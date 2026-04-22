@@ -1,0 +1,21 @@
+{
+    "points_per_level":              1,
+    "bonus_points_every_5":          0,
+    "capstone_cost":                 2,
+    "merge_cost":                    1,
+    "node_cost":                     1,
+    "migration_mult":                1.5,
+    "migration_cap":                 15,
+    "autopilot_xp_mult":             0.80,
+    "flagship_full_survival_seconds": 60,
+    "survival_bonus_base_rate":      0.20,
+    "fighter_credit_mult":           0.40,
+    "underdog_min":                  0.75,
+    "underdog_max":                  2.00,
+    "kill_bonus_threshold":          0.15,
+    "kill_bonus_amount":             0.20,
+    "good_standing_threshold":       5,
+    "stability_streak_cap_months":   6,
+    "vassal_xp_mult":                0.25,
+    "administrator_xp_mult":         0.50
+}

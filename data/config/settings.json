@@ -1,0 +1,5 @@
+{
+    "plugins":{
+        "skills_overhaul_combat":"skills_overhaul.effect.SkillsOverhaulCombatPlugin"
+    }
+}

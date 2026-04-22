@@ -1,0 +1,198 @@
+{
+    "tree": "admin",
+    "_review": "DRAFT v1 — colony effects require MarketAPI/Industry handler hooks. Numbers untuned. Administered-only filter unimplemented.",
+    "lanes": ["industry", "trade", "stability"],
+    "nodes": [
+        {
+            "id": "so_admin_root_1",
+            "name": "Colony Management",
+            "desc": "+5% production for administered colonies.",
+            "lane": "root",
+            "tier": 0,
+            "cost": 1,
+            "prereqs": [],
+            "effects": [
+                {"type": "colony_production", "amount": 0.05}
+            ],
+            "_review": "Handler must identify 'administered' colonies — currently vague. Assume player-faction markets with admin."
+        },
+        {
+            "id": "so_admin_root_2",
+            "name": "Bureaucracy",
+            "desc": "+1 max colony size governed personally by you.",
+            "lane": "root",
+            "tier": 0,
+            "cost": 1,
+            "prereqs": [],
+            "effects": [
+                {"type": "colony_size_cap", "amount": 1}
+            ],
+            "_review": "Vanilla Hypercognition gives +1 size; stack means +2 total. Likely over-strong."
+        },
+
+        {
+            "id": "so_admin_industry_1",
+            "name": "Industrial Planning",
+            "desc": "-5% industry upkeep, administered colonies.",
+            "lane": "industry",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_admin_root_1"],
+            "effects": [
+                {"type": "industry_upkeep", "amount": -0.05}
+            ],
+            "_review": "5% is marginal at early colony; scales with # of industries. Keep."
+        },
+        {
+            "id": "so_admin_industry_3",
+            "name": "Mass Production",
+            "desc": "+1 production output on mining/refining/heavy industry.",
+            "lane": "industry",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_admin_industry_1"],
+            "effects": [
+                {"type": "industry_output_bonus", "industries": ["mining", "refining", "heavy_industry"], "amount": 1}
+            ],
+            "_review": "+1 flat is vanilla Industrial Planning-level. Confirm industry IDs match vanilla constants."
+        },
+        {
+            "id": "so_admin_industry_5",
+            "name": "AI Cores",
+            "desc": "-25% upkeep penalty when using AI cores on administered colonies.",
+            "lane": "industry",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_admin_industry_3"],
+            "effects": [
+                {"type": "ai_core_upkeep_penalty", "amount": -0.25}
+            ],
+            "_review": "AI core penalty reduction — handler must read market's admin flag for faction rep impact. Thematic."
+        },
+        {
+            "id": "so_admin_industry_capstone",
+            "name": "Industrial Empire",
+            "desc": "Administered colonies: +25% production, +1 industry slot. (Capstone)",
+            "lane": "industry",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_admin_industry_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "colony_production", "amount": 0.25},
+                {"type": "colony_industry_slots", "amount": 1}
+            ],
+            "_review": "+1 industry slot is biggest colony-cap change vanilla offers. Strong capstone."
+        },
+
+        {
+            "id": "so_admin_trade_1",
+            "name": "Trade Networks",
+            "desc": "+10% income from export of goods.",
+            "lane": "trade",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_admin_root_1"],
+            "effects": [
+                {"type": "export_income", "amount": 0.10}
+            ],
+            "_review": "Handler hooks EconomyAPI monthly report. Effect key TBD based on actual API."
+        },
+        {
+            "id": "so_admin_trade_3",
+            "name": "Accessibility",
+            "desc": "+20% accessibility on administered colonies.",
+            "lane": "trade",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_admin_trade_1"],
+            "effects": [
+                {"type": "accessibility_bonus", "amount": 0.20}
+            ],
+            "_review": "Accessibility is a market stat (getAccessibility) — handler modifies getAccessibilityMod."
+        },
+        {
+            "id": "so_admin_trade_5",
+            "name": "Black Market Connections",
+            "desc": "-50% reputation impact from black market trading.",
+            "lane": "trade",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_admin_trade_3"],
+            "effects": [
+                {"type": "black_market_rep_mult", "amount": -0.50}
+            ],
+            "_review": "Vanilla Black Market (Contacts) gives this. Thematic overlap — consider niche only."
+        },
+        {
+            "id": "so_admin_trade_capstone",
+            "name": "Merchant Prince",
+            "desc": "Administered colonies: +25% income, +30% accessibility. (Capstone)",
+            "lane": "trade",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_admin_trade_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "colony_income", "amount": 0.25},
+                {"type": "accessibility_bonus", "amount": 0.30}
+            ],
+            "_review": "Stacks with trade_1 and trade_3. Income from 3-colony empire could hit +50% — tune."
+        },
+
+        {
+            "id": "so_admin_stability_1",
+            "name": "Civil Administration",
+            "desc": "+1 stability to administered colonies.",
+            "lane": "stability",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_admin_root_2"],
+            "effects": [
+                {"type": "colony_stability", "amount": 1}
+            ],
+            "_review": "Vanilla Hypercognition gives +2. Keep this at +1 as prerequisite tier."
+        },
+        {
+            "id": "so_admin_stability_3",
+            "name": "Patrol Doctrine",
+            "desc": "+1 patrol fleet strength on administered colonies.",
+            "lane": "stability",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_admin_stability_1"],
+            "effects": [
+                {"type": "colony_patrol_bonus", "amount": 1}
+            ],
+            "_review": "Effect spec unclear — 'patrol strength' not a direct MarketAPI stat. May need Industry-level handler."
+        },
+        {
+            "id": "so_admin_stability_5",
+            "name": "Intelligence Network",
+            "desc": "+5% to all intel events resolved in your favor.",
+            "lane": "stability",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_admin_stability_3"],
+            "effects": [
+                {"type": "intel_bonus", "amount": 0.05}
+            ],
+            "_review": "'Intel bonus' vague — handler could read bar events, raids, or faction quests. Scope TBD."
+        },
+        {
+            "id": "so_admin_stability_capstone",
+            "name": "Political Mastermind",
+            "desc": "Administered colonies: +2 stability, immune to growth penalties from low relations. (Capstone)",
+            "lane": "stability",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_admin_stability_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "colony_stability", "amount": 2},
+                {"type": "colony_growth_penalty_immunity", "amount": 1}
+            ],
+            "_review": "Immunity effect is binary — handler spec different from amount-based stats. Design before implementing."
+        }
+    ]
+}

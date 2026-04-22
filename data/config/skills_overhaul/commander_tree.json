@@ -1,0 +1,201 @@
+{
+    "tree": "commander",
+    "_review": "DRAFT v1 — fleet-wide effects assume campaign-stat handlers via FleetMemberAPI and CampaignFleetAPI. Numbers untuned.",
+    "lanes": ["tactics", "logistics", "doctrine"],
+    "nodes": [
+        {
+            "id": "so_cmd_root_1",
+            "name": "Fleet Command",
+            "desc": "+5% command point regeneration rate.",
+            "lane": "root",
+            "tier": 0,
+            "cost": 1,
+            "prereqs": [],
+            "effects": [
+                {"type": "cmd_point_regen", "amount": 0.05}
+            ],
+            "_review": "Vanilla base regen is slow; 5% is nearly invisible. Consider +1 CP flat or +25% regen."
+        },
+        {
+            "id": "so_cmd_root_2",
+            "name": "Signal Discipline",
+            "desc": "+1 officer slot.",
+            "lane": "root",
+            "tier": 0,
+            "cost": 1,
+            "prereqs": [],
+            "effects": [
+                {"type": "officer_slots", "amount": 1}
+            ],
+            "_review": "Handler must modify MutableCharacterStatsAPI.getOfficerNumberBonus(). Vanilla formula may clamp."
+        },
+
+        {
+            "id": "so_cmd_tactics_1",
+            "name": "Coordinated Strikes",
+            "desc": "+5% damage to ships targeted by multiple allies.",
+            "lane": "tactics",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_cmd_root_1"],
+            "effects": [
+                {"type": "coordinated_damage", "amount": 0.05}
+            ],
+            "_review": "Requires per-combat target-tracking plugin — non-trivial handler. May reduce to simple fleet damage boost."
+        },
+        {
+            "id": "so_cmd_tactics_3",
+            "name": "Bombardment Doctrine",
+            "desc": "+15% missile weapon damage, fleet-wide.",
+            "lane": "tactics",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_cmd_tactics_1"],
+            "effects": [
+                {"type": "fleet_weapon_damage", "filter": "MISSILE", "amount": 0.15}
+            ],
+            "_review": "Fleet-wide missile buff — pairs poorly with missile-heavy officer builds. Consider 0.10."
+        },
+        {
+            "id": "so_cmd_tactics_5",
+            "name": "Force Concentration",
+            "desc": "+1 additional officer can be assigned to the same ship type (cruiser/capital).",
+            "lane": "tactics",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_cmd_tactics_3"],
+            "effects": [
+                {"type": "officer_slots", "amount": 1}
+            ],
+            "_review": "Description mismatch — current effect is generic slot. Either rework handler or rewrite desc to match."
+        },
+        {
+            "id": "so_cmd_tactics_capstone",
+            "name": "Grand Admiral",
+            "desc": "All fleet ships +10% CR at start of battle, +5% top speed. (Capstone)",
+            "lane": "tactics",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_cmd_tactics_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "fleet_cr_start_bonus", "amount": 0.10},
+                {"type": "fleet_top_speed", "amount": 0.05}
+            ],
+            "_review": "CR start bonus is vanilla Coordinated Maneuvers territory. Stacks — confirm cap."
+        },
+
+        {
+            "id": "so_cmd_logistics_1",
+            "name": "Fleet Logistics",
+            "desc": "-10% supply consumption.",
+            "lane": "logistics",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_cmd_root_2"],
+            "effects": [
+                {"type": "supply_consumption_mult", "amount": -0.10}
+            ],
+            "_review": "Negative amount = reduction. Handler must mirror sign convention for stacking."
+        },
+        {
+            "id": "so_cmd_logistics_3",
+            "name": "Fuel Economy",
+            "desc": "-20% fuel consumption during travel.",
+            "lane": "logistics",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_cmd_logistics_1"],
+            "effects": [
+                {"type": "fuel_use_mult", "amount": -0.20}
+            ],
+            "_review": "Vanilla Navigation gives -10% — keep this skill larger to justify investment."
+        },
+        {
+            "id": "so_cmd_logistics_5",
+            "name": "Crew Training",
+            "desc": "+20% max CR for all ships in fleet.",
+            "lane": "logistics",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_cmd_logistics_3"],
+            "effects": [
+                {"type": "fleet_cr_max", "amount": 0.20}
+            ],
+            "_review": "Max CR above 70% is powerful — consider soft cap via handler."
+        },
+        {
+            "id": "so_cmd_logistics_capstone",
+            "name": "Iron Stomach",
+            "desc": "Fleet-wide: -25% supply/fuel use, +30% cargo capacity. (Capstone)",
+            "lane": "logistics",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_cmd_logistics_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "supply_consumption_mult", "amount": -0.25},
+                {"type": "fuel_use_mult", "amount": -0.25},
+                {"type": "fleet_cargo_capacity", "amount": 0.30}
+            ],
+            "_review": "Stacks with logistics_1 and logistics_3 — total supply reduction could hit -35%. Balance via handler cap."
+        },
+
+        {
+            "id": "so_cmd_doctrine_1",
+            "name": "Carrier Wing Discipline",
+            "desc": "+10% fighter replacement rate, fleet-wide.",
+            "lane": "doctrine",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_cmd_root_2"],
+            "effects": [
+                {"type": "fighter_replacement_rate", "amount": 0.10}
+            ],
+            "_review": "Replacement rate is a cap — handler must not exceed vanilla max of 1.0."
+        },
+        {
+            "id": "so_cmd_doctrine_3",
+            "name": "Phase Doctrine",
+            "desc": "Phase ships in fleet: +15% flux dissipation, -10% phase cloak upkeep.",
+            "lane": "doctrine",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_cmd_doctrine_1"],
+            "effects": [
+                {"type": "phase_ship_flux_dissipation", "amount": 0.15},
+                {"type": "phase_ship_cloak_upkeep", "amount": -0.10}
+            ],
+            "_review": "Phase-ship filtering requires handler to check hull tags. Nice to have, niche use."
+        },
+        {
+            "id": "so_cmd_doctrine_5",
+            "name": "Elite Forces",
+            "desc": "+1 elite skill slot on each officer (beyond vanilla).",
+            "lane": "doctrine",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_cmd_doctrine_3"],
+            "effects": [
+                {"type": "officer_elite_slots", "amount": 1}
+            ],
+            "_review": "Stacks with vanilla Officer Management. Very powerful — consider 'chance of extra elite skill' instead of guaranteed."
+        },
+        {
+            "id": "so_cmd_doctrine_capstone",
+            "name": "Carrier Admiral",
+            "desc": "Fighters in fleet: +25% damage, +25% HP, +30% replacement rate. (Capstone)",
+            "lane": "doctrine",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_cmd_doctrine_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "fighter_damage", "amount": 0.25},
+                {"type": "fighter_hp", "amount": 0.25},
+                {"type": "fighter_replacement_rate", "amount": 0.30}
+            ],
+            "_review": "Overlaps doctrine_1 replacement rate — confirm stacking intended (currently +40% total)."
+        }
+    ]
+}

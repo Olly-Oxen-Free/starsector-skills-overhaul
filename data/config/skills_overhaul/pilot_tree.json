@@ -1,0 +1,214 @@
+{
+    "tree": "pilot",
+    "_review": "DRAFT v1 — all nodes need balance review and effect-handler wiring (Phase 10.4). Numbers are first-pass estimates, not tuned.",
+    "lanes": ["gunner", "ace", "defender"],
+    "nodes": [
+        {
+            "id": "so_pilot_root_1",
+            "name": "Basic Piloting",
+            "desc": "+5% maneuverability, piloted ship.",
+            "lane": "root",
+            "tier": 0,
+            "cost": 1,
+            "prereqs": [],
+            "effects": [
+                {"type": "piloted_maneuverability", "amount": 0.05}
+            ],
+            "_review": "Baseline. Works as gate to all three lanes."
+        },
+        {
+            "id": "so_pilot_root_2",
+            "name": "Combat Reflexes",
+            "desc": "+10% weapon autofire precision, piloted ship.",
+            "lane": "root",
+            "tier": 0,
+            "cost": 1,
+            "prereqs": [],
+            "effects": [
+                {"type": "piloted_autofire_precision", "amount": 0.10}
+            ],
+            "_review": "autofire_precision handler not yet written — NoOp warns at purchase. Wire in 10.4."
+        },
+
+        {
+            "id": "so_pilot_gunner_1",
+            "name": "Weapon Drills",
+            "desc": "+5% ballistic damage, piloted ship.",
+            "lane": "gunner",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_pilot_root_1"],
+            "effects": [
+                {"type": "piloted_weapon_damage", "filter": "BALLISTIC", "amount": 0.05}
+            ],
+            "_review": "Ballistic-only on purpose (gunner lane = projectiles). Energy in ace lane."
+        },
+        {
+            "id": "so_pilot_gunner_3",
+            "name": "Target Analysis",
+            "desc": "+10% weapon range, piloted ship.",
+            "lane": "gunner",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_pilot_gunner_1"],
+            "effects": [
+                {"type": "piloted_weapon_range", "amount": 0.10}
+            ],
+            "_review": "Overlaps with vanilla Gunnery Implants range bonus — size carefully. Consider cap."
+        },
+        {
+            "id": "so_pilot_gunner_5",
+            "name": "Overwhelming Fire",
+            "desc": "+15% damage vs. shields, piloted ship.",
+            "lane": "gunner",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_pilot_gunner_3"],
+            "effects": [
+                {"type": "piloted_shield_damage", "amount": 0.15}
+            ],
+            "_review": "Shield-bypass alternative in defender lane. Pick one or split further."
+        },
+        {
+            "id": "so_pilot_gunner_capstone",
+            "name": "Weapon Apotheosis",
+            "desc": "Piloted ship: +25% damage, +15% range, all weapon types. (Capstone)",
+            "lane": "gunner",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_pilot_gunner_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "piloted_weapon_damage", "filter": "ALL", "amount": 0.25},
+                {"type": "piloted_weapon_range", "amount": 0.15}
+            ],
+            "_review": "Capstone numbers — 25% dmg + 15% range feels strong vs. vanilla Ordnance Expertise. Consider 20/10."
+        },
+
+        {
+            "id": "so_pilot_ace_1",
+            "name": "Throttle Mastery",
+            "desc": "+10% top speed, piloted ship.",
+            "lane": "ace",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_pilot_root_1"],
+            "effects": [
+                {"type": "piloted_top_speed", "amount": 0.10}
+            ],
+            "_review": "top_speed stacks multiplicatively with safety-override type effects — verify in playtest."
+        },
+        {
+            "id": "so_pilot_ace_3",
+            "name": "Dancing Hull",
+            "desc": "+15% turn rate and sideways acceleration, piloted ship.",
+            "lane": "ace",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_pilot_ace_1"],
+            "effects": [
+                {"type": "piloted_maneuverability", "amount": 0.15}
+            ],
+            "_review": "Stacks with root_1 for +20% total maneuverability. Consider diminishing returns."
+        },
+        {
+            "id": "so_pilot_ace_5",
+            "name": "Flux Conditioning",
+            "desc": "+20% flux dissipation, piloted ship.",
+            "lane": "ace",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_pilot_ace_3"],
+            "effects": [
+                {"type": "piloted_flux_dissipation", "amount": 0.20}
+            ],
+            "_review": "Large number — vanilla Helmsmanship gives 15%. Maybe reduce to 0.15."
+        },
+        {
+            "id": "so_pilot_ace_capstone",
+            "name": "Impossible Geometries",
+            "desc": "Piloted ship: zero-flux boost also applies with guns firing; +50% zero-flux threshold. (Capstone)",
+            "lane": "ace",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_pilot_ace_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "piloted_zeroflux_while_firing", "amount": 1.0},
+                {"type": "piloted_zeroflux_threshold", "amount": 0.50}
+            ],
+            "_review": "Signature capstone — behavior change, not just numbers. Handler is complex combat-plugin work."
+        },
+
+        {
+            "id": "so_pilot_defender_1",
+            "name": "Damage Control",
+            "desc": "+15% armor, piloted ship.",
+            "lane": "defender",
+            "tier": 1,
+            "cost": 1,
+            "prereqs": ["so_pilot_root_2"],
+            "effects": [
+                {"type": "piloted_armor_bonus", "amount": 0.15}
+            ],
+            "_review": "Armor bonus as % of base — verify that's what the stat expects (may be flat add)."
+        },
+        {
+            "id": "so_pilot_defender_3",
+            "name": "Shield Modulation",
+            "desc": "-20% shield flux per damage taken, piloted ship.",
+            "lane": "defender",
+            "tier": 3,
+            "cost": 1,
+            "prereqs": ["so_pilot_defender_1"],
+            "effects": [
+                {"type": "piloted_shield_efficiency", "amount": -0.20}
+            ],
+            "_review": "Sign convention — negative = less flux absorbed per damage. Handler must mirror vanilla Shield Modulation semantics."
+        },
+        {
+            "id": "so_pilot_defender_5",
+            "name": "Hardened Plating",
+            "desc": "+15% hull integrity, piloted ship.",
+            "lane": "defender",
+            "tier": 5,
+            "cost": 2,
+            "prereqs": ["so_pilot_defender_3"],
+            "effects": [
+                {"type": "piloted_hull_bonus", "amount": 0.15}
+            ],
+            "_review": "Overlaps with vanilla Polarized Armor; keep smaller than armor_bonus."
+        },
+        {
+            "id": "so_pilot_defender_capstone",
+            "name": "Ironhide",
+            "desc": "Piloted ship: 25% damage taken reduction below 50% hull. (Capstone)",
+            "lane": "defender",
+            "tier": 9,
+            "cost": 2,
+            "prereqs": ["so_pilot_defender_5"],
+            "capstone": true,
+            "effects": [
+                {"type": "piloted_damage_reduction_low_hull", "threshold": 0.50, "amount": 0.25}
+            ],
+            "_review": "Conditional damage reduction — vanilla Polarized Armor pattern. Handler needs hull-% polling in combat plugin."
+        }
+    ],
+    "merges": [
+        {
+            "id": "so_pilot_merge_elite_pilot",
+            "name": "Elite Pilot",
+            "desc": "Merge of Ace + Gunner lanes: adds +10% weapon damage AND +10% top speed.",
+            "tier": 9,
+            "slot": 1,
+            "cost": 2,
+            "parentLanes": ["gunner", "ace"],
+            "prereqs": ["so_pilot_gunner_capstone", "so_pilot_ace_capstone"],
+            "effects": [
+                {"type": "piloted_weapon_damage", "filter": "ALL", "amount": 0.1},
+                {"type": "piloted_top_speed", "amount": 0.1}
+            ],
+            "_review": "Post-capstone merge. parentLanes drives hybrid-column placement; prereqs enforce both capstones owned."
+        }
+    ]
+}
