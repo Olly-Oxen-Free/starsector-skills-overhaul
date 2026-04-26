@@ -1,0 +1,16 @@
+{
+    "id": "skills_overhaul_privateer",
+    "color": [200, 180, 90, 255],
+    "displayName": "Privateer",
+    "displayNameWithArticle": "the Privateer",
+    "displayNameIsOrAre": "is",
+    "logo": "graphics/factions/independent.png",
+    "shipNamePrefix": "PRV",
+    "personalities": { "timid": 1, "cautious": 5, "steady": 10, "aggressive": 5, "reckless": 1 },
+    "ranks": { "ranks": {}, "posts": {} },
+    "fleetTypeNames": { "patrolFleet": "Privateer Detachment" },
+    "illegalCommodities": [],
+    "music": {},
+    "internalComm": "default_neutral",
+    "voices": {}
+}
