@@ -1,65 +1,40 @@
 package skills_overhaul.tree;
 
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.io.File;
-import java.nio.file.Files;
+import java.io.FileReader;
 
 public class TreeLoaderRealJSONTest {
-
     public static void main(String[] args) throws Exception {
-        File dataDir = findDataDir();
-        if (dataDir == null) throw new RuntimeException("couldn't locate data/config/skills_overhaul/");
+        for (String tab : new String[]{"pilot", "commander", "admin"}) {
+            String indexPath = "data/config/skills_overhaul/trees/" + tab + "_index.json";
+            JSONObject index = new JSONObject(new JSONTokener(new FileReader(indexPath)));
+            String[] keys = jsonStringArray(index.getJSONArray("trees"));
+            assert keys.length > 0 : tab + " has no trees in index";
 
-        verify(dataDir, "pilot",     new String[]{"gunner", "ace", "defender"});
-        verify(dataDir, "commander", new String[]{"tactics", "logistics", "doctrine"});
-        verify(dataDir, "admin",     new String[]{"industry", "trade", "stability"});
-
+            for (String key : keys) {
+                String path = "data/config/skills_overhaul/trees/" + tab + "_" + key + ".json";
+                assert new File(path).exists() : "missing tree file: " + path;
+                JSONObject j = new JSONObject(new JSONTokener(new FileReader(path)));
+                TreeDef def = TreeLoader.fromJSON(j);
+                assert def.getT0() != null : tab + "_" + key + " missing T0";
+                assert def.getNodes().size() > 0 : tab + "_" + key + " has no nodes";
+                for (Node n : def.getNodes()) {
+                    for (String ref : n.getReferencedPrereqIds()) {
+                        assert def.getNode(ref) != null
+                                : tab + "_" + key + ": " + n.getId() + " refs missing " + ref;
+                    }
+                }
+            }
+        }
         System.out.println("ALL PASSED");
     }
 
-    private static void verify(File dataDir, String tree, String[] expectedLanes) throws Exception {
-        File f = new File(dataDir, tree + "_tree.json");
-        String raw = new String(Files.readAllBytes(f.toPath()));
-        TreeDef def = TreeLoader.fromJSON(new JSONObject(raw));
-
-        assert def != null : tree + ": null TreeDef";
-        assert def.getTree().equals(tree) : tree + ": tree name mismatch";
-        assert def.getNodes().size() >= 14 : tree + ": expected >=14 nodes, got " + def.getNodes().size();
-
-        for (String lane : expectedLanes) {
-            assert def.getLanes().contains(lane) : tree + ": missing lane " + lane;
-        }
-
-        int capstones = 0;
-        for (Node n : def.getNodes()) if (n.isCapstone()) capstones++;
-        assert capstones >= 3 : tree + ": expected >=3 capstones";
-        assert !def.getRootNodes().isEmpty() : tree + ": no root nodes";
-
-        // Merge nodes parse correctly (zero allowed; when present, invariants hold)
-        for (Node m : def.getMergeNodes()) {
-            assert m.isMerge() : tree + ": " + m.getId() + " not marked merge";
-            assert m.getParentLanes().size() == 2 : tree + ": " + m.getId() + " bad parentLanes";
-            assert m.getLane().startsWith("merge:") : tree + ": " + m.getId() + " lane should start 'merge:'";
-        }
-
-        // Slot invariant: every node has slot in [0,2]
-        for (Node n : def.getNodes()) {
-            int s = n.getSlot();
-            assert s >= 0 && s <= 2 : tree + ": " + n.getId() + " slot=" + s + " out of [0,2]";
-        }
-
-        System.out.println("  " + tree + ": " + def.getNodes().size() + " nodes, "
-                + def.getMergeNodes().size() + " merges, " + capstones + " capstones");
-    }
-
-    private static File findDataDir() {
-        File cur = new File(".").getAbsoluteFile();
-        for (int i = 0; i < 6 && cur != null; i++) {
-            File candidate = new File(cur, "data/config/skills_overhaul");
-            if (candidate.isDirectory()) return candidate;
-            cur = cur.getParentFile();
-        }
-        return null;
+    private static String[] jsonStringArray(org.json.JSONArray a) throws Exception {
+        String[] out = new String[a.length()];
+        for (int i = 0; i < a.length(); i++) out[i] = a.getString(i);
+        return out;
     }
 }

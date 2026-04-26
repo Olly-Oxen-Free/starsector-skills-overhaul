@@ -1,0 +1,19 @@
+{
+  "tree": "pilot_gunnery",
+  "nodes": [
+    {
+      "id": "pilot_gunnery_t0",
+      "name": "Gunnery",
+      "desc": "Placeholder T0 — content TBD.",
+      "x": 2, "y": 0, "cost": 1,
+      "prereqs": []
+    },
+    {
+      "id": "pilot_gunnery_t5",
+      "name": "Gunnery Capstone",
+      "desc": "Placeholder capstone — content TBD.",
+      "x": 2, "y": 5, "cost": 1,
+      "prereqs": [{"all": ["pilot_gunnery_t0"]}]
+    }
+  ]
+}
