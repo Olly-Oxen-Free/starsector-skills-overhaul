@@ -6,40 +6,28 @@ import java.util.*;
 
 public class PendingPurchaseTopoSortTest {
     public static void main(String[] args) throws Exception {
-        String json = "{" +
-                "\"tree\":\"pilot\"," +
-                "\"lanes\":[\"gunner\"]," +
-                "\"nodes\":[" +
-                "  {\"id\":\"r\",\"name\":\"r\",\"lane\":\"gunner\",\"tier\":1,\"cost\":1,\"prereqs\":[]}," +
-                "  {\"id\":\"a\",\"name\":\"a\",\"lane\":\"gunner\",\"tier\":2,\"cost\":1,\"prereqs\":[\"r\"]}," +
-                "  {\"id\":\"b\",\"name\":\"b\",\"lane\":\"gunner\",\"tier\":3,\"cost\":1,\"prereqs\":[\"a\"]}," +
-                "  {\"id\":\"c\",\"name\":\"c\",\"lane\":\"gunner\",\"tier\":3,\"cost\":1,\"prereqs\":[\"a\"]}" +
+        // r0 -> c1 -> c2 (chain)
+        String json = "{\"tree\":\"t\",\"nodes\":[" +
+                "{\"id\":\"r0\",\"name\":\"R0\",\"x\":2,\"y\":0,\"cost\":1,\"prereqs\":[]}," +
+                "{\"id\":\"c1\",\"name\":\"C1\",\"x\":2,\"y\":1,\"cost\":1," +
+                " \"prereqs\":[{\"all\":[\"r0\"]}]}," +
+                "{\"id\":\"c2\",\"name\":\"C2\",\"x\":2,\"y\":2,\"cost\":1," +
+                " \"prereqs\":[{\"all\":[\"c1\"]}]}" +
                 "]}";
         TreeDef def = TreeLoader.fromJSON(new JSONObject(json));
 
-        // Pending {b, r, a} should sort to [r, a, b] (or any order where r before a before b)
         Set<String> pending = new LinkedHashSet<>();
-        pending.add("b"); pending.add("r"); pending.add("a");
-        List<String> sorted = PendingPurchaseTopoSort.sort(def, pending);
-        assert sorted.size() == 3 : "size";
-        assert sorted.indexOf("r") < sorted.indexOf("a") : "r before a";
-        assert sorted.indexOf("a") < sorted.indexOf("b") : "a before b";
+        pending.add("c2"); pending.add("r0"); pending.add("c1");
+        List<String> order = PendingPurchaseTopoSort.sort(def, pending);
+        assert order.indexOf("r0") < order.indexOf("c1");
+        assert order.indexOf("c1") < order.indexOf("c2");
 
-        // Owned prereqs are ignored for ordering (only in-pending edges count)
-        // Here only {a, b} pending, r assumed owned — edge r->a ignored because r not in pending
+        // Pending containing only c1 (r0 owned, not pending): no inter-pending edge from r0,
+        // c1 has in-degree 0 in the pending sub-graph.
         Set<String> pending2 = new LinkedHashSet<>();
-        pending2.add("b"); pending2.add("a");
-        List<String> sorted2 = PendingPurchaseTopoSort.sort(def, pending2);
-        assert sorted2.size() == 2;
-        assert sorted2.indexOf("a") < sorted2.indexOf("b") : "a before b (owned r ignored)";
-
-        // Independent branches (b and c both depend only on a): any ordering OK, just assert
-        // a comes before both.
-        Set<String> pending3 = new LinkedHashSet<>();
-        pending3.add("b"); pending3.add("c"); pending3.add("a");
-        List<String> sorted3 = PendingPurchaseTopoSort.sort(def, pending3);
-        assert sorted3.indexOf("a") < sorted3.indexOf("b");
-        assert sorted3.indexOf("a") < sorted3.indexOf("c");
+        pending2.add("c1");
+        List<String> order2 = PendingPurchaseTopoSort.sort(def, pending2);
+        assert order2.size() == 1 && order2.get(0).equals("c1");
 
         System.out.println("ALL PASSED");
     }

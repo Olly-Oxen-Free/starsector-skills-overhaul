@@ -45,4 +45,8 @@ public final class TreeDef {
         if (t0 != null) out.add(t0);
         return out;
     }
+
+    // TODO: Task 7+ will populate these stub methods.
+    public List<String> getLanes() { return Collections.emptyList(); }
+    public List<Node> getMergeNodes() { return Collections.emptyList(); }
 }
