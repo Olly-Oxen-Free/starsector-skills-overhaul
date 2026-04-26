@@ -1,6 +1,7 @@
 {
     "plugins":{
         "skills_overhaul_combat":"skills_overhaul.effect.SkillsOverhaulCombatPlugin",
+        "skills_overhaul_corsair_combat":"skills_overhaul.effect.handlers.corsair.CorsairCombatPlugin",
         "skills_overhaul_pilot_xp":"skills_overhaul.xp.PilotXPTracker"
     }
 }

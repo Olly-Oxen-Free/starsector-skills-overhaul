@@ -17,6 +17,8 @@ public final class EffectRegistry {
         handlers.put("piloted_weapon_damage",   new PilotedWeaponDamageHandler());
         handlers.put("corsair_stat_bonus",      new StatBonusHandler());
         handlers.put("corsair_salvage_mult",    new SalvageMultiplierHandler());
+        handlers.put("corsair_combat_script",
+                new skills_overhaul.effect.handlers.corsair.CombatScriptHandler());
     }
 
     public static EffectHandler get(String type) {
