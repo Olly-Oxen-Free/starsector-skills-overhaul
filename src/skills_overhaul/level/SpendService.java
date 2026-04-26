@@ -100,9 +100,9 @@ public final class SpendService {
 
     private static void addToResult(Result r, Tree tree, int n) {
         switch (tree) {
-            case PILOT:     r.fromMigrationToPilot += n;     break;
-            case COMMANDER: r.fromMigrationToCommander += n; break;
-            case ADMIN:     r.fromMigrationToAdmin += n;     break;
+            case PILOT:      r.fromMigrationToPilot      += n; break;
+            case COMMANDER:  r.fromMigrationToCommander  += n; break;
+            case ADMIN:      r.fromMigrationToAdmin      += n; break;
         }
     }
 }

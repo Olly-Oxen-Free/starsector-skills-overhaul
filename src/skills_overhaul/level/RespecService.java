@@ -33,8 +33,8 @@ public final class RespecService {
         for (String key : new HashSet<String>(keysWithPrefix(mem, RECORD_PREFIX))) {
             if (!key.endsWith(".tl")) continue;
             String nodeId = key.substring(RECORD_PREFIX.length(), key.length() - 3);
-            // Only respec this tree's nodes — check the node ID prefix
-            if (!nodeId.startsWith("so_" + tree.key)) continue;
+            // Only this tree's nodes (JSON ids use short prefixes: so_p_, so_c_, so_a_)
+            if (!nodeId.startsWith(tree.nodeIdPrefix())) continue;
 
             int tl = intOf(mem.remove(key));
             int fu = intOf(mem.remove(RECORD_PREFIX + nodeId + ".fu"));

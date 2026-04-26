@@ -1,201 +1,84 @@
 {
     "tree": "commander",
-    "_review": "DRAFT v1 — fleet-wide effects assume campaign-stat handlers via FleetMemberAPI and CampaignFleetAPI. Numbers untuned.",
-    "lanes": ["tactics", "logistics", "doctrine"],
+    "lanes": ["leadership", "tactics", "logistics", "doctrine"],
     "nodes": [
-        {
-            "id": "so_cmd_root_1",
-            "name": "Fleet Command",
-            "desc": "+5% command point regeneration rate.",
-            "lane": "root",
-            "tier": 0,
-            "cost": 1,
-            "prereqs": [],
-            "effects": [
-                {"type": "cmd_point_regen", "amount": 0.05}
-            ],
-            "_review": "Vanilla base regen is slow; 5% is nearly invisible. Consider +1 CP flat or +25% regen."
-        },
-        {
-            "id": "so_cmd_root_2",
-            "name": "Signal Discipline",
-            "desc": "+1 officer slot.",
-            "lane": "root",
-            "tier": 0,
-            "cost": 1,
-            "prereqs": [],
-            "effects": [
-                {"type": "officer_slots", "amount": 1}
-            ],
-            "_review": "Handler must modify MutableCharacterStatsAPI.getOfficerNumberBonus(). Vanilla formula may clamp."
-        },
+        {"id":"so_c_l0","name":"Command Presence","desc":"Basic fleet command.","lane":"leadership","tier":0,"slot":0,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/leadership.png"},
+        {"id":"so_c_t0","name":"Tactical Mind","desc":"Basic tactical analysis.","lane":"tactics","tier":0,"slot":1,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/advanced_tactics.png"},
+        {"id":"so_c_g0","name":"Supply Chain","desc":"Basic logistics knowledge.","lane":"logistics","tier":0,"slot":2,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/fleet_logistics.png"},
+        {"id":"so_c_d0","name":"Fleet Doctrine","desc":"Fundamentals of fleet doctrine.","lane":"doctrine","tier":0,"slot":3,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/advanced_tactics.png"},
 
-        {
-            "id": "so_cmd_tactics_1",
-            "name": "Coordinated Strikes",
-            "desc": "+5% damage to ships targeted by multiple allies.",
-            "lane": "tactics",
-            "tier": 1,
-            "cost": 1,
-            "prereqs": ["so_cmd_root_1"],
-            "effects": [
-                {"type": "coordinated_damage", "amount": 0.05}
-            ],
-            "_review": "Requires per-combat target-tracking plugin — non-trivial handler. May reduce to simple fleet damage boost."
-        },
-        {
-            "id": "so_cmd_tactics_3",
-            "name": "Bombardment Doctrine",
-            "desc": "+15% missile weapon damage, fleet-wide.",
-            "lane": "tactics",
-            "tier": 3,
-            "cost": 1,
-            "prereqs": ["so_cmd_tactics_1"],
-            "effects": [
-                {"type": "fleet_weapon_damage", "filter": "MISSILE", "amount": 0.15}
-            ],
-            "_review": "Fleet-wide missile buff — pairs poorly with missile-heavy officer builds. Consider 0.10."
-        },
-        {
-            "id": "so_cmd_tactics_5",
-            "name": "Force Concentration",
-            "desc": "+1 additional officer can be assigned to the same ship type (cruiser/capital).",
-            "lane": "tactics",
-            "tier": 5,
-            "cost": 2,
-            "prereqs": ["so_cmd_tactics_3"],
-            "effects": [
-                {"type": "officer_slots", "amount": 1}
-            ],
-            "_review": "Description mismatch — current effect is generic slot. Either rework handler or rewrite desc to match."
-        },
-        {
-            "id": "so_cmd_tactics_capstone",
-            "name": "Grand Admiral",
-            "desc": "All fleet ships +10% CR at start of battle, +5% top speed. (Capstone)",
-            "lane": "tactics",
-            "tier": 9,
-            "cost": 2,
-            "prereqs": ["so_cmd_tactics_5"],
-            "capstone": true,
-            "effects": [
-                {"type": "fleet_cr_start_bonus", "amount": 0.10},
-                {"type": "fleet_top_speed", "amount": 0.05}
-            ],
-            "_review": "CR start bonus is vanilla Coordinated Maneuvers territory. Stacks — confirm cap."
-        },
+        {"id":"so_c_l1","name":"Coordinated Maneuvers","desc":"+5% fleet speed.","lane":"leadership","tier":1,"slot":0,"cost":1,"prereqs":["so_c_l0"],"icon":"graphics/icons/skills/coordinated_maneuvers.png"},
+        {"id":"so_c_l1b","name":"Wolfpack","desc":"+10% frigate damage.","lane":"leadership","tier":1,"slot":1,"cost":1,"prereqs":["so_c_l0"],"icon":"graphics/icons/skills/wolfpack.png"},
+        {"id":"so_c_l1c","name":"Crew Training","desc":"+10% CR recovery.","lane":"leadership","tier":1,"slot":2,"cost":1,"prereqs":["so_c_l0"],"icon":"graphics/icons/skills/crew_training.png"},
 
-        {
-            "id": "so_cmd_logistics_1",
-            "name": "Fleet Logistics",
-            "desc": "-10% supply consumption.",
-            "lane": "logistics",
-            "tier": 1,
-            "cost": 1,
-            "prereqs": ["so_cmd_root_2"],
-            "effects": [
-                {"type": "supply_consumption_mult", "amount": -0.10}
-            ],
-            "_review": "Negative amount = reduction. Handler must mirror sign convention for stacking."
-        },
-        {
-            "id": "so_cmd_logistics_3",
-            "name": "Fuel Economy",
-            "desc": "-20% fuel consumption during travel.",
-            "lane": "logistics",
-            "tier": 3,
-            "cost": 1,
-            "prereqs": ["so_cmd_logistics_1"],
-            "effects": [
-                {"type": "fuel_use_mult", "amount": -0.20}
-            ],
-            "_review": "Vanilla Navigation gives -10% — keep this skill larger to justify investment."
-        },
-        {
-            "id": "so_cmd_logistics_5",
-            "name": "Crew Training",
-            "desc": "+20% max CR for all ships in fleet.",
-            "lane": "logistics",
-            "tier": 5,
-            "cost": 2,
-            "prereqs": ["so_cmd_logistics_3"],
-            "effects": [
-                {"type": "fleet_cr_max", "amount": 0.20}
-            ],
-            "_review": "Max CR above 70% is powerful — consider soft cap via handler."
-        },
-        {
-            "id": "so_cmd_logistics_capstone",
-            "name": "Iron Stomach",
-            "desc": "Fleet-wide: -25% supply/fuel use, +30% cargo capacity. (Capstone)",
-            "lane": "logistics",
-            "tier": 9,
-            "cost": 2,
-            "prereqs": ["so_cmd_logistics_5"],
-            "capstone": true,
-            "effects": [
-                {"type": "supply_consumption_mult", "amount": -0.25},
-                {"type": "fuel_use_mult", "amount": -0.25},
-                {"type": "fleet_cargo_capacity", "amount": 0.30}
-            ],
-            "_review": "Stacks with logistics_1 and logistics_3 — total supply reduction could hit -35%. Balance via handler cap."
-        },
+        {"id":"so_c_t1","name":"EW Training","desc":"+10% ECM rating.","lane":"tactics","tier":1,"slot":0,"cost":1,"prereqs":["so_c_t0"],"icon":"graphics/icons/skills/EW.png"},
+        {"id":"so_c_t1b","name":"Sensors","desc":"+20% sensor range.","lane":"tactics","tier":1,"slot":1,"cost":1,"prereqs":["so_c_t0"],"icon":"graphics/icons/skills/sensors.png"},
+        {"id":"so_c_t1c","name":"Strike Commander","desc":"+15% strike craft damage.","lane":"tactics","tier":1,"slot":2,"cost":1,"prereqs":["so_c_t0"],"icon":"graphics/icons/skills/strike_commander.png"},
 
-        {
-            "id": "so_cmd_doctrine_1",
-            "name": "Carrier Wing Discipline",
-            "desc": "+10% fighter replacement rate, fleet-wide.",
-            "lane": "doctrine",
-            "tier": 1,
-            "cost": 1,
-            "prereqs": ["so_cmd_root_2"],
-            "effects": [
-                {"type": "fighter_replacement_rate", "amount": 0.10}
-            ],
-            "_review": "Replacement rate is a cap — handler must not exceed vanilla max of 1.0."
-        },
-        {
-            "id": "so_cmd_doctrine_3",
-            "name": "Phase Doctrine",
-            "desc": "Phase ships in fleet: +15% flux dissipation, -10% phase cloak upkeep.",
-            "lane": "doctrine",
-            "tier": 3,
-            "cost": 1,
-            "prereqs": ["so_cmd_doctrine_1"],
-            "effects": [
-                {"type": "phase_ship_flux_dissipation", "amount": 0.15},
-                {"type": "phase_ship_cloak_upkeep", "amount": -0.10}
-            ],
-            "_review": "Phase-ship filtering requires handler to check hull tags. Nice to have, niche use."
-        },
-        {
-            "id": "so_cmd_doctrine_5",
-            "name": "Elite Forces",
-            "desc": "+1 elite skill slot on each officer (beyond vanilla).",
-            "lane": "doctrine",
-            "tier": 5,
-            "cost": 2,
-            "prereqs": ["so_cmd_doctrine_3"],
-            "effects": [
-                {"type": "officer_elite_slots", "amount": 1}
-            ],
-            "_review": "Stacks with vanilla Officer Management. Very powerful — consider 'chance of extra elite skill' instead of guaranteed."
-        },
-        {
-            "id": "so_cmd_doctrine_capstone",
-            "name": "Carrier Admiral",
-            "desc": "Fighters in fleet: +25% damage, +25% HP, +30% replacement rate. (Capstone)",
-            "lane": "doctrine",
-            "tier": 9,
-            "cost": 2,
-            "prereqs": ["so_cmd_doctrine_5"],
-            "capstone": true,
-            "effects": [
-                {"type": "fighter_damage", "amount": 0.25},
-                {"type": "fighter_hp", "amount": 0.25},
-                {"type": "fighter_replacement_rate", "amount": 0.30}
-            ],
-            "_review": "Overlaps doctrine_1 replacement rate — confirm stacking intended (currently +40% total)."
-        }
-    ]
+        {"id":"so_c_g1","name":"Bulk Transport","desc":"+20% cargo capacity.","lane":"logistics","tier":1,"slot":0,"cost":1,"prereqs":["so_c_g0"],"icon":"graphics/icons/skills/bulk_transport.png"},
+        {"id":"so_c_g1b","name":"Salvaging","desc":"+25% salvage recovery.","lane":"logistics","tier":1,"slot":1,"cost":1,"prereqs":["so_c_g0"],"icon":"graphics/icons/skills/salvaging.png"},
+        {"id":"so_c_g1c","name":"Containment","desc":"-15% supply use.","lane":"logistics","tier":1,"slot":2,"cost":1,"prereqs":["so_c_g0"],"icon":"graphics/icons/skills/containment_procedures.png"},
+
+        {"id":"so_c_d1","name":"Aggressive Doctrine","desc":"Officers more aggressive.","lane":"doctrine","tier":1,"slot":0,"cost":1,"prereqs":["so_c_d0"],"icon":"graphics/icons/skills/advanced_tactics.png"},
+        {"id":"so_c_d1b","name":"Defensive Doctrine","desc":"Officers more cautious.","lane":"doctrine","tier":1,"slot":1,"cost":1,"prereqs":["so_c_d0"],"icon":"graphics/icons/skills/field_modulation.png"},
+        {"id":"so_c_d1c","name":"Unified Command","desc":"+5% coordinated attack damage.","lane":"doctrine","tier":1,"slot":2,"cost":1,"prereqs":["so_c_d0"],"icon":"graphics/icons/skills/coordinated_maneuvers.png"},
+
+        {"id":"so_c_l2","name":"Fighter Doctrine","desc":"+1 fighter bay per carrier.","lane":"leadership","tier":2,"slot":0,"cost":1,"prereqs":["so_c_l1"],"icon":"graphics/icons/skills/fighter_doctrine.png"},
+        {"id":"so_c_l2b","name":"Carrier Command","desc":"+20% fighter speed.","lane":"leadership","tier":2,"slot":1,"cost":1,"prereqs":["so_c_l1b"],"icon":"graphics/icons/skills/carrier_command.png"},
+        {"id":"so_c_l2c","name":"Officer Training","desc":"+1 officer skill point.","lane":"leadership","tier":2,"slot":2,"cost":1,"prereqs":["so_c_l1c"],"icon":"graphics/icons/skills/officer_training.png"},
+
+        {"id":"so_c_t2","name":"Electronic Warfare","desc":"+15% ECM, -10% enemy range.","lane":"tactics","tier":2,"slot":0,"cost":1,"prereqs":["so_c_t1"],"icon":"graphics/icons/skills/EW.png"},
+        {"id":"so_c_t2b","name":"Navigation","desc":"+1 burn level.","lane":"tactics","tier":2,"slot":1,"cost":1,"prereqs":["so_c_t1b"],"icon":"graphics/icons/skills/navigation.png"},
+        {"id":"so_c_t2c","name":"Tactical Drills","desc":"+10% damage to larger ships.","lane":"tactics","tier":2,"slot":2,"cost":1,"prereqs":["so_c_t1c"],"icon":"graphics/icons/skills/advanced_tactics.png"},
+
+        {"id":"so_c_g2","name":"Industrial Planning","desc":"+20% production efficiency.","lane":"logistics","tier":2,"slot":0,"cost":1,"prereqs":["so_c_g1"],"icon":"graphics/icons/skills/industrial_planning.png"},
+        {"id":"so_c_g2b","name":"Field Repairs","desc":"Repair at 50% rate in deep space.","lane":"logistics","tier":2,"slot":1,"cost":1,"prereqs":["so_c_g1b"],"icon":"graphics/icons/skills/field_repairs.png"},
+        {"id":"so_c_g2c","name":"Recovery Operations","desc":"+30% ship recovery.","lane":"logistics","tier":2,"slot":2,"cost":1,"prereqs":["so_c_g1c"],"icon":"graphics/icons/skills/recovery_ops.png"},
+
+        {"id":"so_c_d2","name":"Shock Assault","desc":"+10% fleet burst damage.","lane":"doctrine","tier":2,"slot":0,"cost":1,"prereqs":["so_c_d1"],"icon":"graphics/icons/skills/strike_commander.png"},
+        {"id":"so_c_d2b","name":"Steady Line","desc":"+10% fleet damage reduction.","lane":"doctrine","tier":2,"slot":1,"cost":1,"prereqs":["so_c_d1b"],"icon":"graphics/icons/skills/impact_mitigation.png"},
+        {"id":"so_c_d2c","name":"Crossfire","desc":"+10% damage when flanking.","lane":"doctrine","tier":2,"slot":2,"cost":1,"prereqs":["so_c_d1c"],"icon":"graphics/icons/skills/coordinated_maneuvers.png"},
+
+        {"id":"so_c_l3","name":"Fleet Coordination","desc":"+10% fleet damage.","lane":"leadership","tier":3,"slot":0,"cost":2,"prereqs":["so_c_l2"],"icon":"graphics/icons/skills/coordinated_maneuvers.png"},
+        {"id":"so_c_l3b","name":"Elite Wing","desc":"+25% fighter damage.","lane":"leadership","tier":3,"slot":1,"cost":2,"prereqs":["so_c_l2b"],"icon":"graphics/icons/skills/fighter_doctrine.png"},
+        {"id":"so_c_l3c","name":"Command Experience","desc":"+2 max officers.","lane":"leadership","tier":3,"slot":2,"cost":2,"prereqs":["so_c_l2c"],"icon":"graphics/icons/skills/command_experience.png"},
+
+        {"id":"so_c_t3","name":"Cyberwarfare","desc":"Disable enemy missiles.","lane":"tactics","tier":3,"slot":0,"cost":2,"prereqs":["so_c_t2"],"icon":"graphics/icons/skills/cybernetic_augmentation.png"},
+        {"id":"so_c_t3b","name":"Deep Space","desc":"+1 max burn, no terrain penalty.","lane":"tactics","tier":3,"slot":1,"cost":2,"prereqs":["so_c_t2b"],"icon":"graphics/icons/skills/navigation.png"},
+        {"id":"so_c_t3c","name":"Grand Strategy","desc":"+15% fleet size.","lane":"tactics","tier":3,"slot":2,"cost":2,"prereqs":["so_c_t2c"],"icon":"graphics/icons/skills/advanced_tactics.png"},
+
+        {"id":"so_c_g3","name":"Megacorp","desc":"+25% colony income.","lane":"logistics","tier":3,"slot":0,"cost":2,"prereqs":["so_c_g2"],"icon":"graphics/icons/skills/industrial_planning.png"},
+        {"id":"so_c_g3b","name":"Mobile Yards","desc":"Build ships in deep space.","lane":"logistics","tier":3,"slot":1,"cost":2,"prereqs":["so_c_g2b"],"icon":"graphics/icons/skills/field_repairs.png"},
+        {"id":"so_c_g3c","name":"Derelict Operations","desc":"Recover and field derelicts.","lane":"logistics","tier":3,"slot":2,"cost":2,"prereqs":["so_c_g2c"],"icon":"graphics/icons/skills/derelict_contingent.png"},
+
+        {"id":"so_c_d3","name":"Blitz Doctrine","desc":"+20% burst damage, -10% armor.","lane":"doctrine","tier":3,"slot":0,"cost":2,"prereqs":["so_c_d2"],"icon":"graphics/icons/skills/strike_commander.png"},
+        {"id":"so_c_d3b","name":"Bulwark","desc":"+20% armor, -10% speed.","lane":"doctrine","tier":3,"slot":1,"cost":2,"prereqs":["so_c_d2b"],"icon":"graphics/icons/skills/polarized_armor.png"},
+        {"id":"so_c_d3c","name":"Combined Arms","desc":"+15% damage from coordinated volleys.","lane":"doctrine","tier":3,"slot":2,"cost":2,"prereqs":["so_c_d2c"],"icon":"graphics/icons/skills/coordinated_maneuvers.png"},
+
+        {"id":"so_c_lt3","name":"Carrier Tactics","desc":"+15% fighter speed and damage.","lane":"merge:leadership_tactics","tier":3,"slot":1,"cost":2,"prereqs":["so_c_l2","so_c_t2"],"merge":true,"icon":"graphics/icons/skills/carrier_command.png"},
+        {"id":"so_c_tg3","name":"Scout Protocols","desc":"+15% fleet sensor strength.","lane":"merge:logistics_tactics","tier":3,"slot":1,"cost":2,"prereqs":["so_c_t2","so_c_g2"],"merge":true,"icon":"graphics/icons/skills/sensors.png"},
+        {"id":"so_c_gd3","name":"Campaign Logistics","desc":"Sustained operations without resupply.","lane":"merge:doctrine_logistics","tier":3,"slot":1,"cost":2,"prereqs":["so_c_g2","so_c_d2"],"merge":true,"icon":"graphics/icons/skills/fleet_logistics.png"},
+
+        {"id":"so_c_l4","name":"Best of the Best","desc":"Elite officers gain extra skill.","lane":"leadership","tier":4,"slot":0,"cost":2,"prereqs":["so_c_l3"],"icon":"graphics/icons/skills/best_of_the_best.png"},
+        {"id":"so_c_l4b","name":"Inspiring Presence","desc":"+20% fleet morale.","lane":"leadership","tier":4,"slot":1,"cost":2,"prereqs":["so_c_l3b"],"icon":"graphics/icons/skills/leadership.png"},
+        {"id":"so_c_l4c","name":"Admiralty","desc":"+3 max officers, +1 elite.","lane":"leadership","tier":4,"slot":2,"cost":2,"prereqs":["so_c_l3c"],"icon":"graphics/icons/skills/command_experience.png"},
+
+        {"id":"so_c_t4","name":"Total War","desc":"+20% damage, -10% defense.","lane":"tactics","tier":4,"slot":0,"cost":2,"prereqs":["so_c_t3"],"icon":"graphics/icons/skills/strike_commander.png"},
+        {"id":"so_c_t4b","name":"Deep Strike","desc":"Bypass enemy sensor net.","lane":"tactics","tier":4,"slot":1,"cost":2,"prereqs":["so_c_t3b"],"icon":"graphics/icons/skills/navigation.png"},
+        {"id":"so_c_t4c","name":"Overwhelming Force","desc":"+25% fleet size.","lane":"tactics","tier":4,"slot":2,"cost":2,"prereqs":["so_c_t3c"],"icon":"graphics/icons/skills/advanced_tactics.png"},
+
+        {"id":"so_c_g4","name":"Trade Hegemon","desc":"Control regional trade.","lane":"logistics","tier":4,"slot":0,"cost":2,"prereqs":["so_c_g3"],"icon":"graphics/icons/skills/industrial_planning.png"},
+        {"id":"so_c_g4b","name":"Mobile Command","desc":"Fleet operates without supply.","lane":"logistics","tier":4,"slot":1,"cost":2,"prereqs":["so_c_g3b"],"icon":"graphics/icons/skills/field_repairs.png"},
+        {"id":"so_c_g4c","name":"Derelict Empire","desc":"Field unlimited derelicts.","lane":"logistics","tier":4,"slot":2,"cost":2,"prereqs":["so_c_g3c"],"icon":"graphics/icons/skills/derelict_contingent.png"},
+
+        {"id":"so_c_d4","name":"Shock and Awe","desc":"+30% opening volley damage.","lane":"doctrine","tier":4,"slot":0,"cost":2,"prereqs":["so_c_d3"],"icon":"graphics/icons/skills/strike_commander.png"},
+        {"id":"so_c_d4b","name":"Immovable Line","desc":"+30% fleet armor in defensive stance.","lane":"doctrine","tier":4,"slot":1,"cost":2,"prereqs":["so_c_d3b"],"icon":"graphics/icons/skills/polarized_armor.png"},
+        {"id":"so_c_d4c","name":"Grand Maneuver","desc":"Fleet-wide flank bonus +25%.","lane":"doctrine","tier":4,"slot":2,"cost":2,"prereqs":["so_c_d3c"],"icon":"graphics/icons/skills/advanced_tactics.png"},
+
+        {"id":"so_c_lc","name":"Legendary Command","desc":"All officers start elite. Capstone.","lane":"leadership","tier":5,"slot":1,"cost":3,"prereqs":["so_c_l4b"],"capstone":true,"icon":"graphics/icons/skills/best_of_the_best.png"},
+        {"id":"so_c_tc","name":"Cybernetic Command","desc":"Neural-linked fleet coordination. Capstone.","lane":"tactics","tier":5,"slot":1,"cost":3,"prereqs":["so_c_t4b"],"capstone":true,"icon":"graphics/icons/skills/cybernetic_augmentation.png"},
+        {"id":"so_c_gc","name":"Logistical Supremacy","desc":"Zero supply use. Capstone.","lane":"logistics","tier":5,"slot":1,"cost":3,"prereqs":["so_c_g4b"],"capstone":true,"icon":"graphics/icons/skills/fleet_logistics.png"},
+        {"id":"so_c_dc","name":"Total Doctrine","desc":"Fleet adopts any posture at will. Capstone.","lane":"doctrine","tier":5,"slot":1,"cost":3,"prereqs":["so_c_d4b"],"capstone":true,"icon":"graphics/icons/skills/advanced_tactics.png"}
+    ],
+    "merges": []
 }

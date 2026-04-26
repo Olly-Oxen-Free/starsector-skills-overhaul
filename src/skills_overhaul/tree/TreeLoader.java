@@ -77,6 +77,7 @@ public final class TreeLoader {
                 Collections.unmodifiableList(parents),
                 o.optBoolean("capstone", false),
                 true, // isMerge
-                Collections.unmodifiableList(fx));
+                Collections.unmodifiableList(fx),
+                o.optString("icon", null));
     }
 }

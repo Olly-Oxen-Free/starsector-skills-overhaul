@@ -9,6 +9,7 @@ import skills_overhaul.tree.Node;
 import skills_overhaul.tree.PrereqValidator;
 import skills_overhaul.tree.TreeDef;
 import skills_overhaul.tree.TreeRegistry;
+import skills_overhaul.ui.SkillUISounds;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -27,11 +28,13 @@ public final class GameSpend {
         SpendService.Result r = SpendService.spend(m, tree, nodeId, n.getCost());
         if (!r.success) return false;
 
-        int totalMig = r.fromMigrationToPilot + r.fromMigrationToCommander + r.fromMigrationToAdmin;
+        int totalMig = r.fromMigrationToPilot + r.fromMigrationToCommander
+                     + r.fromMigrationToAdmin;
         RespecService.recordPurchase(m, nodeId, r.fromTreeLocked, r.fromFreeUni, totalMig);
 
         writeBack(mem, m, nodeId);
         NodeEffectApplier.apply(n);
+        SkillUISounds.playTierSkillSound(tree, n.getTier(), 1f);
         return true;
     }
 

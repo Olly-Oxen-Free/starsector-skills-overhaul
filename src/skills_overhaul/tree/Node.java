@@ -7,7 +7,7 @@ import org.json.JSONObject;
 import java.util.*;
 
 public final class Node {
-    private final String id, name, desc, lane;
+    private final String id, name, desc, lane, icon;
     private final int tier, slot, cost;
     private final List<String> prereqs;
     private final List<String> parentLanes;
@@ -16,19 +16,21 @@ public final class Node {
 
     public Node(String id, String name, String desc, String lane, int tier, int slot, int cost,
                 List<String> prereqs, List<String> parentLanes, boolean capstone, boolean merge,
-                List<JSONObject> effects) {
+                List<JSONObject> effects, String icon) {
         this.id = id; this.name = name; this.desc = desc;
         this.lane = lane; this.tier = tier; this.slot = slot; this.cost = cost;
         this.prereqs = prereqs;
         this.parentLanes = parentLanes;
         this.capstone = capstone; this.merge = merge;
         this.effects = effects;
+        this.icon = icon;
     }
 
     public String getId()          { return id; }
     public String getName()        { return name; }
     public String getDesc()        { return desc; }
     public String getLane()        { return lane; }
+    public String getIcon()        { return icon; }
     public int    getTier()        { return tier; }
     public int    getSlot()        { return slot; }
     public int    getCost()        { return cost; }
@@ -59,6 +61,7 @@ public final class Node {
                 Collections.emptyList(),
                 o.optBoolean("capstone", false),
                 o.optBoolean("merge", false),
-                Collections.unmodifiableList(fx));
+                Collections.unmodifiableList(fx),
+                o.optString("icon", null));
     }
 }

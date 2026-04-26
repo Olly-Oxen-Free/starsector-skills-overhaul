@@ -10,7 +10,8 @@
 - GL_LINES prereq edge drawing with state colors (teal/amber/gray/stippled-green).
 - Schema: added `slot` field + `parentLanes` for merge nodes.
 - Tests: NodeSlotTest, MergeNodeTest, PendingPurchaseTopoSortTest added.
-  PrereqValidatorTest + TreeLoaderRealJSONTest extended.
+PrereqValidatorTest + TreeLoaderRealJSONTest extended.
 
 ## 0.1.0 (unreleased)
+
 - v1: three-tree skill overhaul (Pilot/Commander/Admin), activity-gated XP, custom UI, save-compat migration.

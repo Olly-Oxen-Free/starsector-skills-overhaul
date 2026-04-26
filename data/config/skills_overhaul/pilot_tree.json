@@ -1,214 +1,84 @@
 {
     "tree": "pilot",
-    "_review": "DRAFT v1 — all nodes need balance review and effect-handler wiring (Phase 10.4). Numbers are first-pass estimates, not tuned.",
-    "lanes": ["gunner", "ace", "defender"],
+    "lanes": ["gunnery", "maneuvering", "defense", "systems"],
     "nodes": [
-        {
-            "id": "so_pilot_root_1",
-            "name": "Basic Piloting",
-            "desc": "+5% maneuverability, piloted ship.",
-            "lane": "root",
-            "tier": 0,
-            "cost": 1,
-            "prereqs": [],
-            "effects": [
-                {"type": "piloted_maneuverability", "amount": 0.05}
-            ],
-            "_review": "Baseline. Works as gate to all three lanes."
-        },
-        {
-            "id": "so_pilot_root_2",
-            "name": "Combat Reflexes",
-            "desc": "+10% weapon autofire precision, piloted ship.",
-            "lane": "root",
-            "tier": 0,
-            "cost": 1,
-            "prereqs": [],
-            "effects": [
-                {"type": "piloted_autofire_precision", "amount": 0.10}
-            ],
-            "_review": "autofire_precision handler not yet written — NoOp warns at purchase. Wire in 10.4."
-        },
+        {"id":"so_p_g0","name":"Basic Gunnery","desc":"Fundamentals of ship weapons.","lane":"gunnery","tier":0,"slot":0,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/weapon_drills.png"},
+        {"id":"so_p_m0","name":"Basic Maneuvering","desc":"Fundamentals of ship control.","lane":"maneuvering","tier":0,"slot":1,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/helmsmanship.png"},
+        {"id":"so_p_d0","name":"Basic Defense","desc":"Fundamentals of damage mitigation.","lane":"defense","tier":0,"slot":2,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/damage_control.png"},
+        {"id":"so_p_s0","name":"Systems Fundamentals","desc":"Fundamentals of active ship systems.","lane":"systems","tier":0,"slot":3,"cost":1,"prereqs":[],"icon":"graphics/icons/skills/systems_expertise.png"},
 
-        {
-            "id": "so_pilot_gunner_1",
-            "name": "Weapon Drills",
-            "desc": "+5% ballistic damage, piloted ship.",
-            "lane": "gunner",
-            "tier": 1,
-            "cost": 1,
-            "prereqs": ["so_pilot_root_1"],
-            "effects": [
-                {"type": "piloted_weapon_damage", "filter": "BALLISTIC", "amount": 0.05}
-            ],
-            "_review": "Ballistic-only on purpose (gunner lane = projectiles). Energy in ace lane."
-        },
-        {
-            "id": "so_pilot_gunner_3",
-            "name": "Target Analysis",
-            "desc": "+10% weapon range, piloted ship.",
-            "lane": "gunner",
-            "tier": 3,
-            "cost": 1,
-            "prereqs": ["so_pilot_gunner_1"],
-            "effects": [
-                {"type": "piloted_weapon_range", "amount": 0.10}
-            ],
-            "_review": "Overlaps with vanilla Gunnery Implants range bonus — size carefully. Consider cap."
-        },
-        {
-            "id": "so_pilot_gunner_5",
-            "name": "Overwhelming Fire",
-            "desc": "+15% damage vs. shields, piloted ship.",
-            "lane": "gunner",
-            "tier": 5,
-            "cost": 2,
-            "prereqs": ["so_pilot_gunner_3"],
-            "effects": [
-                {"type": "piloted_shield_damage", "amount": 0.15}
-            ],
-            "_review": "Shield-bypass alternative in defender lane. Pick one or split further."
-        },
-        {
-            "id": "so_pilot_gunner_capstone",
-            "name": "Weapon Apotheosis",
-            "desc": "Piloted ship: +25% damage, +15% range, all weapon types. (Capstone)",
-            "lane": "gunner",
-            "tier": 9,
-            "cost": 2,
-            "prereqs": ["so_pilot_gunner_5"],
-            "capstone": true,
-            "effects": [
-                {"type": "piloted_weapon_damage", "filter": "ALL", "amount": 0.25},
-                {"type": "piloted_weapon_range", "amount": 0.15}
-            ],
-            "_review": "Capstone numbers — 25% dmg + 15% range feels strong vs. vanilla Ordnance Expertise. Consider 20/10."
-        },
+        {"id":"so_p_g1","name":"Ballistic Focus","desc":"+5% ballistic damage.","lane":"gunnery","tier":1,"slot":0,"cost":1,"prereqs":["so_p_g0"],"icon":"graphics/icons/skills/ordnance_expert.png"},
+        {"id":"so_p_g1b","name":"Target Practice","desc":"+10% weapon accuracy.","lane":"gunnery","tier":1,"slot":1,"cost":1,"prereqs":["so_p_g0"],"icon":"graphics/icons/skills/target_analysis.png"},
+        {"id":"so_p_g1c","name":"Rapid Fire","desc":"+10% rate of fire.","lane":"gunnery","tier":1,"slot":2,"cost":1,"prereqs":["so_p_g0"],"icon":"graphics/icons/skills/gunnery_implants.png"},
 
-        {
-            "id": "so_pilot_ace_1",
-            "name": "Throttle Mastery",
-            "desc": "+10% top speed, piloted ship.",
-            "lane": "ace",
-            "tier": 1,
-            "cost": 1,
-            "prereqs": ["so_pilot_root_1"],
-            "effects": [
-                {"type": "piloted_top_speed", "amount": 0.10}
-            ],
-            "_review": "top_speed stacks multiplicatively with safety-override type effects — verify in playtest."
-        },
-        {
-            "id": "so_pilot_ace_3",
-            "name": "Dancing Hull",
-            "desc": "+15% turn rate and sideways acceleration, piloted ship.",
-            "lane": "ace",
-            "tier": 3,
-            "cost": 1,
-            "prereqs": ["so_pilot_ace_1"],
-            "effects": [
-                {"type": "piloted_maneuverability", "amount": 0.15}
-            ],
-            "_review": "Stacks with root_1 for +20% total maneuverability. Consider diminishing returns."
-        },
-        {
-            "id": "so_pilot_ace_5",
-            "name": "Flux Conditioning",
-            "desc": "+20% flux dissipation, piloted ship.",
-            "lane": "ace",
-            "tier": 5,
-            "cost": 2,
-            "prereqs": ["so_pilot_ace_3"],
-            "effects": [
-                {"type": "piloted_flux_dissipation", "amount": 0.20}
-            ],
-            "_review": "Large number — vanilla Helmsmanship gives 15%. Maybe reduce to 0.15."
-        },
-        {
-            "id": "so_pilot_ace_capstone",
-            "name": "Impossible Geometries",
-            "desc": "Piloted ship: zero-flux boost also applies with guns firing; +50% zero-flux threshold. (Capstone)",
-            "lane": "ace",
-            "tier": 9,
-            "cost": 2,
-            "prereqs": ["so_pilot_ace_5"],
-            "capstone": true,
-            "effects": [
-                {"type": "piloted_zeroflux_while_firing", "amount": 1.0},
-                {"type": "piloted_zeroflux_threshold", "amount": 0.50}
-            ],
-            "_review": "Signature capstone — behavior change, not just numbers. Handler is complex combat-plugin work."
-        },
+        {"id":"so_p_m1","name":"Evasive Action","desc":"+10% top speed.","lane":"maneuvering","tier":1,"slot":0,"cost":1,"prereqs":["so_p_m0"],"icon":"graphics/icons/skills/evasive_maneuvering.png"},
+        {"id":"so_p_m1b","name":"Throttle Control","desc":"+15% acceleration.","lane":"maneuvering","tier":1,"slot":1,"cost":1,"prereqs":["so_p_m0"],"icon":"graphics/icons/skills/systems_expertise.png"},
+        {"id":"so_p_m1c","name":"Drift Mastery","desc":"+20% turn rate.","lane":"maneuvering","tier":1,"slot":2,"cost":1,"prereqs":["so_p_m0"],"icon":"graphics/icons/skills/flux_dynamics.png"},
 
-        {
-            "id": "so_pilot_defender_1",
-            "name": "Damage Control",
-            "desc": "+15% armor, piloted ship.",
-            "lane": "defender",
-            "tier": 1,
-            "cost": 1,
-            "prereqs": ["so_pilot_root_2"],
-            "effects": [
-                {"type": "piloted_armor_bonus", "amount": 0.15}
-            ],
-            "_review": "Armor bonus as % of base — verify that's what the stat expects (may be flat add)."
-        },
-        {
-            "id": "so_pilot_defender_3",
-            "name": "Shield Modulation",
-            "desc": "-20% shield flux per damage taken, piloted ship.",
-            "lane": "defender",
-            "tier": 3,
-            "cost": 1,
-            "prereqs": ["so_pilot_defender_1"],
-            "effects": [
-                {"type": "piloted_shield_efficiency", "amount": -0.20}
-            ],
-            "_review": "Sign convention — negative = less flux absorbed per damage. Handler must mirror vanilla Shield Modulation semantics."
-        },
-        {
-            "id": "so_pilot_defender_5",
-            "name": "Hardened Plating",
-            "desc": "+15% hull integrity, piloted ship.",
-            "lane": "defender",
-            "tier": 5,
-            "cost": 2,
-            "prereqs": ["so_pilot_defender_3"],
-            "effects": [
-                {"type": "piloted_hull_bonus", "amount": 0.15}
-            ],
-            "_review": "Overlaps with vanilla Polarized Armor; keep smaller than armor_bonus."
-        },
-        {
-            "id": "so_pilot_defender_capstone",
-            "name": "Ironhide",
-            "desc": "Piloted ship: 25% damage taken reduction below 50% hull. (Capstone)",
-            "lane": "defender",
-            "tier": 9,
-            "cost": 2,
-            "prereqs": ["so_pilot_defender_5"],
-            "capstone": true,
-            "effects": [
-                {"type": "piloted_damage_reduction_low_hull", "threshold": 0.50, "amount": 0.25}
-            ],
-            "_review": "Conditional damage reduction — vanilla Polarized Armor pattern. Handler needs hull-% polling in combat plugin."
-        }
+        {"id":"so_p_d1","name":"Shield Basics","desc":"-10% shield flux cost.","lane":"defense","tier":1,"slot":0,"cost":1,"prereqs":["so_p_d0"],"icon":"graphics/icons/skills/field_modulation.png"},
+        {"id":"so_p_d1b","name":"Armor Familiarity","desc":"+10% armor effectiveness.","lane":"defense","tier":1,"slot":1,"cost":1,"prereqs":["so_p_d0"],"icon":"graphics/icons/skills/polarized_armor.png"},
+        {"id":"so_p_d1c","name":"Damage Control","desc":"-15% weapon and EMP damage taken.","lane":"defense","tier":1,"slot":2,"cost":1,"prereqs":["so_p_d0"],"icon":"graphics/icons/skills/impact_mitigation.png"},
+
+        {"id":"so_p_s1","name":"Reactive Systems","desc":"-10% system cooldown.","lane":"systems","tier":1,"slot":0,"cost":1,"prereqs":["so_p_s0"],"icon":"graphics/icons/skills/systems_expertise.png"},
+        {"id":"so_p_s1b","name":"Charged Capacitors","desc":"+1 system use per battle.","lane":"systems","tier":1,"slot":1,"cost":1,"prereqs":["so_p_s0"],"icon":"graphics/icons/skills/flux_dynamics.png"},
+        {"id":"so_p_s1c","name":"Neural Interface","desc":"+10% system activation speed.","lane":"systems","tier":1,"slot":2,"cost":1,"prereqs":["so_p_s0"],"icon":"graphics/icons/skills/cybernetic_augmentation.png"},
+
+        {"id":"so_p_g2","name":"Weapon Range","desc":"+10% weapon range.","lane":"gunnery","tier":2,"slot":0,"cost":1,"prereqs":["so_p_g1"],"icon":"graphics/icons/skills/ranged_specialization.png"},
+        {"id":"so_p_g2b","name":"Overload Mastery","desc":"+20% overload reduction.","lane":"gunnery","tier":2,"slot":1,"cost":1,"prereqs":["so_p_g1b"],"icon":"graphics/icons/skills/combat_endurance.png"},
+        {"id":"so_p_g2c","name":"Point Defense","desc":"+25% point defense damage.","lane":"gunnery","tier":2,"slot":2,"cost":1,"prereqs":["so_p_g1c"],"icon":"graphics/icons/skills/missile_specialization.png"},
+
+        {"id":"so_p_m2","name":"Zero-Flux Boost","desc":"Maintain boost while firing.","lane":"maneuvering","tier":2,"slot":0,"cost":1,"prereqs":["so_p_m1"],"icon":"graphics/icons/skills/helmsmanship.png"},
+        {"id":"so_p_m2b","name":"Phase Affinity","desc":"-20% phase flux cost.","lane":"maneuvering","tier":2,"slot":1,"cost":1,"prereqs":["so_p_m1b"],"icon":"graphics/icons/skills/phase_mastery.png"},
+        {"id":"so_p_m2c","name":"Systems Expert","desc":"+15% system recharge rate.","lane":"maneuvering","tier":2,"slot":2,"cost":1,"prereqs":["so_p_m1c"],"icon":"graphics/icons/skills/systems_expertise.png"},
+
+        {"id":"so_p_d2","name":"Hardened Shields","desc":"+20% shield arc.","lane":"defense","tier":2,"slot":0,"cost":1,"prereqs":["so_p_d1"],"icon":"graphics/icons/skills/field_modulation.png"},
+        {"id":"so_p_d2b","name":"Hull Restoration","desc":"+15% hull integrity.","lane":"defense","tier":2,"slot":1,"cost":1,"prereqs":["so_p_d1b"],"icon":"graphics/icons/skills/damage_control2.png"},
+        {"id":"so_p_d2c","name":"Emergency Repairs","desc":"Repair at 50% rate in combat.","lane":"defense","tier":2,"slot":2,"cost":1,"prereqs":["so_p_d1c"],"icon":"graphics/icons/skills/reliability_engineering.png"},
+
+        {"id":"so_p_s2","name":"Rapid Charge","desc":"-20% system cooldown.","lane":"systems","tier":2,"slot":0,"cost":1,"prereqs":["so_p_s1"],"icon":"graphics/icons/skills/flux_regulation.png"},
+        {"id":"so_p_s2b","name":"Overdrive","desc":"+2 system uses per battle.","lane":"systems","tier":2,"slot":1,"cost":1,"prereqs":["so_p_s1b"],"icon":"graphics/icons/skills/flux_dynamics.png"},
+        {"id":"so_p_s2c","name":"Linked Reflexes","desc":"+20% system activation speed.","lane":"systems","tier":2,"slot":2,"cost":1,"prereqs":["so_p_s1c"],"icon":"graphics/icons/skills/cybernetic_augmentation.png"},
+
+        {"id":"so_p_g3","name":"Ballistic Mastery","desc":"+15% ballistic damage.","lane":"gunnery","tier":3,"slot":0,"cost":2,"prereqs":["so_p_g2"],"icon":"graphics/icons/skills/ordnance_expert.png"},
+        {"id":"so_p_g3b","name":"Energy Focus","desc":"+15% energy damage.","lane":"gunnery","tier":3,"slot":1,"cost":2,"prereqs":["so_p_g2b"],"icon":"graphics/icons/skills/flux_dynamics.png"},
+        {"id":"so_p_g3c","name":"Missile Swarm","desc":"+1 missile ammo, +20% speed.","lane":"gunnery","tier":3,"slot":2,"cost":2,"prereqs":["so_p_g2c"],"icon":"graphics/icons/skills/missile_specialization.png"},
+
+        {"id":"so_p_m3","name":"Elite Piloting","desc":"+20% maneuverability.","lane":"maneuvering","tier":3,"slot":0,"cost":2,"prereqs":["so_p_m2"],"icon":"graphics/icons/skills/helmsmanship.png"},
+        {"id":"so_p_m3b","name":"Phase Mastery","desc":"Phase cloak lasts 25% longer.","lane":"maneuvering","tier":3,"slot":1,"cost":2,"prereqs":["so_p_m2b"],"icon":"graphics/icons/skills/phase_mastery.png"},
+        {"id":"so_p_m3c","name":"Cybernetics","desc":"+1 active system charge.","lane":"maneuvering","tier":3,"slot":2,"cost":2,"prereqs":["so_p_m2c"],"icon":"graphics/icons/skills/cybernetic_augmentation.png"},
+
+        {"id":"so_p_d3","name":"Shield Mastery","desc":"-20% shield upkeep.","lane":"defense","tier":3,"slot":0,"cost":2,"prereqs":["so_p_d2"],"icon":"graphics/icons/skills/field_modulation.png"},
+        {"id":"so_p_d3b","name":"Armor Mastery","desc":"+20% armor, -10% damage.","lane":"defense","tier":3,"slot":1,"cost":2,"prereqs":["so_p_d2b"],"icon":"graphics/icons/skills/polarized_armor.png"},
+        {"id":"so_p_d3c","name":"System Hardening","desc":"+25% EMP resistance.","lane":"defense","tier":3,"slot":2,"cost":2,"prereqs":["so_p_d2c"],"icon":"graphics/icons/skills/reliability_engineering.png"},
+
+        {"id":"so_p_s3","name":"Subsystem Mastery","desc":"-30% system cooldown.","lane":"systems","tier":3,"slot":0,"cost":2,"prereqs":["so_p_s2"],"icon":"graphics/icons/skills/systems_expertise.png"},
+        {"id":"so_p_s3b","name":"Power Cycling","desc":"+3 system uses per battle.","lane":"systems","tier":3,"slot":1,"cost":2,"prereqs":["so_p_s2b"],"icon":"graphics/icons/skills/flux_regulation.png"},
+        {"id":"so_p_s3c","name":"Hypercognition","desc":"+30% system activation speed.","lane":"systems","tier":3,"slot":2,"cost":2,"prereqs":["so_p_s2c"],"icon":"graphics/icons/skills/hypercognition.png"},
+
+        {"id":"so_p_gm3","name":"Gunner-Ace","desc":"+10% damage while moving.","lane":"merge:gunnery_maneuvering","tier":3,"slot":1,"cost":2,"prereqs":["so_p_g2","so_p_m2"],"merge":true,"icon":"graphics/icons/skills/combat_endurance2.png"},
+        {"id":"so_p_md3","name":"Evasive Shielding","desc":"+15% shield efficiency while moving.","lane":"merge:defense_maneuvering","tier":3,"slot":1,"cost":2,"prereqs":["so_p_m2","so_p_d2"],"merge":true,"icon":"graphics/icons/skills/impact_mitigation.png"},
+        {"id":"so_p_ds3","name":"Fortress System","desc":"Shield system triggers instantly.","lane":"merge:defense_systems","tier":3,"slot":1,"cost":2,"prereqs":["so_p_d2","so_p_s2"],"merge":true,"icon":"graphics/icons/skills/field_modulation.png"},
+
+        {"id":"so_p_g4","name":"Overwhelming Fire","desc":"+20% damage vs shields.","lane":"gunnery","tier":4,"slot":0,"cost":2,"prereqs":["so_p_g3"],"icon":"graphics/icons/skills/target_analysis.png"},
+        {"id":"so_p_g4b","name":"Weapon Specialist","desc":"+25% damage for primary weapon group.","lane":"gunnery","tier":4,"slot":1,"cost":2,"prereqs":["so_p_g3b"],"icon":"graphics/icons/skills/ordnance_expert.png"},
+        {"id":"so_p_g4c","name":"Missile Specialist","desc":"+30% missile damage, +50% ammo.","lane":"gunnery","tier":4,"slot":2,"cost":2,"prereqs":["so_p_g3c"],"icon":"graphics/icons/skills/missile_specialization.png"},
+
+        {"id":"so_p_m4","name":"Ace Pilot","desc":"+25% fighter effectiveness.","lane":"maneuvering","tier":4,"slot":0,"cost":2,"prereqs":["so_p_m3"],"icon":"graphics/icons/skills/fighter_doctrine.png"},
+        {"id":"so_p_m4b","name":"Elite Systems","desc":"System cooldown -30%.","lane":"maneuvering","tier":4,"slot":1,"cost":2,"prereqs":["so_p_m3b"],"icon":"graphics/icons/skills/systems_expertise.png"},
+        {"id":"so_p_m4c","name":"Phase Lord","desc":"Phase flux -40%.","lane":"maneuvering","tier":4,"slot":2,"cost":2,"prereqs":["so_p_m3c"],"icon":"graphics/icons/skills/phase_mastery.png"},
+
+        {"id":"so_p_d4","name":"Fortress Shield","desc":"Shield arc +45 degrees.","lane":"defense","tier":4,"slot":0,"cost":2,"prereqs":["so_p_d3"],"icon":"graphics/icons/skills/field_modulation.png"},
+        {"id":"so_p_d4b","name":"Ironclad","desc":"+25% armor, hull repair in combat.","lane":"defense","tier":4,"slot":1,"cost":2,"prereqs":["so_p_d3b"],"icon":"graphics/icons/skills/polarized_armor.png"},
+        {"id":"so_p_d4c","name":"Indestructible","desc":"+30% hull, immune to EMP.","lane":"defense","tier":4,"slot":2,"cost":2,"prereqs":["so_p_d3c"],"icon":"graphics/icons/skills/damage_control2.png"},
+
+        {"id":"so_p_s4","name":"Zero-Delay Systems","desc":"-40% cooldown on all systems.","lane":"systems","tier":4,"slot":0,"cost":2,"prereqs":["so_p_s3"],"icon":"graphics/icons/skills/systems_expertise.png"},
+        {"id":"so_p_s4b","name":"Infinite Charges","desc":"+5 system uses per battle.","lane":"systems","tier":4,"slot":1,"cost":2,"prereqs":["so_p_s3b"],"icon":"graphics/icons/skills/flux_dynamics.png"},
+        {"id":"so_p_s4c","name":"Cybernetic Uplink","desc":"Systems auto-trigger at optimal moments.","lane":"systems","tier":4,"slot":2,"cost":2,"prereqs":["so_p_s3c"],"icon":"graphics/icons/skills/cybernetic_augmentation.png"},
+
+        {"id":"so_p_gc","name":"Weapon Apotheosis","desc":"+30% damage, +20% range. Capstone.","lane":"gunnery","tier":5,"slot":1,"cost":3,"prereqs":["so_p_g4b"],"capstone":true,"icon":"graphics/icons/skills/combat_endurance3.png"},
+        {"id":"so_p_mc","name":"Impossible Geometry","desc":"Zero-flux boost, +50% speed. Capstone.","lane":"maneuvering","tier":5,"slot":1,"cost":3,"prereqs":["so_p_m4b"],"capstone":true,"icon":"graphics/icons/skills/helmsmanship.png"},
+        {"id":"so_p_dc","name":"Ironhide","desc":"50% DR below 30% hull. Capstone.","lane":"defense","tier":5,"slot":1,"cost":3,"prereqs":["so_p_d4b"],"capstone":true,"icon":"graphics/icons/skills/damage_control2.png"},
+        {"id":"so_p_sc","name":"Overmind","desc":"All systems never cool down. Capstone.","lane":"systems","tier":5,"slot":1,"cost":3,"prereqs":["so_p_s4b"],"capstone":true,"icon":"graphics/icons/skills/hypercognition.png"}
     ],
-    "merges": [
-        {
-            "id": "so_pilot_merge_elite_pilot",
-            "name": "Elite Pilot",
-            "desc": "Merge of Ace + Gunner lanes: adds +10% weapon damage AND +10% top speed.",
-            "tier": 9,
-            "slot": 1,
-            "cost": 2,
-            "parentLanes": ["gunner", "ace"],
-            "prereqs": ["so_pilot_gunner_capstone", "so_pilot_ace_capstone"],
-            "effects": [
-                {"type": "piloted_weapon_damage", "filter": "ALL", "amount": 0.1},
-                {"type": "piloted_top_speed", "amount": 0.1}
-            ],
-            "_review": "Post-capstone merge. parentLanes drives hybrid-column placement; prereqs enforce both capstones owned."
-        }
-    ]
+    "merges": []
 }

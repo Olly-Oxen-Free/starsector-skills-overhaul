@@ -1,0 +1,98 @@
+Compiled from "CharacterTabReplacer.java"
+public final class skills_overhaul.ui.CharacterTabReplacer implements com.fs.starfarer.api.EveryFrameScript {
+  public skills_overhaul.ui.CharacterTabReplacer();
+    Code:
+       0: aload_0
+       1: invokespecial #1                  // Method java/lang/Object."<init>":()V
+       4: aload_0
+       5: iconst_0
+       6: putfield      #7                  // Field installed:Z
+       9: aload_0
+      10: iconst_0
+      11: putfield      #13                 // Field reflectionWarned:Z
+      14: return
+
+  public boolean isDone();
+    Code:
+       0: iconst_0
+       1: ireturn
+
+  public boolean runWhilePaused();
+    Code:
+       0: iconst_1
+       1: ireturn
+
+  public void advance(float);
+    Code:
+       0: ldc           #8                  // class skills_overhaul/ui/CharacterTabReplacer
+       2: invokestatic  #16                 // Method com/fs/starfarer/api/Global.getLogger:(Ljava/lang/Class;)Lorg/apache/log4j/Logger;
+       5: new           #22                 // class java/lang/StringBuilder
+       8: dup
+       9: invokespecial #24                 // Method java/lang/StringBuilder."<init>":()V
+      12: ldc           #25                 // String [SkillsOverhaul/UI] advance: called, paused=
+      14: invokevirtual #27                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+      17: invokestatic  #31                 // Method com/fs/starfarer/api/Global.getSector:()Lcom/fs/starfarer/api/campaign/SectorAPI;
+      20: ifnull        38
+      23: invokestatic  #31                 // Method com/fs/starfarer/api/Global.getSector:()Lcom/fs/starfarer/api/campaign/SectorAPI;
+      26: invokeinterface #35,  1           // InterfaceMethod com/fs/starfarer/api/campaign/SectorAPI.isPaused:()Z
+      31: ifeq          38
+      34: iconst_1
+      35: goto          39
+      38: iconst_0
+      39: invokevirtual #41                 // Method java/lang/StringBuilder.append:(Z)Ljava/lang/StringBuilder;
+      42: invokevirtual #44                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+      45: invokevirtual #48                 // Method org/apache/log4j/Logger.info:(Ljava/lang/Object;)V
+      48: invokestatic  #31                 // Method com/fs/starfarer/api/Global.getSector:()Lcom/fs/starfarer/api/campaign/SectorAPI;
+      51: ifnonnull     55
+      54: return
+      55: invokestatic  #31                 // Method com/fs/starfarer/api/Global.getSector:()Lcom/fs/starfarer/api/campaign/SectorAPI;
+      58: invokeinterface #35,  1           // InterfaceMethod com/fs/starfarer/api/campaign/SectorAPI.isPaused:()Z
+      63: ifne          71
+      66: aload_0
+      67: invokespecial #54                 // Method maybeUninstall:()V
+      70: return
+      71: invokestatic  #31                 // Method com/fs/starfarer/api/Global.getSector:()Lcom/fs/starfarer/api/campaign/SectorAPI;
+      74: invokeinterface #57,  1           // InterfaceMethod com/fs/starfarer/api/campaign/SectorAPI.getCampaignUI:()Lcom/fs/starfarer/api/campaign/CampaignUIAPI;
+      79: invokeinterface #61,  1           // InterfaceMethod com/fs/starfarer/api/campaign/CampaignUIAPI.getCurrentCoreTab:()Lcom/fs/starfarer/api/campaign/CoreUITabId;
+      84: astore_2
+      85: ldc           #8                  // class skills_overhaul/ui/CharacterTabReplacer
+      87: invokestatic  #16                 // Method com/fs/starfarer/api/Global.getLogger:(Ljava/lang/Class;)Lorg/apache/log4j/Logger;
+      90: new           #22                 // class java/lang/StringBuilder
+      93: dup
+      94: invokespecial #24                 // Method java/lang/StringBuilder."<init>":()V
+      97: ldc           #67                 // String [SkillsOverhaul/UI] advance: current tab=
+      99: invokevirtual #27                 // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+     102: aload_2
+     103: invokevirtual #69                 // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+     106: invokevirtual #44                 // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+     109: invokevirtual #48                 // Method org/apache/log4j/Logger.info:(Ljava/lang/Object;)V
+     112: aload_2
+     113: getstatic     #72                 // Field com/fs/starfarer/api/campaign/CoreUITabId.CHARACTER:Lcom/fs/starfarer/api/campaign/CoreUITabId;
+     116: if_acmpeq     124
+     119: aload_0
+     120: invokespecial #54                 // Method maybeUninstall:()V
+     123: return
+     124: aload_0
+     125: getfield      #7                  // Field installed:Z
+     128: ifeq          132
+     131: return
+     132: aload_0
+     133: invokespecial #78                 // Method install:()V
+     136: goto          163
+     139: astore_3
+     140: aload_0
+     141: getfield      #13                 // Field reflectionWarned:Z
+     144: ifne          163
+     147: ldc           #8                  // class skills_overhaul/ui/CharacterTabReplacer
+     149: invokestatic  #16                 // Method com/fs/starfarer/api/Global.getLogger:(Ljava/lang/Class;)Lorg/apache/log4j/Logger;
+     152: ldc           #83                 // String [SkillsOverhaul/UI] reflection failed, leaving vanilla char tab intact
+     154: aload_3
+     155: invokevirtual #85                 // Method org/apache/log4j/Logger.warn:(Ljava/lang/Object;Ljava/lang/Throwable;)V
+     158: aload_0
+     159: iconst_1
+     160: putfield      #13                 // Field reflectionWarned:Z
+     163: return
+    Exception table:
+       from    to  target type
+         132   136   139   Class java/lang/Throwable
+}
