@@ -1,3 +1,5 @@
 name,id,type,tags,activationDays,activationCooldown,durationDays,deactivationDays,deactivationCooldown,unlockedAtStart,defaultForAIFleet,musicSuppression,uiOn,uiOff,uiLoop,worldOn,worldOff,worldLoop,icon,plugin,ai,desc,sortOrder
 Underground Intel,skills_overhaul_underground_intel,TOGGLE,,,,,,,TRUE,FALSE,,ui_underground_intel_on,ui_underground_intel_off,,,,graphics/icons/abilities/scrambled_signal.png,skills_overhaul.corsair.UndergroundIntelAbility,,Query the Underground for a profitable mark within 10 LY.,200
 Letter of Marque,skills_overhaul_letter_of_marque,TOGGLE,,,,,,,FALSE,FALSE,,,,,,,graphics/icons/abilities/transverse_jump.png,skills_overhaul.corsair.LetterOfMarqueAbility,,Spend supply buffer to commission a privateer fleet.,210
+Craft Supplies,skills_overhaul_craft_supplies,TOGGLE,,,,,,,TRUE,FALSE,,,,,,,,graphics/icons/abilities/scavenge.png,skills_overhaul.commandant.CraftSuppliesAbility,,Convert buffer/fleet supplies into fresh supplies.,220
+Craft Fuel,skills_overhaul_craft_fuel,TOGGLE,,,,,,,TRUE,FALSE,,,,,,,,graphics/icons/abilities/distress_call.png,skills_overhaul.commandant.CraftFuelAbility,,Convert buffer/fleet supplies into fuel.,221
