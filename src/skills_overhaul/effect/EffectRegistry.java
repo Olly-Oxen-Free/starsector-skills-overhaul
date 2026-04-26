@@ -23,6 +23,8 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.corsair.BountyBoardHandler());
         handlers.put("corsair_dmod_dp",
                 new skills_overhaul.effect.handlers.corsair.DModDpScalingHandler());
+        handlers.put("corsair_cap_mult",
+                new skills_overhaul.effect.handlers.corsair.CapMultiplierHandler());
     }
 
     public static EffectHandler get(String type) {
