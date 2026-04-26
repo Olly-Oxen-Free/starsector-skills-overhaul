@@ -11,6 +11,7 @@ public final class SkillMemory {
     public static String migUniKey(Tree t)   { return "$skills.points.universal_migrated_" + t.key; }
     public static String purchasedKey(String nodeId) { return "$skills.purchased." + nodeId; }
     public static String respecUsedKey(Tree t) { return "$skills.respec_used." + t.key; }
+    public static String supplyBufferCurrentKey() { return "$skills.supplybuffer.current"; }
     public static final String MIGRATED_KEY = "$skills_overhaul.migrated";
 
     // Testable Map methods
@@ -38,6 +39,14 @@ public final class SkillMemory {
     }
     public static void setMigrated(Map<String,Object> m, boolean v) { m.put(MIGRATED_KEY, v); }
 
+    public static float getSupplyBuffer(Map<String,Object> m) {
+        Object v = m.get(supplyBufferCurrentKey());
+        return v == null ? 0f : ((Number) v).floatValue();
+    }
+    public static void setSupplyBuffer(Map<String,Object> m, float v) {
+        m.put(supplyBufferCurrentKey(), v);
+    }
+
     // Game-API wrappers
     public static float getXP(MemoryAPI mem, Tree t)          { return mem.getFloat(xpKey(t)); }
     public static void  addXP(MemoryAPI mem, Tree t, float x) { mem.set(xpKey(t), getXP(mem, t) + x); }
@@ -47,4 +56,6 @@ public final class SkillMemory {
     public static void  addPoints(MemoryAPI mem, Tree t, int n) { mem.set(pointsKey(t), (float)(getPoints(mem,t)+n)); }
     public static boolean isMigrated(MemoryAPI mem)           { return mem.getBoolean(MIGRATED_KEY); }
     public static void  setMigrated(MemoryAPI mem, boolean v) { mem.set(MIGRATED_KEY, v); }
+    public static float getSupplyBuffer(MemoryAPI mem)        { return mem.getFloat(supplyBufferCurrentKey()); }
+    public static void  setSupplyBuffer(MemoryAPI mem, float v) { mem.set(supplyBufferCurrentKey(), v); }
 }
