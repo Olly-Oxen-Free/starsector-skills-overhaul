@@ -47,6 +47,21 @@ public final class SkillMemory {
         m.put(supplyBufferCurrentKey(), v);
     }
 
+    public static String activeBasicsKey() { return "$skills.activeBasics"; }
+
+    @SuppressWarnings("unchecked")
+    public static java.util.List<String> getActiveBasics(Map<String,Object> m) {
+        Object v = m.get(activeBasicsKey());
+        if (v instanceof java.util.List) return (java.util.List<String>) v;
+        java.util.List<String> empty = new java.util.ArrayList<>();
+        m.put(activeBasicsKey(), empty);
+        return empty;
+    }
+
+    public static void setActiveBasics(Map<String,Object> m, java.util.List<String> ids) {
+        m.put(activeBasicsKey(), new java.util.ArrayList<>(ids));
+    }
+
     // Game-API wrappers
     public static float getXP(MemoryAPI mem, Tree t)          { return mem.getFloat(xpKey(t)); }
     public static void  addXP(MemoryAPI mem, Tree t, float x) { mem.set(xpKey(t), getXP(mem, t) + x); }
