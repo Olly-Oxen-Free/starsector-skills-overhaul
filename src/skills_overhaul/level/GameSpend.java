@@ -2,6 +2,7 @@ package skills_overhaul.level;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import skills_overhaul.basics.ActiveLaneService;
 import skills_overhaul.effect.NodeEffectApplier;
 import skills_overhaul.state.SkillMemory;
 import skills_overhaul.state.Tree;
@@ -34,6 +35,9 @@ public final class GameSpend {
         RespecService.recordPurchase(m, nodeId, r.fromTreeLocked, r.fromFreeUni, totalMig);
 
         writeBack(mem, m, nodeId);
+        if (n.getY() == 0) {
+            ActiveLaneService.onPurchased(mem, nodeId);
+        }
         NodeEffectApplier.apply(n);
         SkillUISounds.playTierSkillSound(tree, n.getTier(), 1f);
         return true;

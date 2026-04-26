@@ -89,5 +89,30 @@ public final class ActiveLaneService {
         return new ArrayList<>();
     }
 
+    @SuppressWarnings("unchecked")
+    public static void onPurchased(MemoryAPI mem, String nodeId) {
+        List<String> cur = readList(mem);
+        if (cur.contains(nodeId)) return;
+        if (cur.size() < MAX_ACTIVE) {
+            cur.add(nodeId);
+            mem.set(SkillMemory.activeBasicsKey(), cur);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public static void onUnpurchased(MemoryAPI mem, String nodeId) {
+        List<String> cur = readList(mem);
+        if (cur.remove(nodeId)) {
+            mem.set(SkillMemory.activeBasicsKey(), cur);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> readList(MemoryAPI mem) {
+        Object v = mem.get(SkillMemory.activeBasicsKey());
+        if (v instanceof List) return new ArrayList<>((List<String>) v);
+        return new ArrayList<>();
+    }
+
     private ActiveLaneService() {}
 }

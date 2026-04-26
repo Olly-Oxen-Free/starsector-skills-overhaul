@@ -3,6 +3,7 @@ package skills_overhaul.level;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.MutableCharacterStatsAPI;
+import skills_overhaul.basics.ActiveLaneService;
 import skills_overhaul.effect.NodeEffectApplier;
 import skills_overhaul.state.SkillMemory;
 import skills_overhaul.state.Tree;
@@ -65,6 +66,11 @@ public final class RespecRunner {
             for (String suffix : new String[]{".tl", ".fu", ".mg"}) {
                 mem.unset(RespecService.RECORD_PREFIX + n.getId() + suffix);
             }
+        }
+
+        // Drop T0 nodes from active basics
+        for (Node n : ownedBefore) {
+            if (n.getY() == 0) ActiveLaneService.onUnpurchased(mem, n.getId());
         }
 
         // Remove effects
