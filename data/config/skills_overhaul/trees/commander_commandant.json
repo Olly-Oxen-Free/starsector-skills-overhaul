@@ -1,0 +1,123 @@
+{
+  "tree": "commander_commandant",
+  "nodes": [
+    { "id": "commandant_t0", "name": "Command Field",
+      "x": 2, "y": 0, "cost": 1, "prereqs": [],
+      "effects": [
+        { "type": "SO_commandant_t0", "channel": "base" },
+        { "type": "SO_commandant_t0", "channel": "core" }
+      ]
+    },
+
+    { "id": "commandant_t1_officer_training", "name": "Officer Training",
+      "x": 0, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
+      "effects": [
+        { "type": "SO_combat_script", "node": "commandant_t1_officer_training" },
+        { "type": "SO_command_field_mod", "param": "rangeBumpFlat", "value": 250 }
+      ]
+    },
+    { "id": "commandant_t1_drilled", "name": "Drilled and Ready",
+      "x": 1, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
+      "effects": []
+    },
+    { "id": "commandant_t1_discipline", "name": "Fleet Discipline",
+      "x": 2, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
+      "effects": []
+    },
+    { "id": "commandant_t1_logistics", "name": "Logistics Supremacy",
+      "x": 3, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
+      "effects": [
+        { "type": "SO_fleet_stat",
+          "stats": [
+            { "key": "fuelUseMod", "value": -0.15 }
+          ] }
+      ]
+    },
+    { "id": "commandant_t1_standing_orders", "name": "Standing Orders",
+      "x": 4, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
+      "effects": [ { "type": "SO_combat_script", "node": "commandant_t1_standing_orders" } ]
+    },
+
+    { "id": "commandant_t2_authority", "name": "Authority",
+      "x": 0, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_officer_training"] }],
+      "effects": [
+        { "type": "SO_combat_script", "node": "commandant_t2_authority" },
+        { "type": "SO_objective_scaling", "fleetCapBonus": 0.02 }
+      ]
+    },
+    { "id": "commandant_t2_cohesion", "name": "Tactical Cohesion",
+      "x": 1, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_drilled"] }],
+      "effects": [ { "type": "SO_combat_script", "node": "commandant_t2_cohesion" } ]
+    },
+    { "id": "commandant_t2_cnc", "name": "Command and Conquer",
+      "x": 2, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_discipline"] }],
+      "effects": []
+    },
+    { "id": "commandant_t2_reserve", "name": "Reserve Commitment",
+      "x": 3, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_logistics"] }],
+      "effects": [ { "type": "SO_combat_script", "node": "commandant_t2_reserve" } ]
+    },
+    { "id": "commandant_t2_refitting", "name": "Refitting",
+      "x": 4, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_standing_orders"] }],
+      "effects": [ { "type": "SO_refitting" } ]
+    },
+
+    { "id": "commandant_t3_line_anchor", "name": "Line and Anchor",
+      "x": 0, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_authority"] }],
+      "effects": [ { "type": "SO_combat_script", "node": "commandant_t3_line_anchor" } ]
+    },
+    { "id": "commandant_t3_esprit", "name": "Esprit de Corps",
+      "x": 1, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_cohesion"] }],
+      "effects": [
+        { "type": "SO_command_field_mod", "param": "rangeBumpMultByClass:CAPITAL_SHIP", "value": 1.333 },
+        { "type": "SO_command_field_mod", "param": "rangeBumpMultByClass:CRUISER",      "value": 1.333 }
+      ]
+    },
+    { "id": "commandant_t3_in_good_hands", "name": "In Good Hands",
+      "x": 2, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_cnc"] }],
+      "effects": []
+    },
+    { "id": "commandant_t3_vanguard", "name": "Vanguard Screen",
+      "x": 3, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_reserve"] }],
+      "effects": [ { "type": "SO_combat_script", "node": "commandant_t3_vanguard" } ]
+    },
+    { "id": "commandant_t3_elite_cascade", "name": "Elite Cascade",
+      "x": 4, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_refitting"] }],
+      "effects": [ { "type": "SO_elite_cascade" } ]
+    },
+
+    { "id": "commandant_t4_war_room", "name": "War Room",
+      "x": 0, "y": 4, "cost": 2, "prereqs": [{ "all": ["commandant_t3_line_anchor"] }],
+      "effects": [ { "type": "SO_objective_capture_buff" } ]
+    },
+    { "id": "commandant_t4_doctrine_hierarchy", "name": "Doctrine Hierarchy",
+      "x": 1, "y": 4, "cost": 2, "prereqs": [{ "all": ["commandant_t3_esprit"] }],
+      "effects": [ { "type": "SO_doctrine_hierarchy" } ]
+    },
+    { "id": "commandant_t4_officer_inspiration", "name": "Officer Inspiration",
+      "x": 2, "y": 4, "cost": 2, "prereqs": [{ "all": ["commandant_t3_in_good_hands"] }],
+      "effects": [ { "type": "SO_officer_inspiration" } ]
+    },
+    { "id": "commandant_t4_field_commands", "name": "Field Commands",
+      "x": 3, "y": 4, "cost": 2, "prereqs": [{ "all": ["commandant_t3_vanguard"] }],
+      "effects": [ { "type": "SO_field_commands" } ]
+    },
+
+    { "id": "commandant_t5", "name": "Iron Doctrine",
+      "x": 2, "y": 5, "cost": 3,
+      "prereqs": [{
+        "atLeast": 2,
+        "of": [
+          "commandant_t4_war_room",
+          "commandant_t4_doctrine_hierarchy",
+          "commandant_t4_officer_inspiration",
+          "commandant_t4_field_commands"
+        ]
+      }],
+      "effects": [
+        { "type": "SO_commandant_t5", "channel": "base" },
+        { "type": "SO_commandant_t5", "channel": "core" }
+      ]
+    }
+  ]
+}
