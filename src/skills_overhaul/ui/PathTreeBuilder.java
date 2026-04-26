@@ -94,7 +94,7 @@ public final class PathTreeBuilder {
     public static void configureForViewport(TreeDef def, float viewportW, float viewportH) {
         resetLayoutDefaults();
 
-        int laneCount = Math.max(1, def.getLanes().size());
+        int laneCount = Math.max(1, deriveLaneCount(def));
         int sublaneCount = Math.max(0, laneCount - 1);
 
         int maxTier = 0;
@@ -257,11 +257,31 @@ public final class PathTreeBuilder {
         }
     }
 
+    /** Derive lane count from distinct non-merge node x-column values. */
+    private static int deriveLaneCount(TreeDef def) {
+        Set<String> lanes = new LinkedHashSet<String>();
+        for (Node n : def.getNodes()) {
+            if (!n.isMerge()) lanes.add(n.getLane());
+        }
+        return Math.max(1, lanes.size());
+    }
+
+    /** Derive ordered lane name list from distinct non-merge node lane values (insertion order). */
+    private static List<String> deriveLanes(TreeDef def) {
+        List<String> lanes = new ArrayList<String>();
+        Set<String> seen = new LinkedHashSet<String>();
+        for (Node n : def.getNodes()) {
+            if (!n.isMerge() && seen.add(n.getLane())) lanes.add(n.getLane());
+        }
+        if (lanes.isEmpty()) lanes.add("default");
+        return lanes;
+    }
+
     public static Metrics computeMetrics(TreeDef def) {
         int maxTier = 0;
         for (Node n : def.getNodes()) if (n.getTier() > maxTier) maxTier = n.getTier();
         int rowCount = maxTier + 1;
-        int laneCount = def.getLanes().size();
+        int laneCount = deriveLaneCount(def);
 
         float bodyH = rowCount * NODE + Math.max(0, rowCount - 1) * TIER_GAP_Y;
         float totalH = HEADER_H + LANE_TOP_PAD + bodyH + 8f;
@@ -288,7 +308,9 @@ public final class PathTreeBuilder {
                                      float scrollX,
                                      List<UIComponentAPI> tracker,
                                      List<LaneColumn> laneColumnsOut) {
-        TreeDef def = TreeRegistry.get(t);
+        // NOTE: post-multi-tree refactor, buildPaths renders only the first tree of each tab.
+        // Full per-tab multi-tree navigation lands with the Commander content rebuild.
+        TreeDef def = TreeRegistry.getTrees(t).get(0);
         Metrics metrics = computeMetrics(def);
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
@@ -303,7 +325,7 @@ public final class PathTreeBuilder {
         }
         Set<String> pending = host.pendingByTree.get(t);
 
-        List<String> mainLanes = def.getLanes();
+        List<String> mainLanes = deriveLanes(def);
 
         // Compute each main-lane's X inside the unscrolled content.
         float[] laneX = new float[mainLanes.size()];
@@ -385,7 +407,8 @@ public final class PathTreeBuilder {
      */
     public static void refreshEdgesAfterLayout(CustomPanelAPI panel, CharacterTabPanelPlugin host) {
         Tree tree = host.currentTree;
-        TreeDef def = TreeRegistry.get(tree);
+        // NOTE: post-multi-tree refactor, renders only the first tree of each tab.
+        TreeDef def = TreeRegistry.getTrees(tree).get(0);
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         Set<String> owned = new HashSet<String>();
         for (Node n : def.getNodes()) {
@@ -505,7 +528,7 @@ public final class PathTreeBuilder {
         boolean isPending    = pending.contains(n.getId());
         boolean isUnlockable = !isOwned && !isPending &&
                 PrereqValidator.canPurchaseWithPending(
-                        TreeRegistry.get(resolveTreeOf(n)), memSnapshot, pending, n.getId());
+                        TreeRegistry.findTreeOfAnywhere(n.getId()), memSnapshot, pending, n.getId());
 
         Color borderColor;
         if (n.isCapstone()) {
@@ -646,7 +669,7 @@ public final class PathTreeBuilder {
 
     private static Tree resolveTreeOf(Node n) {
         for (Tree t : Tree.values()) {
-            if (TreeRegistry.get(t).getNode(n.getId()) != null) return t;
+            if (TreeRegistry.findNode(t, n.getId()) != null) return t;
         }
         return Tree.PILOT;
     }

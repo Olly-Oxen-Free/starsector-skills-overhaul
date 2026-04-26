@@ -16,7 +16,8 @@ import java.util.Map;
 
 public final class GameSpend {
     public static boolean purchase(Tree tree, String nodeId) {
-        TreeDef def = TreeRegistry.get(tree);
+        TreeDef def = TreeRegistry.findTreeOf(tree, nodeId);
+        if (def == null) return false;
         Node n = def.getNode(nodeId);
         if (n == null) return false;
 

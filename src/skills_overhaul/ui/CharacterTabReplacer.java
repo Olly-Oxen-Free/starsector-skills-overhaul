@@ -147,9 +147,11 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         // Diagnostics: widest tree's content width.
         float maxGridW = 0f, maxGridH = 0f;
         for (Tree t : Tree.values()) {
-            PathTreeBuilder.Metrics m = PathTreeBuilder.computeMetrics(TreeRegistry.get(t));
-            if (m.totalW > maxGridW) maxGridW = m.totalW;
-            if (m.totalH > maxGridH) maxGridH = m.totalH;
+            for (skills_overhaul.tree.TreeDef def : TreeRegistry.getTrees(t)) {
+                PathTreeBuilder.Metrics m = PathTreeBuilder.computeMetrics(def);
+                if (m.totalW > maxGridW) maxGridW = m.totalW;
+                if (m.totalH > maxGridH) maxGridH = m.totalH;
+            }
         }
 
         float screenW = Global.getSettings().getScreenWidth();

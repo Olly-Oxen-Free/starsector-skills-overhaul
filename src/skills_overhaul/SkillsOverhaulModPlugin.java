@@ -15,9 +15,12 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         ConfigLoader.load();
         TreeRegistry.load();
         Global.getLogger(SkillsOverhaulModPlugin.class).info(LOG_PREFIX
-                + "loaded " + TreeRegistry.get(Tree.PILOT).getNodes().size() + " pilot nodes, "
-                + TreeRegistry.get(Tree.COMMANDER).getNodes().size() + " cmd, "
-                + TreeRegistry.get(Tree.ADMIN).getNodes().size() + " admin");
+                + "loaded " + TreeRegistry.totalNodeCount(Tree.PILOT) + " pilot nodes ("
+                + TreeRegistry.getTrees(Tree.PILOT).size() + " trees), "
+                + TreeRegistry.totalNodeCount(Tree.COMMANDER) + " cmd ("
+                + TreeRegistry.getTrees(Tree.COMMANDER).size() + " trees), "
+                + TreeRegistry.totalNodeCount(Tree.ADMIN) + " admin ("
+                + TreeRegistry.getTrees(Tree.ADMIN).size() + " trees)");
     }
 
     @Override

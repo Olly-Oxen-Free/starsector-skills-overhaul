@@ -52,16 +52,16 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     private void applyPilotSkillsTo(ShipAPI ship) {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
-        TreeDef def = TreeRegistry.get(Tree.PILOT);
-        if (def == null) return;
         MutableShipStatsAPI stats = ship.getMutableStats();
 
         int applied = 0;
-        for (Node n : def.getNodes()) {
-            if (!mem.contains(SkillMemory.purchasedKey(n.getId()))) continue;
-            if (!mem.getBoolean(SkillMemory.purchasedKey(n.getId()))) continue;
-            for (JSONObject fx : n.getEffects()) {
-                if (applyShipStatEffect(stats, n.getId(), fx)) applied++;
+        for (TreeDef def : TreeRegistry.getTrees(Tree.PILOT)) {
+            for (Node n : def.getNodes()) {
+                if (!mem.contains(SkillMemory.purchasedKey(n.getId()))) continue;
+                if (!mem.getBoolean(SkillMemory.purchasedKey(n.getId()))) continue;
+                for (JSONObject fx : n.getEffects()) {
+                    if (applyShipStatEffect(stats, n.getId(), fx)) applied++;
+                }
             }
         }
         log.info("[SkillsOverhaul] combat init: applied " + applied + " ship-stat effects to " + ship.getHullSpec().getHullId());

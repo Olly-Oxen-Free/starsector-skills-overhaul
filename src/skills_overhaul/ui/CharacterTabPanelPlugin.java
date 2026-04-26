@@ -217,8 +217,10 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         viewW = (winX + winW) - viewX - PAD;
         viewH = leftH - SCROLL_H - 6f;
 
+        // NOTE: post-multi-tree refactor, this panel renders only the first tree of each tab.
+        // Full per-tab multi-tree navigation lands with the Commander content rebuild.
         // Configure builder metrics to fit the viewport for this tree.
-        TreeDef def = TreeRegistry.get(currentTree);
+        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         PathTreeBuilder.configureForViewport(def, viewW, viewH);
 
         PathTreeBuilder.Metrics metrics = PathTreeBuilder.computeMetrics(def);
@@ -258,7 +260,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         int count = 0;
         try {
-            TreeDef def = TreeRegistry.get(t);
+            TreeDef def = TreeRegistry.getTrees(t).get(0);
             for (Node n : def.getNodes()) {
                 String k = SkillMemory.purchasedKey(n.getId());
                 if (mem.contains(k) && mem.getBoolean(k)) count++;
@@ -893,7 +895,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
     int sumPendingCost(Set<String> pending) {
         int s = 0;
-        TreeDef def = TreeRegistry.get(currentTree);
+        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         for (String id : pending) {
             Node n = def.getNode(id);
             if (n != null) s += n.getCost();
@@ -1132,7 +1134,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         String purK = SkillMemory.purchasedKey(nodeId);
         if (mem.contains(purK) && mem.getBoolean(purK)) return;
 
-        TreeDef def = TreeRegistry.get(currentTree);
+        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         Node clicked = def.getNode(nodeId);
         if (clicked == null) return;
 
@@ -1161,7 +1163,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     private void commitPending() {
         Set<String> pending = pendingByTree.get(currentTree);
         if (pending.isEmpty()) return;
-        TreeDef def = TreeRegistry.get(currentTree);
+        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         List<String> order;
         try {
             order = skills_overhaul.tree.PendingPurchaseTopoSort.sort(def, pending);
@@ -1183,7 +1185,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     }
 
     private void removePendingWithDependents(String removed, Set<String> pending) {
-        TreeDef def = TreeRegistry.get(currentTree);
+        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         Set<String> toRemove = new HashSet<String>();
         toRemove.add(removed);
         boolean changed = true;

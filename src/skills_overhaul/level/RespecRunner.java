@@ -15,14 +15,15 @@ import java.util.*;
 public final class RespecRunner {
 
     public static RespecService.Result run(Tree tree) {
-        TreeDef def = TreeRegistry.get(tree);
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
 
         // Collect previously-owned nodes BEFORE respec clears their purchased flags
         List<Node> ownedBefore = new ArrayList<Node>();
-        for (Node n : def.getNodes()) {
-            String k = SkillMemory.purchasedKey(n.getId());
-            if (mem.contains(k) && mem.getBoolean(k)) ownedBefore.add(n);
+        for (TreeDef def : TreeRegistry.getTrees(tree)) {
+            for (Node n : def.getNodes()) {
+                String k = SkillMemory.purchasedKey(n.getId());
+                if (mem.contains(k) && mem.getBoolean(k)) ownedBefore.add(n);
+            }
         }
 
         // Snapshot minimal state: points, freeUni, migUni per tree, purchased flags for this tree's nodes, records for this tree
