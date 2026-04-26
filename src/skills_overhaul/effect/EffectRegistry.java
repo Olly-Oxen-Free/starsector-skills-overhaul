@@ -29,6 +29,8 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.corsair.CorsairT0Handler());
         handlers.put("corsair_letter_of_marque",
                 new skills_overhaul.effect.handlers.corsair.LetterOfMarqueHandler());
+        handlers.put("SO_fleet_stat", new skills_overhaul.effect.handlers.SOFleetStatHandler());
+        handlers.put("SO_combat_script", new skills_overhaul.effect.handlers.SOCombatScriptHandler());
     }
 
     public static EffectHandler get(String type) {
