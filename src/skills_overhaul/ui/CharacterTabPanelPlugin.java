@@ -631,6 +631,30 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                     c, ns.owned, ns.pending, ns.unlockable, ns.node.isCapstone(), alphaMult);
         }
 
+        // --- Pass 3: active-basic T0 indicator — bright outer ring ---
+        {
+            MemoryAPI activeMem = Global.getSector().getMemoryWithoutUpdate();
+            java.util.List<String> activeIds = skills_overhaul.basics.ActiveLaneService.getActive(activeMem);
+            if (!activeIds.isEmpty()) {
+                // Warm gold accent — distinct from any existing state colour.
+                GL11.glLineWidth(2.0f);
+                GL11.glColor4f(1.00f, 0.82f, 0.25f, 0.90f * alphaMult);
+                for (String id : activeIds) {
+                    float[] xy = nodeLocal.get(id);
+                    if (xy == null) continue;
+                    float ix = px + xy[0];
+                    float iy = py + xy[1];
+                    float offset = 3f;
+                    GL11.glBegin(GL11.GL_LINE_LOOP);
+                    GL11.glVertex2f(ix - offset,          iy - offset);
+                    GL11.glVertex2f(ix + nSize + offset,  iy - offset);
+                    GL11.glVertex2f(ix + nSize + offset,  iy + nSize + offset);
+                    GL11.glVertex2f(ix - offset,          iy + nSize + offset);
+                    GL11.glEnd();
+                }
+            }
+        }
+
         if (needsScissor) GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
         // Scroll track + thumb just under the viewport.
@@ -1132,7 +1156,39 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         String purK = SkillMemory.purchasedKey(nodeId);
-        if (mem.contains(purK) && mem.getBoolean(purK)) return;
+        if (mem.contains(purK) && mem.getBoolean(purK)) {
+            // Purchased node clicked — if it's a T0, handle active-slot toggle.
+            TreeDef defForClicked = TreeRegistry.getTrees(currentTree).get(0);
+            Node clickedPurchased = defForClicked.getNode(nodeId);
+            if (clickedPurchased != null && clickedPurchased.getY() == 0) {
+                if (!skills_overhaul.basics.ActiveLaneService.canSwapLive()) {
+                    return; // In combat — ignore silently.
+                }
+                if (skills_overhaul.basics.ActiveLaneService.isActive(mem, nodeId)) {
+                    return; // Already active — clicking again does nothing.
+                }
+                java.util.List<String> active = skills_overhaul.basics.ActiveLaneService.getActive(mem);
+                if (active.size() < skills_overhaul.basics.ActiveLaneService.MAX_ACTIVE) {
+                    skills_overhaul.basics.ActiveLaneService.add(mem, nodeId);
+                    skills_overhaul.effect.NodeEffectApplier.reapplyForActiveChange(clickedPurchased, true);
+                    rebuild();
+                    return;
+                }
+                // TODO(active-basics): v0 auto-displaces the first active slot. A follow-up should
+                //   open a modal letting the player choose which active T0 to displace.
+                String displaced = active.get(0);
+                if (skills_overhaul.basics.ActiveLaneService.swap(mem, displaced, nodeId)) {
+                    TreeDef displacedDef = skills_overhaul.tree.TreeRegistry.findTreeOfAnywhere(displaced);
+                    Node displacedNode = displacedDef != null ? displacedDef.getNode(displaced) : null;
+                    if (displacedNode != null) {
+                        skills_overhaul.effect.NodeEffectApplier.reapplyForActiveChange(displacedNode, false);
+                    }
+                    skills_overhaul.effect.NodeEffectApplier.reapplyForActiveChange(clickedPurchased, true);
+                    rebuild();
+                }
+            }
+            return;
+        }
 
         TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         Node clicked = def.getNode(nodeId);

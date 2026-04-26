@@ -108,6 +108,27 @@ public final class ActiveLaneService {
     }
 
     @SuppressWarnings("unchecked")
+    public static boolean add(MemoryAPI mem, String nodeId) {
+        List<String> cur = readList(mem);
+        if (cur.contains(nodeId)) return false;
+        if (cur.size() >= MAX_ACTIVE) return false;
+        cur.add(nodeId);
+        mem.set(SkillMemory.activeBasicsKey(), cur);
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static boolean swap(MemoryAPI mem, String oldId, String newId) {
+        List<String> cur = readList(mem);
+        int i = cur.indexOf(oldId);
+        if (i < 0) return false;
+        if (cur.contains(newId)) return false;
+        cur.set(i, newId);
+        mem.set(SkillMemory.activeBasicsKey(), cur);
+        return true;
+    }
+
+    @SuppressWarnings("unchecked")
     private static List<String> readList(MemoryAPI mem) {
         Object v = mem.get(SkillMemory.activeBasicsKey());
         if (v instanceof List) return new ArrayList<>((List<String>) v);
