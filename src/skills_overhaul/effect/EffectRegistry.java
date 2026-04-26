@@ -25,6 +25,10 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.corsair.DModDpScalingHandler());
         handlers.put("corsair_cap_mult",
                 new skills_overhaul.effect.handlers.corsair.CapMultiplierHandler());
+        handlers.put("corsair_t0",
+                new skills_overhaul.effect.handlers.corsair.CorsairT0Handler());
+        handlers.put("corsair_letter_of_marque",
+                new skills_overhaul.effect.handlers.corsair.LetterOfMarqueHandler());
     }
 
     public static EffectHandler get(String type) {
