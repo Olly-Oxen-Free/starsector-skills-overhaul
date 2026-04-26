@@ -9,7 +9,7 @@ CLASSES_DIR="$PATCH_DIR/jars/classes"
 JAR_FILE="$PATCH_DIR/jars/SkillsOverhaul.jar"
 GAME_DIR="/home/jayden-eppcohen/Games/Starsector"
 
-CLASSPATH="$GAME_DIR/starfarer.api.jar:$GAME_DIR/log4j-1.2.9.jar:$GAME_DIR/json.jar:$GAME_DIR/fs.common_obf.jar:$GAME_DIR/starfarer_obf.jar:$GAME_DIR/lwjgl.jar"
+CLASSPATH="$GAME_DIR/starfarer.api.jar:$GAME_DIR/log4j-1.2.9.jar:$GAME_DIR/json.jar:$GAME_DIR/fs.common_obf.jar:$GAME_DIR/starfarer_obf.jar:$GAME_DIR/lwjgl.jar:$GAME_DIR/lwjgl_util.jar"
 
 # Handle test target
 if [ "$1" = "test" ]; then
