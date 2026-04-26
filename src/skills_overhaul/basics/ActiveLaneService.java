@@ -1,6 +1,7 @@
 package skills_overhaul.basics;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import skills_overhaul.state.SkillMemory;
 
 import java.util.*;
@@ -71,6 +72,21 @@ public final class ActiveLaneService {
         cur.add(nodeId);
         SkillMemory.setActiveBasics(mem, cur);
         return true;
+    }
+
+    // ---- MemoryAPI overloads ----
+
+    @SuppressWarnings("unchecked")
+    public static boolean isActive(MemoryAPI mem, String nodeId) {
+        Object v = mem.get(SkillMemory.activeBasicsKey());
+        return (v instanceof List) && ((List<String>) v).contains(nodeId);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static List<String> getActive(MemoryAPI mem) {
+        Object v = mem.get(SkillMemory.activeBasicsKey());
+        if (v instanceof List) return new ArrayList<>((List<String>) v);
+        return new ArrayList<>();
     }
 
     private ActiveLaneService() {}
