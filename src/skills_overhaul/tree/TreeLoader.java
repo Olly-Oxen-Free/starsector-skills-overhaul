@@ -11,73 +11,59 @@ public final class TreeLoader {
 
     public static TreeDef loadFromSettings(String tree) throws Exception {
         JSONObject j = Global.getSettings().getMergedJSONForMod(
-                "data/config/skills_overhaul/" + tree + "_tree.json", "skills_overhaul");
+                "data/config/skills_overhaul/trees/" + tree + ".json", "skills_overhaul");
         return fromJSON(j);
     }
 
     public static TreeDef fromJSON(JSONObject o) throws JSONException {
         String tree = o.getString("tree");
-        List<String> lanes = new ArrayList<>();
-        JSONArray la = o.getJSONArray("lanes");
-        for (int i = 0; i < la.length(); i++) lanes.add(la.getString(i));
 
         Map<String, Node> byId = new LinkedHashMap<>();
         JSONArray na = o.getJSONArray("nodes");
         for (int i = 0; i < na.length(); i++) {
             Node n = Node.fromJSON(na.getJSONObject(i));
+            validateCoords(tree, n);
+            if (byId.containsKey(n.getId())) {
+                throw new JSONException("tree " + tree + ": duplicate node id " + n.getId());
+            }
             byId.put(n.getId(), n);
         }
 
-        JSONArray ma = o.optJSONArray("merges");
-        if (ma != null) {
-            for (int i = 0; i < ma.length(); i++) {
-                Node m = mergeFromJSON(ma.getJSONObject(i));
-                byId.put(m.getId(), m);
+        // Pass 2: validate T0 prereqs + cross-reference resolution.
+        for (Node n : byId.values()) {
+            if (n.getY() == 0 && !n.getClauses().isEmpty()) {
+                throw new JSONException("tree " + tree + ": T0 node " + n.getId()
+                        + " must have empty prereqs");
+            }
+            for (String ref : n.getReferencedPrereqIds()) {
+                if (!byId.containsKey(ref)) {
+                    throw new JSONException("tree " + tree + ": node " + n.getId()
+                            + " references unknown prereq id " + ref);
+                }
             }
         }
 
-        return new TreeDef(tree, lanes, byId);
+        // TreeDef constructor enforces unique (x,y); rethrow as JSONException for symmetry.
+        try {
+            return new TreeDef(tree, byId);
+        } catch (IllegalStateException ise) {
+            throw new JSONException(ise.getMessage());
+        }
     }
 
-    /**
-     * Parses a merge-node entry. Enforces parentLanes.length == 2 invariant.
-     * Derives lane = "merge:<a>_<b>" with parent lanes sorted alphabetically
-     * so lane naming is deterministic regardless of JSON ordering.
-     */
-    private static Node mergeFromJSON(JSONObject o) throws JSONException {
-        JSONArray pla = o.getJSONArray("parentLanes");
-        if (pla.length() != 2) {
-            throw new JSONException("merge node " + o.optString("id", "?")
-                    + ": parentLanes must have length 2, got " + pla.length());
+    private static void validateCoords(String tree, Node n) throws JSONException {
+        int x = n.getX(), y = n.getY();
+        if (x < 0 || x > 4) {
+            throw new JSONException("tree " + tree + ": node " + n.getId()
+                    + " x=" + x + " out of range [0,4]");
         }
-        List<String> parents = new ArrayList<>();
-        parents.add(pla.getString(0));
-        parents.add(pla.getString(1));
-        List<String> sorted = new ArrayList<>(parents);
-        Collections.sort(sorted);
-        String derivedLane = "merge:" + sorted.get(0) + "_" + sorted.get(1);
-
-        List<String> pre = new ArrayList<>();
-        JSONArray pa = o.optJSONArray("prereqs");
-        if (pa != null) for (int i = 0; i < pa.length(); i++) pre.add(pa.getString(i));
-
-        List<JSONObject> fx = new ArrayList<>();
-        JSONArray fa = o.optJSONArray("effects");
-        if (fa != null) for (int i = 0; i < fa.length(); i++) fx.add(fa.getJSONObject(i));
-
-        return new Node(
-                o.getString("id"),
-                o.getString("name"),
-                o.optString("desc", ""),
-                derivedLane,
-                o.optInt("tier", 0),
-                o.optInt("slot", 1),
-                o.optInt("cost", 1),
-                Collections.unmodifiableList(pre),
-                Collections.unmodifiableList(parents),
-                o.optBoolean("capstone", false),
-                true, // isMerge
-                Collections.unmodifiableList(fx),
-                o.optString("icon", null));
+        if (y < 0 || y > 5) {
+            throw new JSONException("tree " + tree + ": node " + n.getId()
+                    + " y=" + y + " out of range [0,5]");
+        }
+        if ((y == 0 || y == 5) && x != 2) {
+            throw new JSONException("tree " + tree + ": node " + n.getId()
+                    + " at y=" + y + " must have x=2 (got " + x + ")");
+        }
     }
 }
