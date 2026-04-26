@@ -57,6 +57,16 @@ public class SupplyBufferServiceTest {
         assert SupplyBufferService.applyIncomeBonus(0f) == 0f;
         assert Math.abs(SupplyBufferService.applyIncomeBonus(33f) - 33f * 1.10f) < 1e-4f;
 
+        // --- cap multiplier registry ---
+        Map<String,Object> memCap = new HashMap<>();
+        SkillMemory.setLevel(memCap, Tree.COMMANDER, 0);
+        // No multipliers: cap = 20.
+        assert SupplyBufferService.computeCap(memCap, 0f) == 20f;
+        SupplyBufferService.registerCapMultiplier("scrapheap", 1.5f);
+        assert SupplyBufferService.computeCap(memCap, 0f) == 30f : "cap × 1.5 = 30";
+        SupplyBufferService.unregisterCapMultiplier("scrapheap");
+        assert SupplyBufferService.computeCap(memCap, 0f) == 20f : "cap restored after unregister";
+
         System.out.println("ALL PASSED");
     }
 }

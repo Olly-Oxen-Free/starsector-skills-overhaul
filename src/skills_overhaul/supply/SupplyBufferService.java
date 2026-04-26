@@ -22,6 +22,8 @@ public final class SupplyBufferService {
     public static final float CAP_PER_LEVEL = 5f;
     public static final float FLEET_CARGO_RATIO = 0.10f;
 
+    private static final java.util.Map<String, Float> CAP_MULTIPLIERS = new java.util.LinkedHashMap<>();
+
     public enum DrainMode { ABILITY, UPKEEP }
 
     public static final class DrainResult {
@@ -31,11 +33,11 @@ public final class SupplyBufferService {
         public float shortfall;
     }
 
-    /** cap = BASE_CAP + CAP_PER_LEVEL * commanderLevel + floor(FLEET_CARGO_RATIO * fleetCargoCapacity). */
+    /** cap = BASE_CAP + CAP_PER_LEVEL * commanderLevel + floor(FLEET_CARGO_RATIO * fleetCargoCapacity), multiplied by cap multipliers. */
     public static float computeCap(Map<String,Object> mem, float fleetCargoCapacity) {
         int lvl = SkillMemory.getLevel(mem, Tree.COMMANDER);
         float fleetPart = (float) Math.floor(FLEET_CARGO_RATIO * fleetCargoCapacity);
-        return BASE_CAP + CAP_PER_LEVEL * lvl + fleetPart;
+        return (BASE_CAP + CAP_PER_LEVEL * lvl + fleetPart) * capMultiplierProduct();
     }
 
     /**
@@ -76,11 +78,25 @@ public final class SupplyBufferService {
         return baseAmount * INCOME_BONUS_MULTIPLIER;
     }
 
+    public static void registerCapMultiplier(String key, float mult) {
+        CAP_MULTIPLIERS.put(key, mult);
+    }
+
+    public static void unregisterCapMultiplier(String key) {
+        CAP_MULTIPLIERS.remove(key);
+    }
+
+    private static float capMultiplierProduct() {
+        float p = 1f;
+        for (Float m : CAP_MULTIPLIERS.values()) p *= m;
+        return p;
+    }
+
     // MemoryAPI overloads — mirrors the SkillMemory pattern for live-game use.
     public static float computeCap(MemoryAPI mem, float fleetCargoCapacity) {
         int lvl = SkillMemory.getLevel(mem, Tree.COMMANDER);
         float fleetPart = (float) Math.floor(FLEET_CARGO_RATIO * fleetCargoCapacity);
-        return BASE_CAP + CAP_PER_LEVEL * lvl + fleetPart;
+        return (BASE_CAP + CAP_PER_LEVEL * lvl + fleetPart) * capMultiplierProduct();
     }
 
     public static float add(MemoryAPI mem, float fleetCargoCapacity, float amount) {
