@@ -8,8 +8,11 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 
 /**
  * Periodic reconciler: each tick, observes the player fleet's supply count.
- * On an increase, treats the delta as income, applies the +10% bonus to the delta,
- * routes through SupplyBufferService.add, and adds any overflow back to fleet cargo.
+ * On an increase, routes the delta into the buffer (no bonus applied here).
+ *
+ * The +10% salvage bonus is applied upstream in SalvageBonusListener, which
+ * inflates post-battle loot supplies before the player picks them up. That
+ * bonus then flows through this reconciler as part of the normal delta.
  *
  * Decreases are ignored — consumption flows through SupplyBufferService.tryConsume from
  * the spend site, not through this listener.
@@ -36,15 +39,9 @@ public final class SupplyBufferListener implements EveryFrameScript {
             MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
             float fleetCap = cargo.getMaxCapacity();
 
-            // +10% bonus on the income delta; granted on top of the observed gain.
-            float bonus = delta * (SupplyBufferService.INCOME_BONUS_MULTIPLIER - 1f);
-            if (bonus > 0f) cargo.addSupplies(bonus);
-
-            float total = delta + bonus;
-
-            // Move as much of `total` into the buffer as fits; remainder stays in fleet cargo.
-            float overflow = SupplyBufferService.add(mem, fleetCap, total);
-            float intoBuffer = total - overflow;
+            // Route delta into the buffer; overflow stays in fleet cargo.
+            float overflow = SupplyBufferService.add(mem, fleetCap, delta);
+            float intoBuffer = delta - overflow;
             if (intoBuffer > 0f) cargo.removeSupplies(intoBuffer);
 
             now = cargo.getCommodityQuantity("supplies");

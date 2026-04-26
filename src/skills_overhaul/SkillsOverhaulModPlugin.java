@@ -29,6 +29,7 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().getListenerManager().addListener(new skills_overhaul.xp.AdminXPTracker(), false);
         Global.getSector().addTransientScript(new skills_overhaul.level.LevelReconciler());
         Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferListener());
+        Global.getSector().addTransientListener(new skills_overhaul.supply.SalvageBonusListener());
         Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferRenderer());
         Global.getSector().addTransientScript(new skills_overhaul.ui.CharacterTabReplacer());
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
