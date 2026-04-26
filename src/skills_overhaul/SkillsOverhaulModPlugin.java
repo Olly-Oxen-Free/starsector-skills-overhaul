@@ -34,6 +34,8 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientScript(new skills_overhaul.ui.CharacterTabReplacer());
         Global.getSector().addTransientScript(new skills_overhaul.corsair.InfamyDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.corsair.InfamyKillListener());
+        Global.getSector().addTransientListener(
+                new skills_overhaul.effect.handlers.corsair.PostBattleSalvageMultiplierListener());
         skills_overhaul.corsair.PrivateerLifecycleScript privLifecycle =
                 new skills_overhaul.corsair.PrivateerLifecycleScript();
         Global.getSector().addTransientScript(privLifecycle);
