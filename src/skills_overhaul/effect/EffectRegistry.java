@@ -31,6 +31,16 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.corsair.LetterOfMarqueHandler());
         handlers.put("SO_fleet_stat", new skills_overhaul.effect.handlers.SOFleetStatHandler());
         handlers.put("SO_combat_script", new skills_overhaul.effect.handlers.SOCombatScriptHandler());
+        handlers.put("SO_commandant_t0", new skills_overhaul.effect.handlers.SOCommandantT0Handler());
+        handlers.put("SO_command_field_mod", new skills_overhaul.effect.handlers.SOCommandFieldModHandler());
+        handlers.put("SO_objective_scaling", new skills_overhaul.effect.handlers.SOObjectiveScalingHandler());
+        handlers.put("SO_commandant_t5", new skills_overhaul.effect.handlers.SOCommandantT5Handler());
+        handlers.put("SO_refitting", new skills_overhaul.effect.handlers.SORefittingHandler());
+        handlers.put("SO_objective_capture_buff", new skills_overhaul.effect.handlers.SOObjectiveCaptureBuffHandler());
+        handlers.put("SO_doctrine_hierarchy", new skills_overhaul.effect.handlers.SODoctrineHierarchyHandler());
+        handlers.put("SO_officer_inspiration", new skills_overhaul.effect.handlers.SOOfficerInspirationHandler());
+        handlers.put("SO_field_commands", new skills_overhaul.effect.handlers.SOFieldCommandsHandler());
+        handlers.put("SO_elite_cascade", new skills_overhaul.effect.handlers.SOEliteCascadeHandler());
     }
 
     public static EffectHandler get(String type) {
