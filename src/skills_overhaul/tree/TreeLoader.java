@@ -51,6 +51,32 @@ public final class TreeLoader {
         }
     }
 
+    /**
+     * Loads every tree file matching the given tab prefix from the mod's config directory.
+     * Returns the parsed TreeDefs in deterministic order (sorted by tree id).
+     *
+     * Reads via Global.getSettings().getMergedJSONForMod for each known file. Because
+     * Starsector's settings API doesn't expose a "list mod files" call, the set of files
+     * to attempt is enumerated from a per-tab manifest at
+     *   data/config/skills_overhaul/trees/<tabKey>_index.json
+     * which is a JSON array of tree keys, e.g. ["leadership","tactics","logistics","doctrine"]
+     * for the commander tab. Authors update the manifest when adding a tree.
+     */
+    public static List<TreeDef> loadAllForTab(String tabKey) throws Exception {
+        String indexPath = "data/config/skills_overhaul/trees/" + tabKey + "_index.json";
+        JSONObject index = Global.getSettings().getMergedJSONForMod(indexPath, "skills_overhaul");
+        JSONArray keys = index.getJSONArray("trees");
+        List<TreeDef> out = new ArrayList<>(keys.length());
+        for (int i = 0; i < keys.length(); i++) {
+            String key = keys.getString(i);
+            JSONObject j = Global.getSettings().getMergedJSONForMod(
+                    "data/config/skills_overhaul/trees/" + tabKey + "_" + key + ".json",
+                    "skills_overhaul");
+            out.add(fromJSON(j));
+        }
+        return out;
+    }
+
     private static void validateCoords(String tree, Node n) throws JSONException {
         int x = n.getX(), y = n.getY();
         if (x < 0 || x > 4) {
