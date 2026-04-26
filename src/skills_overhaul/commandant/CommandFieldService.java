@@ -124,8 +124,10 @@ public final class CommandFieldService {
         return computeTotals(lvlArr, aiArr, scalingProduct, capBonus);
     }
 
-    // TODO Task 3: replace stub with full CommandFieldListener attach
-    public static void attach(ShipAPI ship) {}
+    public static void attach(ShipAPI ship) {
+        if (ship == null) return;
+        ship.addListener(new CommandFieldListener(ship));
+    }
 
     private CommandFieldService() {}
 }
