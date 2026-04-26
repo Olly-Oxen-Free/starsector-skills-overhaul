@@ -1,5 +1,6 @@
 package skills_overhaul.supply;
 
+import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import skills_overhaul.state.SkillMemory;
 import skills_overhaul.state.Tree;
 
@@ -73,6 +74,38 @@ public final class SupplyBufferService {
 
     public static float applyIncomeBonus(float baseAmount) {
         return baseAmount * INCOME_BONUS_MULTIPLIER;
+    }
+
+    // MemoryAPI overloads — mirrors the SkillMemory pattern for live-game use.
+    public static float computeCap(MemoryAPI mem, float fleetCargoCapacity) {
+        int lvl = SkillMemory.getLevel(mem, Tree.COMMANDER);
+        float fleetPart = (float) Math.floor(FLEET_CARGO_RATIO * fleetCargoCapacity);
+        return BASE_CAP + CAP_PER_LEVEL * lvl + fleetPart;
+    }
+
+    public static float add(MemoryAPI mem, float fleetCargoCapacity, float amount) {
+        if (amount <= 0f) return 0f;
+        float cap = computeCap(mem, fleetCargoCapacity);
+        float cur = SkillMemory.getSupplyBuffer(mem);
+        float room = Math.max(0f, cap - cur);
+        float take = Math.min(room, amount);
+        SkillMemory.setSupplyBuffer(mem, cur + take);
+        return amount - take;
+    }
+
+    public static DrainResult tryConsume(MemoryAPI mem, float amount, DrainMode mode) {
+        DrainResult r = new DrainResult();
+        if (amount <= 0f) return r;
+        float remaining = amount;
+        if (mode == DrainMode.ABILITY) {
+            float cur = SkillMemory.getSupplyBuffer(mem);
+            float take = Math.min(cur, remaining);
+            r.fromBuffer = take;
+            SkillMemory.setSupplyBuffer(mem, cur - take);
+            remaining -= take;
+        }
+        r.fromFleet = remaining;
+        return r;
     }
 
     private SupplyBufferService() {}
