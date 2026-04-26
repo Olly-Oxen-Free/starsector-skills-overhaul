@@ -19,6 +19,10 @@ public final class EffectRegistry {
         handlers.put("corsair_salvage_mult",    new SalvageMultiplierHandler());
         handlers.put("corsair_combat_script",
                 new skills_overhaul.effect.handlers.corsair.CombatScriptHandler());
+        handlers.put("corsair_bounty_board",
+                new skills_overhaul.effect.handlers.corsair.BountyBoardHandler());
+        handlers.put("corsair_dmod_dp",
+                new skills_overhaul.effect.handlers.corsair.DModDpScalingHandler());
     }
 
     public static EffectHandler get(String type) {
