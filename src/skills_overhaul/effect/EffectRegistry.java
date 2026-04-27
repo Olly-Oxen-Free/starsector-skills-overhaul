@@ -54,6 +54,7 @@ public final class EffectRegistry {
         handlers.put("SO_forge_recipe_unlock", new skills_overhaul.effect.handlers.SOForgeRecipeUnlockHandler());
         handlers.put("SO_forge_quota_bonus", new skills_overhaul.effect.handlers.SOForgeQuotaBonusHandler());
         handlers.put("SO_tech_cascade_stub", new skills_overhaul.effect.handlers.SOTechCascadeStubHandler());
+        handlers.put("SO_artificer_combat_script", new skills_overhaul.effect.handlers.SOArtificerCombatScriptHandler());
     }
 
     public static EffectHandler get(String type) {
