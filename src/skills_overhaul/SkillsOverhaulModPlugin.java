@@ -15,6 +15,40 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         ConfigLoader.load();
         TreeRegistry.load();
         skills_overhaul.artificer.forge.ForgeRecipeRegistry.registerAll();
+        // Register all 19 device effects + penalties
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("drone_wakes", new skills_overhaul.artificer.forge.devices.DroneWakesDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("sensor_beacon", new skills_overhaul.artificer.forge.devices.SensorBeaconDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("ecm_wave", new skills_overhaul.artificer.forge.devices.ECMWaveDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("comm_jammer", new skills_overhaul.artificer.forge.devices.CommJammerDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("self_replicating_minefield", new skills_overhaul.artificer.forge.devices.SelfReplicatingMinefieldDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("repair_pod", new skills_overhaul.artificer.forge.devices.RepairPodDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("slipstream_seeder", new skills_overhaul.artificer.forge.devices.SlipstreamSeederDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("nav_beacon_generator", new skills_overhaul.artificer.forge.devices.NavBeaconGeneratorDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("core_surge", new skills_overhaul.artificer.forge.devices.CoreSurgeDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("officer_imprint", new skills_overhaul.artificer.forge.devices.OfficerImprintDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("scrap_beacon", new skills_overhaul.artificer.forge.devices.ScrapBeaconDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("disruptor_relay", new skills_overhaul.artificer.forge.devices.DisruptorRelayDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("graviton_anchor", new skills_overhaul.artificer.forge.devices.GravitonAnchorDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("derelict_drone_spawner", new skills_overhaul.artificer.forge.devices.DerelictDroneSpawnerDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("transverse_vent", new skills_overhaul.artificer.forge.devices.TransverseVentDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("hypercloud_generator", new skills_overhaul.artificer.forge.devices.HypercloudGeneratorDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("pulsar_array", new skills_overhaul.artificer.forge.devices.PulsarArrayDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("magnetic_field_emitter", new skills_overhaul.artificer.forge.devices.MagneticFieldEmitterDevice());
+        skills_overhaul.artificer.forge.ForgeDeviceEffectRegistry.register("alpha_storm_emitter", new skills_overhaul.artificer.forge.devices.AlphaStormEmitterDevice());
+
+        // Penalties (battle devices only; campaign devices have null penaltyKey)
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("drone_wakes_penalty", new skills_overhaul.artificer.forge.devices.DroneWakesPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("ecm_wave_penalty", new skills_overhaul.artificer.forge.devices.ECMWavePenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("minefield_penalty", new skills_overhaul.artificer.forge.devices.SelfReplicatingMinefieldPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("repair_pod_penalty", new skills_overhaul.artificer.forge.devices.RepairPodPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("core_surge_penalty", new skills_overhaul.artificer.forge.devices.CoreSurgePenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("disruptor_relay_penalty", new skills_overhaul.artificer.forge.devices.DisruptorRelayPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("graviton_anchor_penalty", new skills_overhaul.artificer.forge.devices.GravitonAnchorPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("derelict_drone_penalty", new skills_overhaul.artificer.forge.devices.DerelictDroneSpawnerPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("transverse_vent_penalty", new skills_overhaul.artificer.forge.devices.TransverseVentPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("pulsar_array_penalty", new skills_overhaul.artificer.forge.devices.PulsarArrayPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("magnetic_field_penalty", new skills_overhaul.artificer.forge.devices.MagneticFieldEmitterPenalty());
+        skills_overhaul.artificer.forge.ForgeDevicePenaltyRegistry.register("alpha_storm_emitter_penalty", new skills_overhaul.artificer.forge.devices.AlphaStormEmitterPenalty());
         Global.getLogger(SkillsOverhaulModPlugin.class).info(LOG_PREFIX
                 + "loaded " + TreeRegistry.totalNodeCount(Tree.PILOT) + " pilot nodes ("
                 + TreeRegistry.getTrees(Tree.PILOT).size() + " trees), "
