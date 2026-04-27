@@ -1,0 +1,13 @@
+=== Skills Overhaul Test ===
+
+[1/3] Cleaning...
+[2/3] Compiling sources and tests...
+warning: [options] bootstrap class path not set in conjunction with -source 8
+/home/jayden-eppcohen/Documents/Projects/GameDev/Modding/Starsector-Mods/workspace/Skills Overhaul/src/skills_overhaul/tree/TreeLoader.java:68: error: constructor Node in class Node cannot be applied to given types;
+        return new Node(
+               ^
+  required: String,String,String,int,int,int,List<Clause>,List<JSONObject>,String
+  found:    String,String,String,String,int,int,int,List<String>,List<String>,boolean,boolean,List<JSONObject>,String
+  reason: actual and formal argument lists differ in length
+1 error
+1 warning
