@@ -87,6 +87,8 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
                 new skills_overhaul.artificer.forge.MobileFabUnitTicker());
         Global.getSector().addTransientListener(
                 new skills_overhaul.artificer.forge.ForgeBattleHook());
+        Global.getSector().addTransientScript(
+                new skills_overhaul.artificer.alphastorm.AlphaStormCampaignTicker());
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
