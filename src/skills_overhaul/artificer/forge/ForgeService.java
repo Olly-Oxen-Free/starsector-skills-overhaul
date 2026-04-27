@@ -82,8 +82,8 @@ public final class ForgeService {
         }
         if (!removed) return false;
 
-        Global.getLogger(ForgeService.class).info(
-                "[Artificer] CAMPAIGN deploy: " + recipeId + " (Plan C populates effect)");
+        ForgeDeviceEffect effect = ForgeDeviceEffectRegistry.get(r.effectHandlerKey);
+        if (effect != null) effect.deployCampaign();
         return true;
     }
 

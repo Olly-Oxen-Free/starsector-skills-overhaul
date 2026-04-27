@@ -3,6 +3,7 @@ package skills_overhaul.artificer.forge;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.BaseEveryFrameCombatPlugin;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
+import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 
@@ -33,9 +34,22 @@ public final class ForgeBattlePlugin extends BaseEveryFrameCombatPlugin {
         int quota = FreeDeployQuotaTracker.getQuota();
         for (int i = 0; i < pending.size(); i++) {
             String recipeId = pending.get(i);
+            ForgeDeviceRecipe r = ForgeRecipeRegistry.get(recipeId);
+            ForgeDeviceEffect effect = ForgeDeviceEffectRegistry.get(r.effectHandlerKey);
             boolean overQuota = (i >= quota);
-            Global.getLogger(ForgeBattlePlugin.class).info(
-                    "[Forge] BATTLE deploy: " + recipeId + (overQuota ? " (OVER QUOTA — penalty)" : ""));
+            if (effect != null) {
+                effect.deployBattle(engine, overQuota);
+            } else {
+                Global.getLogger(ForgeBattlePlugin.class).warn(
+                        "[Forge] no effect registered for " + r.effectHandlerKey);
+            }
+            if (overQuota && r.penaltyKey != null) {
+                ForgeDevicePenalty penalty = ForgeDevicePenaltyRegistry.get(r.penaltyKey);
+                if (penalty != null) {
+                    ShipAPI flagship = engine.getPlayerShip();
+                    penalty.apply(engine, flagship);
+                }
+            }
         }
 
         for (String recipeId : pending) {
