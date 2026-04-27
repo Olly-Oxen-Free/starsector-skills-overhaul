@@ -49,6 +49,11 @@ public final class EffectRegistry {
         handlers.put("SO_forced_march", new skills_overhaul.effect.handlers.SOForcedMarchHandler());
         handlers.put("SO_heavy_detachments", new skills_overhaul.effect.handlers.SOHeavyDetachmentsHandler());
         handlers.put("SO_doctrinal_authority", new skills_overhaul.effect.handlers.SODoctrinalAuthorityHandler());
+        handlers.put("SO_artificer_t0", new skills_overhaul.effect.handlers.SOArtificerT0Handler());
+        handlers.put("SO_artificer_t5", new skills_overhaul.effect.handlers.SOArtificerT5Handler());
+        handlers.put("SO_forge_recipe_unlock", new skills_overhaul.effect.handlers.SOForgeRecipeUnlockHandler());
+        handlers.put("SO_forge_quota_bonus", new skills_overhaul.effect.handlers.SOForgeQuotaBonusHandler());
+        handlers.put("SO_tech_cascade_stub", new skills_overhaul.effect.handlers.SOTechCascadeStubHandler());
     }
 
     public static EffectHandler get(String type) {
