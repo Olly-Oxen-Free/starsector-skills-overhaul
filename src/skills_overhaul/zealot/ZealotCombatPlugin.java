@@ -273,6 +273,7 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     static final class DeathCheatState {
         Set<ShipAPI> triggered = new HashSet<>();
+        public static final String STAT_KEY = "zealot_t4_death_cheat_invuln";
 
         void tick(ShipAPI s, int zealStacks) {
             if (triggered.contains(s)) return;
@@ -280,19 +281,36 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
             if (hullPct > 0.04f) return;
             triggered.add(s);
             float duration = 5f + Math.min(5f, 0.05f * zealStacks);
-            // TODO: ShipAPI.setInvincible not available in this API version; replace with a hull/damage modifier if added later
+
+            // Apply effective invincibility via damage-taken multipliers ≈ 0.
+            s.getMutableStats().getHullDamageTakenMult().modifyMult(STAT_KEY, 0.001f);
+            s.getMutableStats().getArmorDamageTakenMult().modifyMult(STAT_KEY, 0.001f);
+            s.getMutableStats().getEmpDamageTakenMult().modifyMult(STAT_KEY, 0.001f);
+            try {
+                s.getMutableStats().getShieldDamageTakenMult().modifyMult(STAT_KEY, 0.001f);
+            } catch (Throwable t) {
+                // Some Starsector versions may not expose getShieldDamageTakenMult on hull-side
+                // mutator; ignore.
+            }
+
+            // Repair weapons + vent flux + restore engine functionality
             for (WeaponAPI w : s.getAllWeapons()) {
                 try { w.repair(); } catch (Throwable t) {}
             }
             s.getFluxTracker().setHardFlux(0f);
+
             final ShipAPI ship = s;
-            final float dur = duration;
             Global.getCombatEngine().addPlugin(new BaseEveryFrameCombatPlugin() {
-                float remaining = dur;
+                float remaining = duration;
                 @Override public void advance(float amount, List<InputEventAPI> events) {
                     remaining -= amount;
                     if (remaining <= 0) {
-                        // TODO: ship.setInvincible(false) when API supports it
+                        ship.getMutableStats().getHullDamageTakenMult().unmodify(STAT_KEY);
+                        ship.getMutableStats().getArmorDamageTakenMult().unmodify(STAT_KEY);
+                        ship.getMutableStats().getEmpDamageTakenMult().unmodify(STAT_KEY);
+                        try {
+                            ship.getMutableStats().getShieldDamageTakenMult().unmodify(STAT_KEY);
+                        } catch (Throwable t) {}
                         Global.getCombatEngine().removePlugin(this);
                     }
                 }
