@@ -186,7 +186,11 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_forced_march"
+        }
+      ]
     },
     {
       "id": "zealot_t2_mobile_arsenal",
