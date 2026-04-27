@@ -40,6 +40,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "comm_jammer"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t1_ecm"
         }
       ]
     },
@@ -56,7 +60,12 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t1_ewm"
+        }
+      ]
     },
     {
       "id": "artificer_t1_auto_deploy",
@@ -71,7 +80,13 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_automated_points_bonus",
+          "key": "auto_deploy",
+          "value": 40
+        }
+      ]
     },
     {
       "id": "artificer_t1_systems",
@@ -86,7 +101,12 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t1_systems"
+        }
+      ]
     },
     {
       "id": "artificer_t1_stealth",
@@ -101,7 +121,11 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_stealth_systems"
+        }
+      ]
     },
     {
       "id": "artificer_t2_optics",
@@ -120,6 +144,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "nav_beacon_generator"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t2_optics"
         }
       ]
     },
@@ -140,6 +168,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "self_replicating_minefield"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t2_strike"
         }
       ]
     },
@@ -160,6 +192,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "repair_pod"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t2_shield"
         }
       ]
     },
@@ -180,6 +216,9 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "slipstream_seeder"
+        },
+        {
+          "type": "SO_nav_matrix"
         }
       ]
     },
@@ -200,6 +239,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "core_surge"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t2_standard_systems"
         }
       ]
     },
@@ -216,7 +259,12 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t3_beam_spec"
+        }
+      ]
     },
     {
       "id": "artificer_t3_adv_strike",
@@ -235,6 +283,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "officer_imprint"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t3_adv_strike"
         }
       ]
     },
@@ -259,6 +311,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "disruptor_relay"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t3_resilience"
         }
       ]
     },
@@ -279,6 +335,10 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "graviton_anchor"
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t3_power_grid"
         }
       ]
     },
@@ -295,7 +355,11 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_final_gambit"
+        }
+      ]
     },
     {
       "id": "artificer_t4_limit_breaker",
@@ -319,6 +383,15 @@
           "type": "SO_forge_quota_bonus",
           "key": "limit_breaker",
           "value": 1
+        },
+        {
+          "type": "SO_automated_points_bonus",
+          "key": "limit_breaker",
+          "value": 40
+        },
+        {
+          "type": "SO_artificer_combat_script",
+          "node": "artificer_t4_limit_breaker"
         }
       ]
     },
@@ -343,6 +416,9 @@
         {
           "type": "SO_forge_recipe_unlock",
           "recipeId": "hypercloud_generator"
+        },
+        {
+          "type": "SO_phase_shared_bonus"
         }
       ]
     },
@@ -378,7 +454,11 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_carrier_bay_bonus"
+        }
+      ]
     },
     {
       "id": "artificer_t5",
