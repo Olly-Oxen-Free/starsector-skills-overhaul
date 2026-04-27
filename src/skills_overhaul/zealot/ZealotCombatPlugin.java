@@ -43,6 +43,12 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int zealStacks, Oath oath) {
+        // T0 base effects: always-on if T0 base purchased (no ACTIVE_NODES gate)
+        if (Boolean.TRUE.equals(com.fs.starfarer.api.Global.getSector().getMemoryWithoutUpdate().get(
+                skills_overhaul.effect.handlers.SOZealotT0Handler.K_PURCHASED))) {
+            T0BallisticRange.apply(s);
+            T0CapCruiserArmor.apply(s);
+        }
         if (ACTIVE_NODES.contains("zealot_t1_hammerfall")) Hammerfall.apply(s, oath);
         if (ACTIVE_NODES.contains("zealot_t1_disciplined_gunnery")) DisciplinedGunnery.apply(s, zealStacks);
         if (ACTIVE_NODES.contains("zealot_t1_damage_control")) DamageControl.apply(s, zealStacks);
@@ -54,6 +60,21 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("zealot_t3_last_stand")) LastStand.apply(s, zealStacks);
         if (ACTIVE_NODES.contains("zealot_t3_iron_discipline")) IronDiscipline.apply(s);
         if (ACTIVE_NODES.contains("zealot_t4_sanctum")) Sanctum.apply(s, engine);
+    }
+
+    static final class T0BallisticRange {
+        static void apply(ShipAPI s) {
+            s.getMutableStats().getBallisticWeaponRangeBonus().modifyPercent("zealot_t0_base_range", 5f);
+        }
+    }
+
+    static final class T0CapCruiserArmor {
+        static void apply(ShipAPI s) {
+            if (s.getHullSize() == ShipAPI.HullSize.CAPITAL_SHIP
+                    || s.getHullSize() == ShipAPI.HullSize.CRUISER) {
+                s.getMutableStats().getArmorBonus().modifyFlat("zealot_t0_base_armor", 25f);
+            }
+        }
     }
 
     static final class Hammerfall {
