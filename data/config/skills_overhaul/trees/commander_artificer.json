@@ -1,0 +1,421 @@
+{
+  "tree": "commander_artificer",
+  "nodes": [
+    {
+      "id": "artificer_t0",
+      "name": "Tachyon Forge",
+      "x": 2,
+      "y": 0,
+      "cost": 1,
+      "prereqs": [],
+      "effects": [
+        {
+          "type": "SO_artificer_t0",
+          "channel": "base"
+        },
+        {
+          "type": "SO_artificer_t0",
+          "channel": "core"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t1_ecm",
+      "name": "Electronic Countermeasures",
+      "x": 0,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t0"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "ecm_wave"
+        },
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "comm_jammer"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t1_ewm",
+      "name": "Energy Weapon Mastery",
+      "x": 1,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t0"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t1_auto_deploy",
+      "name": "Automated Deployment",
+      "x": 2,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t0"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t1_systems",
+      "name": "Systems Expertise",
+      "x": 3,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t0"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t1_stealth",
+      "name": "Stealth Systems",
+      "x": 4,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t0"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t2_optics",
+      "name": "Precision Optics",
+      "x": 0,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t1_ecm"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "nav_beacon_generator"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t2_strike",
+      "name": "Strike Package",
+      "x": 1,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t1_ewm"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "self_replicating_minefield"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t2_shield",
+      "name": "Shield Mastery",
+      "x": 2,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t1_auto_deploy"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "repair_pod"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t2_nav_matrix",
+      "name": "Navigation Matrix",
+      "x": 3,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t1_systems"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "slipstream_seeder"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t2_standard_systems",
+      "name": "Standardised Systems",
+      "x": 4,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t1_stealth"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "core_surge"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t3_beam_spec",
+      "name": "Beam Specialization",
+      "x": 0,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t2_optics"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t3_adv_strike",
+      "name": "Advanced Strike Package",
+      "x": 1,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t2_strike"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "officer_imprint"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t3_resilience",
+      "name": "Technological Resilience",
+      "x": 2,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t2_shield"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "scrap_beacon"
+        },
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "disruptor_relay"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t3_power_grid",
+      "name": "Power Grid Mastery",
+      "x": 3,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t2_nav_matrix"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "graviton_anchor"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t3_final_gambit",
+      "name": "Final Gambit",
+      "x": 4,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t2_standard_systems"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t4_limit_breaker",
+      "name": "Limit Breaker",
+      "x": 0,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t3_beam_spec"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "derelict_drone_spawner"
+        },
+        {
+          "type": "SO_forge_quota_bonus",
+          "key": "limit_breaker",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "id": "artificer_t4_transcendence",
+      "name": "Technological Transcendence",
+      "x": 1,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t3_adv_strike"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "transverse_vent"
+        },
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "hypercloud_generator"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t4_cascade",
+      "name": "Technological Cascade",
+      "x": 2,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t3_resilience"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_tech_cascade_stub"
+        }
+      ]
+    },
+    {
+      "id": "artificer_t4_carrier_command",
+      "name": "Carrier Command",
+      "x": 3,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "artificer_t3_power_grid"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "artificer_t5",
+      "name": "Alpha Storm",
+      "x": 2,
+      "y": 5,
+      "cost": 3,
+      "prereqs": [
+        {
+          "atLeast": 2,
+          "of": [
+            "artificer_t4_limit_breaker",
+            "artificer_t4_transcendence",
+            "artificer_t4_cascade",
+            "artificer_t4_carrier_command"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_artificer_t5",
+          "channel": "base"
+        },
+        {
+          "type": "SO_artificer_t5",
+          "channel": "core"
+        },
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "alpha_storm_emitter"
+        },
+        {
+          "type": "SO_forge_quota_bonus",
+          "key": "alpha_storm",
+          "value": 1
+        }
+      ]
+    }
+  ]
+}
