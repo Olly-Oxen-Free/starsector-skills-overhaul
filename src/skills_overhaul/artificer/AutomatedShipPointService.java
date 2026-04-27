@@ -1,0 +1,27 @@
+package skills_overhaul.artificer;
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public final class AutomatedShipPointService {
+
+    public static final int VANILLA_BASE = 120;
+    private static final Map<String, Integer> BONUSES = new LinkedHashMap<>();
+
+    public static int getRaisedCap() {
+        int total = VANILLA_BASE;
+        for (Integer v : BONUSES.values()) total += v;
+        return total;
+    }
+
+    public static void registerBonus(String key, int bonus) { BONUSES.put(key, bonus); }
+    public static void unregisterBonus(String key) { BONUSES.remove(key); }
+
+    public static int computeOverCap(int deployed, int cap) {
+        return Math.max(0, deployed - cap);
+    }
+
+    public static void clearForTest() { BONUSES.clear(); }
+
+    private AutomatedShipPointService() {}
+}
