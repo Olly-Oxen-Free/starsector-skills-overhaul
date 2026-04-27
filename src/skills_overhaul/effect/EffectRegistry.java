@@ -59,6 +59,8 @@ public final class EffectRegistry {
         handlers.put("SO_phase_shared_bonus", new skills_overhaul.effect.handlers.SOPhaseSharedBonusHandler());
         handlers.put("SO_carrier_bay_bonus", new skills_overhaul.effect.handlers.SOCarrierBayBonusHandler());
         handlers.put("SO_final_gambit", new skills_overhaul.effect.handlers.SOFinalGambitHandler());
+        handlers.put("SO_stealth_systems", new skills_overhaul.effect.handlers.SOStealthSystemsHandler());
+        handlers.put("SO_nav_matrix", new skills_overhaul.effect.handlers.SONavMatrixHandler());
     }
 
     public static EffectHandler get(String type) {
