@@ -35,6 +35,7 @@ public final class CrusadeAbility extends BaseDurationAbility {
                 }
             }
             CrusadeService.declare(wrapper, rivalId, now);
+            new skills_overhaul.zealot.CrusadeNPCStub().onPlayerCrusadeDeclared(rivalId);
             mem.set("$skills.zealot.crusade.capBonusActive", true);
         } else if (CrusadeService.canManualCancel(wrapper, now)) {
             // Cancel crusade
