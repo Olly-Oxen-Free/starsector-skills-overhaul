@@ -72,7 +72,11 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [
+        {
+          "type": "SO_heavy_detachments"
+        }
+      ]
     },
     {
       "id": "zealot_t1_damage_control",

@@ -46,6 +46,7 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientScript(new skills_overhaul.zealot.ZealDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.zealot.CrusadeNPCStub());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.PostBattleRestoreListener());
+        Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.RaidZealListener());
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
