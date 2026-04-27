@@ -6,6 +6,7 @@
         "skills_overhaul_pilot_xp":"skills_overhaul.xp.PilotXPTracker",
         "skills_overhaul_field_commands":"skills_overhaul.commandant.FieldCommandsListener",
         "skills_overhaul_commandant_combat":"skills_overhaul.commandant.CommandantCombatPlugin",
-        "skills_overhaul_zealot_combat":"skills_overhaul.zealot.ZealotCombatPlugin"
+        "skills_overhaul_zealot_combat":"skills_overhaul.zealot.ZealotCombatPlugin",
+        "skills_overhaul_forge_battle":"skills_overhaul.artificer.forge.ForgeBattlePlugin"
     }
 }

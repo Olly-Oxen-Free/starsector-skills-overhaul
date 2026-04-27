@@ -14,6 +14,7 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
     public void onApplicationLoad() throws Exception {
         ConfigLoader.load();
         TreeRegistry.load();
+        skills_overhaul.artificer.forge.ForgeRecipeRegistry.registerAll();
         Global.getLogger(SkillsOverhaulModPlugin.class).info(LOG_PREFIX
                 + "loaded " + TreeRegistry.totalNodeCount(Tree.PILOT) + " pilot nodes ("
                 + TreeRegistry.getTrees(Tree.PILOT).size() + " trees), "
@@ -48,6 +49,10 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.PostBattleRestoreListener());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.RaidZealListener());
         Global.getSector().addTransientScript(new skills_overhaul.zealot.DoctrinalAuthorityTicker());
+        Global.getSector().addTransientScript(
+                new skills_overhaul.artificer.forge.MobileFabUnitTicker());
+        Global.getSector().addTransientListener(
+                new skills_overhaul.artificer.forge.ForgeBattleHook());
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
