@@ -42,6 +42,9 @@ public final class EffectRegistry {
         handlers.put("SO_field_commands", new skills_overhaul.effect.handlers.SOFieldCommandsHandler());
         handlers.put("SO_elite_cascade", new skills_overhaul.effect.handlers.SOEliteCascadeHandler());
         handlers.put("SO_zeal_combat_script", new skills_overhaul.effect.handlers.SOZealCombatScriptHandler());
+        handlers.put("SO_zealot_t0", new skills_overhaul.effect.handlers.SOZealotT0Handler());
+        handlers.put("SO_zealot_t5", new skills_overhaul.effect.handlers.SOZealotT5Handler());
+        handlers.put("SO_mobile_arsenal", new skills_overhaul.effect.handlers.SOMobileArsenalHandler());
     }
 
     public static EffectHandler get(String type) {
