@@ -348,7 +348,7 @@
           ]
         }
       ],
-      "effects": []
+      "effects": [ { "type": "SO_doctrinal_authority" } ]
     },
     {
       "id": "zealot_t4_tribute",

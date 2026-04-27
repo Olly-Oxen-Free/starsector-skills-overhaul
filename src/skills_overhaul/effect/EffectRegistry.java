@@ -48,6 +48,7 @@ public final class EffectRegistry {
         handlers.put("SO_field_logistics", new skills_overhaul.effect.handlers.SOFieldLogisticsHandler());
         handlers.put("SO_forced_march", new skills_overhaul.effect.handlers.SOForcedMarchHandler());
         handlers.put("SO_heavy_detachments", new skills_overhaul.effect.handlers.SOHeavyDetachmentsHandler());
+        handlers.put("SO_doctrinal_authority", new skills_overhaul.effect.handlers.SODoctrinalAuthorityHandler());
     }
 
     public static EffectHandler get(String type) {
