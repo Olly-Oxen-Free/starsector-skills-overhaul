@@ -1,108 +1,413 @@
 {
   "tree": "commander_zealot",
   "nodes": [
-    { "id": "zealot_t0", "name": "The Old Way",
-      "x": 2, "y": 0, "cost": 1, "prereqs": [],
+    {
+      "id": "zealot_t0",
+      "name": "The Old Way",
+      "x": 2,
+      "y": 0,
+      "cost": 1,
+      "prereqs": [],
       "effects": [
-        { "type": "SO_zealot_t0", "channel": "base" },
-        { "type": "SO_zealot_t0", "channel": "core" }
+        {
+          "type": "SO_zealot_t0",
+          "channel": "base"
+        },
+        {
+          "type": "SO_zealot_t0",
+          "channel": "core"
+        }
       ]
     },
-
-    { "id": "zealot_t1_hammerfall", "name": "Hammerfall",
-      "x": 0, "y": 1, "cost": 1, "prereqs": [{ "all": ["zealot_t0"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t1_hammerfall" } ]
-    },
-    { "id": "zealot_t1_disciplined_gunnery", "name": "Disciplined Gunnery",
-      "x": 1, "y": 1, "cost": 1, "prereqs": [{ "all": ["zealot_t0"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t1_disciplined_gunnery" } ]
-    },
-    { "id": "zealot_t1_heavy_detachments", "name": "Heavy Detachments",
-      "x": 2, "y": 1, "cost": 1, "prereqs": [{ "all": ["zealot_t0"] }],
-      "effects": []
-    },
-    { "id": "zealot_t1_damage_control", "name": "Damage Control",
-      "x": 3, "y": 1, "cost": 1, "prereqs": [{ "all": ["zealot_t0"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t1_damage_control" } ]
-    },
-    { "id": "zealot_t1_field_logistics", "name": "Field Logistics",
-      "x": 4, "y": 1, "cost": 1, "prereqs": [{ "all": ["zealot_t0"] }],
-      "effects": []
-    },
-
-    { "id": "zealot_t2_avenge", "name": "Avenge the Fallen",
-      "x": 0, "y": 2, "cost": 1, "prereqs": [{ "all": ["zealot_t1_hammerfall"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t2_avenge" } ]
-    },
-    { "id": "zealot_t2_reinforced_plating", "name": "Reinforced Plating",
-      "x": 1, "y": 2, "cost": 1, "prereqs": [{ "all": ["zealot_t1_disciplined_gunnery"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t2_reinforced_plating" } ]
-    },
-    { "id": "zealot_t2_battle_line", "name": "Battle Line",
-      "x": 2, "y": 2, "cost": 1, "prereqs": [{ "all": ["zealot_t1_heavy_detachments"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t2_battle_line" } ]
-    },
-    { "id": "zealot_t2_forced_march", "name": "Forced March",
-      "x": 3, "y": 2, "cost": 1, "prereqs": [{ "all": ["zealot_t1_damage_control"] }],
-      "effects": []
-    },
-    { "id": "zealot_t2_mobile_arsenal", "name": "Mobile Arsenal",
-      "x": 4, "y": 2, "cost": 1, "prereqs": [{ "all": ["zealot_t1_field_logistics"] }],
-      "effects": [ { "type": "SO_mobile_arsenal" } ]
-    },
-
-    { "id": "zealot_t3_steelbound", "name": "Steelbound",
-      "x": 0, "y": 3, "cost": 1, "prereqs": [{ "all": ["zealot_t2_avenge"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t3_steelbound" } ]
-    },
-    { "id": "zealot_t3_sworn_vigilance", "name": "Sworn Vigilance",
-      "x": 1, "y": 3, "cost": 1, "prereqs": [{ "all": ["zealot_t2_reinforced_plating"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t3_sworn_vigilance" } ]
-    },
-    { "id": "zealot_t3_capital_doctrine", "name": "Capital Doctrine",
-      "x": 2, "y": 3, "cost": 1, "prereqs": [{ "all": ["zealot_t2_battle_line"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t3_capital_doctrine" } ]
-    },
-    { "id": "zealot_t3_last_stand", "name": "Last Stand",
-      "x": 3, "y": 3, "cost": 1, "prereqs": [{ "all": ["zealot_t2_forced_march"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t3_last_stand" } ]
-    },
-    { "id": "zealot_t3_iron_discipline", "name": "Iron Discipline",
-      "x": 4, "y": 3, "cost": 1, "prereqs": [{ "all": ["zealot_t2_mobile_arsenal"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t3_iron_discipline" } ]
-    },
-
-    { "id": "zealot_t4_sanctum", "name": "Sanctum",
-      "x": 0, "y": 4, "cost": 2, "prereqs": [{ "all": ["zealot_t3_steelbound"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t4_sanctum" } ]
-    },
-    { "id": "zealot_t4_doctrinal_authority", "name": "Doctrinal Authority",
-      "x": 1, "y": 4, "cost": 2, "prereqs": [{ "all": ["zealot_t3_sworn_vigilance"] }],
-      "effects": []
-    },
-    { "id": "zealot_t4_tribute", "name": "Tribute",
-      "x": 2, "y": 4, "cost": 2, "prereqs": [{ "all": ["zealot_t3_capital_doctrine"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t4_tribute" } ]
-    },
-    { "id": "zealot_t4_death_cheat", "name": "Death Cheat",
-      "x": 3, "y": 4, "cost": 2, "prereqs": [{ "all": ["zealot_t3_last_stand"] }],
-      "effects": [ { "type": "SO_zeal_combat_script", "node": "zealot_t4_death_cheat" } ]
-    },
-
-    { "id": "zealot_t5", "name": "Crusade",
-      "x": 2, "y": 5, "cost": 3,
-      "prereqs": [{
-        "atLeast": 2,
-        "of": [
-          "zealot_t4_sanctum",
-          "zealot_t4_doctrinal_authority",
-          "zealot_t4_tribute",
-          "zealot_t4_death_cheat"
-        ]
-      }],
+    {
+      "id": "zealot_t1_hammerfall",
+      "name": "Hammerfall",
+      "x": 0,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t0"
+          ]
+        }
+      ],
       "effects": [
-        { "type": "SO_zealot_t5", "channel": "base" },
-        { "type": "SO_zealot_t5", "channel": "core" }
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t1_hammerfall"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t1_disciplined_gunnery",
+      "name": "Disciplined Gunnery",
+      "x": 1,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t0"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t1_disciplined_gunnery"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t1_heavy_detachments",
+      "name": "Heavy Detachments",
+      "x": 2,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t0"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "zealot_t1_damage_control",
+      "name": "Damage Control",
+      "x": 3,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t0"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t1_damage_control"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t1_field_logistics",
+      "name": "Field Logistics",
+      "x": 4,
+      "y": 1,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t0"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_field_logistics"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t2_avenge",
+      "name": "Avenge the Fallen",
+      "x": 0,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t1_hammerfall"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t2_avenge"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t2_reinforced_plating",
+      "name": "Reinforced Plating",
+      "x": 1,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t1_disciplined_gunnery"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t2_reinforced_plating"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t2_battle_line",
+      "name": "Battle Line",
+      "x": 2,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t1_heavy_detachments"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t2_battle_line"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t2_forced_march",
+      "name": "Forced March",
+      "x": 3,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t1_damage_control"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "zealot_t2_mobile_arsenal",
+      "name": "Mobile Arsenal",
+      "x": 4,
+      "y": 2,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t1_field_logistics"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_mobile_arsenal"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t3_steelbound",
+      "name": "Steelbound",
+      "x": 0,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t2_avenge"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t3_steelbound"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t3_sworn_vigilance",
+      "name": "Sworn Vigilance",
+      "x": 1,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t2_reinforced_plating"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t3_sworn_vigilance"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t3_capital_doctrine",
+      "name": "Capital Doctrine",
+      "x": 2,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t2_battle_line"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t3_capital_doctrine"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t3_last_stand",
+      "name": "Last Stand",
+      "x": 3,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t2_forced_march"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t3_last_stand"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t3_iron_discipline",
+      "name": "Iron Discipline",
+      "x": 4,
+      "y": 3,
+      "cost": 1,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t2_mobile_arsenal"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t3_iron_discipline"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t4_sanctum",
+      "name": "Sanctum",
+      "x": 0,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t3_steelbound"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t4_sanctum"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t4_doctrinal_authority",
+      "name": "Doctrinal Authority",
+      "x": 1,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t3_sworn_vigilance"
+          ]
+        }
+      ],
+      "effects": []
+    },
+    {
+      "id": "zealot_t4_tribute",
+      "name": "Tribute",
+      "x": 2,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t3_capital_doctrine"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t4_tribute"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t4_death_cheat",
+      "name": "Death Cheat",
+      "x": 3,
+      "y": 4,
+      "cost": 2,
+      "prereqs": [
+        {
+          "all": [
+            "zealot_t3_last_stand"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zeal_combat_script",
+          "node": "zealot_t4_death_cheat"
+        }
+      ]
+    },
+    {
+      "id": "zealot_t5",
+      "name": "Crusade",
+      "x": 2,
+      "y": 5,
+      "cost": 3,
+      "prereqs": [
+        {
+          "atLeast": 2,
+          "of": [
+            "zealot_t4_sanctum",
+            "zealot_t4_doctrinal_authority",
+            "zealot_t4_tribute",
+            "zealot_t4_death_cheat"
+          ]
+        }
+      ],
+      "effects": [
+        {
+          "type": "SO_zealot_t5",
+          "channel": "base"
+        },
+        {
+          "type": "SO_zealot_t5",
+          "channel": "core"
+        }
       ]
     }
   ]
