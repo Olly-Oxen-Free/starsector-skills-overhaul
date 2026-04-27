@@ -149,12 +149,22 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     static final class Steelbound {
+        // Tracks which ships have the armor-crit listener attached (per-battle scope).
+        // TODO: clear `attached` on combat-start to avoid cross-battle leakage for long sessions.
+        static final java.util.Set<ShipAPI> attached = new java.util.HashSet<>();
+
         static void apply(ShipAPI s, int zealStacks) {
             if (s.getHullSize() != ShipAPI.HullSize.CAPITAL_SHIP
                     && s.getHullSize() != ShipAPI.HullSize.CRUISER) return;
+            // HP +10% baseline
             s.getMutableStats().getHullBonus().modifyMult("zealot_t3_steelbound", 1.10f);
-            float critProxy = 0.05f + Math.min(0.075f, 0.00075f * zealStacks);
-            s.getMutableStats().getBallisticWeaponDamageMult().modifyMult("zealot_t3_steelbound_armor", 1f + critProxy);
+            // Remove the stale flat-damage proxy from earlier iterations
+            s.getMutableStats().getBallisticWeaponDamageMult().unmodify("zealot_t3_steelbound_armor");
+            // Attach the true armor-crit listener once per ship per battle
+            if (!attached.contains(s)) {
+                s.addListener(new ZealotArmorCritListener(s));
+                attached.add(s);
+            }
         }
     }
 
