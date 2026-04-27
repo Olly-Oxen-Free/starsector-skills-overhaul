@@ -55,6 +55,10 @@ public final class EffectRegistry {
         handlers.put("SO_forge_quota_bonus", new skills_overhaul.effect.handlers.SOForgeQuotaBonusHandler());
         handlers.put("SO_tech_cascade_stub", new skills_overhaul.effect.handlers.SOTechCascadeStubHandler());
         handlers.put("SO_artificer_combat_script", new skills_overhaul.effect.handlers.SOArtificerCombatScriptHandler());
+        handlers.put("SO_automated_points_bonus", new skills_overhaul.effect.handlers.SOAutomatedPointsBonusHandler());
+        handlers.put("SO_phase_shared_bonus", new skills_overhaul.effect.handlers.SOPhaseSharedBonusHandler());
+        handlers.put("SO_carrier_bay_bonus", new skills_overhaul.effect.handlers.SOCarrierBayBonusHandler());
+        handlers.put("SO_final_gambit", new skills_overhaul.effect.handlers.SOFinalGambitHandler());
     }
 
     public static EffectHandler get(String type) {
