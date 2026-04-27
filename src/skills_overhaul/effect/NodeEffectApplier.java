@@ -44,6 +44,13 @@ public final class NodeEffectApplier {
     }
 
     private static boolean shouldApply(JSONObject fx, boolean isT0, boolean t0Active, MemoryAPI mem) {
+        // Oath filter — skip effect if it requires an oath that isn't currently active
+        String requiredOath = fx.optString("oath", null);
+        if (requiredOath != null) {
+            skills_overhaul.zealot.Oath current = skills_overhaul.zealot.OathService.getCurrentOath(
+                    com.fs.starfarer.api.Global.getSector().getMemoryWithoutUpdate());
+            if (current == null || !current.name().equals(requiredOath)) return false;
+        }
         if (isT0) {
             String channel = fx.optString("channel", "base");
             if ("core".equals(channel)) return t0Active;

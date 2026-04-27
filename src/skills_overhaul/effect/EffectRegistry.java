@@ -41,6 +41,7 @@ public final class EffectRegistry {
         handlers.put("SO_officer_inspiration", new skills_overhaul.effect.handlers.SOOfficerInspirationHandler());
         handlers.put("SO_field_commands", new skills_overhaul.effect.handlers.SOFieldCommandsHandler());
         handlers.put("SO_elite_cascade", new skills_overhaul.effect.handlers.SOEliteCascadeHandler());
+        handlers.put("SO_zeal_combat_script", new skills_overhaul.effect.handlers.SOZealCombatScriptHandler());
     }
 
     public static EffectHandler get(String type) {
