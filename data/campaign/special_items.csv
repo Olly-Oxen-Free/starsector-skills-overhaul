@@ -1,0 +1,2 @@
+name,id,tags,tech/manufacturer,rarity,base price,stack size,cargo space,baseRaidDanger,icon,sound id,sound id drop,plugin,plugin params,desc,order
+Forge Device,forge_device,,Artificer,rare,500,1,1,,graphics/icons/cargo/IndEvo_consumable_missile_pulse.png,,,skills_overhaul.artificer.forge.ForgeDeviceItemPlugin,,A crafted Tachyon Forge device.,500
