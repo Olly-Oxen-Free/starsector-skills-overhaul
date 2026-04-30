@@ -2,18 +2,202 @@
   "tree": "pilot_defense",
   "nodes": [
     {
-      "id": "pilot_defense_t0",
-      "name": "Defense",
-      "desc": "Placeholder T0 — content TBD.",
+      "id": "so_defense_hull_conditioning",
+      "name": "Hull Conditioning",
       "x": 2, "y": 0, "cost": 1,
-      "prereqs": []
+      "prereqs": [],
+      "effects": [
+        { "type": "SO_piloted_stat", "hullBonus": 0.15, "fireChanceReduction": 0.25 }
+      ]
     },
     {
-      "id": "pilot_defense_t5",
-      "name": "Defense Capstone",
-      "desc": "Placeholder capstone — content TBD.",
-      "x": 2, "y": 5, "cost": 1,
-      "prereqs": [{"all": ["pilot_defense_t0"]}]
+      "id": "so_defense_reinforced_plating",
+      "name": "Reinforced Plating",
+      "x": 0, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "armorBonus": 0.15, "projectileFragResist": 0.10 }
+      ]
+    },
+    {
+      "id": "so_defense_capacitor_banks",
+      "name": "Capacitor Banks",
+      "x": 1, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "fluxCapBonus": 0.20, "shieldEfficiency": 0.10, "shieldUpkeepReduction": 0.25 }
+      ]
+    },
+    {
+      "id": "so_defense_hardened_modules",
+      "name": "Hardened Modules",
+      "x": 2, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "empDamageReduction": 0.40, "weaponHPBonus": 0.30, "engineHPBonus": 0.20, "fighterBayHPBonus": 0.40 }
+      ]
+    },
+    {
+      "id": "so_defense_damage_control",
+      "name": "Damage Control",
+      "x": 3, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "weaponRepairMult": 2.0, "engineRepairMult": 2.0, "fireChanceReduction": 0.25, "moduleRepairMult": 1.30 }
+      ]
+    },
+    {
+      "id": "so_defense_combat_stamina",
+      "name": "Combat Stamina",
+      "x": 4, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "crDeclineStart": 0.55, "crRegenInCombat": 0.0025, "pptBonus": 30 }
+      ]
+    },
+    {
+      "id": "so_defense_fortress_shield",
+      "name": "Fortress Shield",
+      "x": 0, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_defense_fortress_shield" }
+      ]
+    },
+    {
+      "id": "so_defense_fortify",
+      "name": "Fortify",
+      "x": 1, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_defense_fortify" }
+      ]
+    },
+    {
+      "id": "so_defense_immovable_object",
+      "name": "Immovable Object",
+      "x": 2, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "massMult": 2.0, "weaponHPBonus": 0.30, "engineHPBonus": 0.30, "collisionDamageDealt": 0.50 }
+      ]
+    },
+    {
+      "id": "so_defense_config",
+      "name": "Defensive Configuration",
+      "x": 3, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_defense_config" }
+      ]
+    },
+    {
+      "id": "so_defense_redundant_bays",
+      "name": "Redundant Bays",
+      "x": 4, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_hull_conditioning"] }],
+      "effects": [
+        { "type": "SO_defense_redundant_bays" }
+      ]
+    },
+    {
+      "id": "so_defense_shield_mastery",
+      "name": "Shield Mastery",
+      "x": 0, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_fortress_shield"] }],
+      "effects": [
+        { "type": "SO_defense_shield_mastery" }
+      ]
+    },
+    {
+      "id": "so_defense_targe",
+      "name": "Targe of the Blooded",
+      "x": 1, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_fortify"] }],
+      "effects": [
+        { "type": "SO_defense_targe" }
+      ]
+    },
+    {
+      "id": "so_defense_lead_front",
+      "name": "Lead From the Front",
+      "x": 2, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_fortify"] }],
+      "effects": [
+        { "type": "SO_defense_lead_front" }
+      ]
+    },
+    {
+      "id": "so_defense_battle_hardened",
+      "name": "Battle Hardened",
+      "x": 3, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_combat_stamina"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "hullBonus": 0.20, "pptBonus": 60, "crMalfunctionThreshold": 0.30 }
+      ]
+    },
+    {
+      "id": "so_defense_iron_bastion",
+      "name": "Iron Bastion",
+      "x": 4, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_redundant_bays"] }],
+      "effects": [
+        { "type": "SO_defense_iron_bastion" }
+      ]
+    },
+    {
+      "id": "so_defense_flux_fortress",
+      "name": "Flux Fortress",
+      "x": 0, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_shield_mastery"] }],
+      "effects": [
+        { "type": "SO_defense_flux_fortress" }
+      ]
+    },
+    {
+      "id": "so_defense_overwhelming_force",
+      "name": "Overwhelming Force",
+      "x": 1, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_targe"] }],
+      "effects": [
+        { "type": "SO_defense_overwhelming_force" }
+      ]
+    },
+    {
+      "id": "so_defense_deaths_door",
+      "name": "Death's Door",
+      "x": 2, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_battle_hardened"] }],
+      "effects": [
+        { "type": "SO_defense_deaths_door" }
+      ]
+    },
+    {
+      "id": "so_defense_derelict_fort",
+      "name": "Derelict Fortifications",
+      "x": 3, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_config"] }],
+      "effects": [
+        { "type": "SO_defense_derelict_fort" }
+      ]
+    },
+    {
+      "id": "so_defense_unbreakable",
+      "name": "Unbreakable",
+      "x": 4, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_defense_battle_hardened"] }],
+      "effects": [
+        { "type": "SO_defense_unbreakable" }
+      ]
+    },
+    {
+      "id": "so_defense_adamantine",
+      "name": "Adamantine",
+      "x": 2, "y": 5, "cost": 2,
+      "prereqs": [{ "all": ["so_defense_unbreakable", "so_defense_deaths_door"] }],
+      "effects": [
+        { "type": "SO_defense_adamantine" }
+      ]
     }
   ]
 }

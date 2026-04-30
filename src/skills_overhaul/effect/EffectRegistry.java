@@ -61,6 +61,39 @@ public final class EffectRegistry {
         handlers.put("SO_final_gambit", new skills_overhaul.effect.handlers.SOFinalGambitHandler());
         handlers.put("SO_stealth_systems", new skills_overhaul.effect.handlers.SOStealthSystemsHandler());
         handlers.put("SO_nav_matrix", new skills_overhaul.effect.handlers.SONavMatrixHandler());
+
+        // ── Pilot — shared stat handler ────────────────────────────────────────
+        handlers.put("SO_piloted_stat", new skills_overhaul.effect.handlers.SOPilotedStatHandler());
+
+        // ── Pilot — Defense lane ───────────────────────────────────────────────
+        {
+            skills_overhaul.effect.handlers.defense.SODefenseCombatScriptHandler defScript =
+                    new skills_overhaul.effect.handlers.defense.SODefenseCombatScriptHandler();
+            // Plugin-activation markers (all → ACTIVE_NODES only)
+            handlers.put("SO_defense_fortify",           defScript);
+            handlers.put("SO_defense_targe",             defScript);
+            handlers.put("SO_defense_deaths_door",       defScript);
+            handlers.put("SO_defense_adamantine",        defScript);
+            handlers.put("SO_defense_iron_bastion",      defScript);
+            handlers.put("SO_defense_lead_front",        defScript);
+            handlers.put("SO_defense_unbreakable",       defScript);
+            handlers.put("SO_defense_flux_fortress",     defScript);
+            handlers.put("SO_defense_overwhelming_force",defScript);
+            // Stat-applying handlers (also add to ACTIVE_NODES)
+            handlers.put("SO_defense_fortress_shield",
+                    new skills_overhaul.effect.handlers.defense.SODefenseFortressShieldHandler());
+            handlers.put("SO_defense_redundant_bays",
+                    new skills_overhaul.effect.handlers.defense.SODefenseRedundantBaysHandler());
+            handlers.put("SO_defense_config",
+                    new skills_overhaul.effect.handlers.defense.SODefenseConfigHandler());
+            handlers.put("SO_defense_shield_mastery",
+                    new skills_overhaul.effect.handlers.defense.SODefenseShieldMasteryHandler());
+            handlers.put("SO_defense_derelict_fort",
+                    new skills_overhaul.effect.handlers.defense.SODefenseDerelictFortHandler());
+            handlers.put("SO_defense_carrier_supremacy",
+                    new skills_overhaul.effect.handlers.defense.SODefenseCarrierSupremacyHandler());
+        }
+
         handlers.put("SO_collective_t0",
                 new skills_overhaul.effect.handlers.collective.SOCollectiveT0Handler());
         // T1
