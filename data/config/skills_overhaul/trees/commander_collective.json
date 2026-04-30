@@ -1,0 +1,13 @@
+{
+  "tree": "commander_collective",
+  "nodes": [
+    {
+      "id": "so_collective_t0",
+      "name": "The Collective",
+      "x": 2, "y": 0, "cost": 1, "prereqs": [],
+      "effects": [
+        { "type": "SO_COLLECTIVE_T0" }
+      ]
+    }
+  ]
+}
