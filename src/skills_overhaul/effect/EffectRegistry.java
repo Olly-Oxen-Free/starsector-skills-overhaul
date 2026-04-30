@@ -85,6 +85,17 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.collective.SOStructuralIntegrityHandler());
         handlers.put("SO_collective_hardened_targeting",
                 new skills_overhaul.effect.handlers.collective.SOHardenedTargetingHandler());
+        // T3
+        handlers.put("SO_collective_mind_cascade",
+                new skills_overhaul.effect.handlers.collective.SOMindCascadeHandler());
+        handlers.put("SO_collective_wide_range_propagation",
+                new skills_overhaul.effect.handlers.collective.SOWideRangePropagationHandler());
+        handlers.put("SO_collective_first_strike",
+                new skills_overhaul.effect.handlers.collective.SOFirstStrikeHandler());
+        handlers.put("SO_collective_critical_state",
+                new skills_overhaul.effect.handlers.collective.SOCriticalStateHandler());
+        handlers.put("SO_collective_furor_machinae",
+                new skills_overhaul.effect.handlers.collective.SOFurorMachinaeHandler());
     }
 
     public static EffectHandler get(String type) {

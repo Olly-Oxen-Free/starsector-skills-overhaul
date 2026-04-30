@@ -15,6 +15,26 @@ import java.util.Map;
 
 public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
 
+    // ── T3 logic instances ─────────────────────────────────────────────────────
+    private final FighterInheritanceTracker fighterTracker = new FighterInheritanceTracker();
+    private SOMindCascadeListener mindCascadeLogic;
+    private SOWideRangePropagationLogic wideRangePropagation;
+    private SOFirstStrikeLogic firstStrikeLogic;
+    private SOCriticalStateLogic criticalStateLogic;
+    private SOFurorMachinaeLogic furorMachinaeLogic;
+
+    // Tracks which ships have already had a per-ship furor listener registered
+    private final java.util.Set<String> furorListenersAdded = new java.util.HashSet<String>();
+
+    @Override
+    public void init(CombatEngineAPI engine) {
+        mindCascadeLogic   = new SOMindCascadeListener();
+        wideRangePropagation = new SOWideRangePropagationLogic(fighterTracker);
+        firstStrikeLogic   = new SOFirstStrikeLogic();
+        criticalStateLogic = new SOCriticalStateLogic();
+        furorMachinaeLogic = new SOFurorMachinaeLogic();
+    }
+
     private static final String SRC              = "so_collective_assimilation";
     private static final String SRC_FIRE         = "so_collective_precision_fire_control";
     private static final String SRC_MEM          = "so_collective_combat_memory";
@@ -74,6 +94,25 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
         if (CollectiveActiveNodes.isActive("so_collective_hardened_targeting")) {
             advanceHardenedTargeting(engine);
+        }
+        // T3
+        if (mindCascadeLogic != null) mindCascadeLogic.advance(engine);
+        if (wideRangePropagation != null) wideRangePropagation.advance(engine);
+        if (firstStrikeLogic != null) firstStrikeLogic.advance(engine, amount);
+        if (criticalStateLogic != null) criticalStateLogic.advance(engine);
+        if (furorMachinaeLogic != null) {
+            // Register the furor listener on each AI-cored player ship once
+            if (CollectiveActiveNodes.isActive("so_collective_furor_machinae")) {
+                for (ShipAPI ship : engine.getShips()) {
+                    if (ship.getOwner() != 0 || !isAICored(ship)) continue;
+                    String id = ship.getId();
+                    if (!furorListenersAdded.contains(id)) {
+                        ship.addListener(furorMachinaeLogic);
+                        furorListenersAdded.add(id);
+                    }
+                }
+            }
+            furorMachinaeLogic.advance(engine, amount);
         }
     }
 
