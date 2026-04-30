@@ -61,11 +61,24 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "pptBonus":                s.getPeakCRDuration().modifyFlat(id, v); break;
             case "projectileFragResist":    s.getFragmentationDamageTakenMult().modifyMult(id, 1f - v); break;
             case "fluxDissipationBonus":    s.getFluxDissipation().modifyMult(id, 1f + v); break;
+            case "ballisticRofBonus":       s.getBallisticRoFMult().modifyMult(id, 1f + v); break;
+            case "energyRofBonus":          s.getEnergyRoFMult().modifyMult(id, 1f + v); break;
+            case "missileRofBonus":         s.getMissileRoFMult().modifyMult(id, 1f + v); break;
+            case "weaponFluxCostReduction":
+                s.getBallisticWeaponFluxCostMod().modifyMult(id, 1f - v);
+                s.getEnergyWeaponFluxCostMod().modifyMult(id, 1f - v);
+                break;
+            case "projectileSpeedBonus":    s.getProjectileSpeedMult().modifyMult(id, 1f + v); break;
+            case "weaponTurnRateBonus":     s.getWeaponTurnRateBonus().modifyPercent(id, v * 100f); break;
+            case "nonMissileAmmoCapBonus":
+                Global.getLogger(SOPilotedStatHandler.class)
+                        .info("[SO] SOPilotedStatHandler: nonMissileAmmoCapBonus has no direct API, requires EveryFrame plugin logic");
+                break;
             // Params with no direct API equivalents — log and skip
             case "weaponHPBonus": case "engineHPBonus": case "fighterBayHPBonus":
             case "moduleRepairMult": case "crDeclineStart": case "crRegenInCombat":
             case "massMult": case "collisionDamageDealt": case "crMalfunctionThreshold":
-            case "hitChance":
+            case "hitChance": case "missileTrackingSpeed": case "ammoRegenBonus":
                 Global.getLogger(SOPilotedStatHandler.class)
                         .info("[SO] SOPilotedStatHandler: param '" + key + "' handled in combat plugin, skipping static apply");
                 break;
@@ -93,6 +106,15 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "pptBonus":                s.getPeakCRDuration().unmodifyFlat(id); break;
             case "projectileFragResist":    s.getFragmentationDamageTakenMult().unmodify(id); break;
             case "fluxDissipationBonus":    s.getFluxDissipation().unmodify(id); break;
+            case "ballisticRofBonus":       s.getBallisticRoFMult().unmodify(id); break;
+            case "energyRofBonus":          s.getEnergyRoFMult().unmodify(id); break;
+            case "missileRofBonus":         s.getMissileRoFMult().unmodify(id); break;
+            case "weaponFluxCostReduction":
+                s.getBallisticWeaponFluxCostMod().unmodify(id);
+                s.getEnergyWeaponFluxCostMod().unmodify(id);
+                break;
+            case "projectileSpeedBonus":    s.getProjectileSpeedMult().unmodify(id); break;
+            case "weaponTurnRateBonus":     s.getWeaponTurnRateBonus().unmodifyPercent(id); break;
         }
     }
 

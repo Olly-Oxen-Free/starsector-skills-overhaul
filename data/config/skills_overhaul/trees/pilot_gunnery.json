@@ -2,18 +2,166 @@
   "tree": "pilot_gunnery",
   "nodes": [
     {
-      "id": "pilot_gunnery_t0",
-      "name": "Gunnery",
-      "desc": "Placeholder T0 — content TBD.",
+      "id": "so_gunnery_lock_on",
+      "name": "Lock On",
       "x": 2, "y": 0, "cost": 1,
-      "prereqs": []
+      "prereqs": [],
+      "effects": [
+        { "type": "SO_gunnery_lock_on" }
+      ]
     },
     {
-      "id": "pilot_gunnery_t5",
-      "name": "Gunnery Capstone",
-      "desc": "Placeholder capstone — content TBD.",
-      "x": 2, "y": 5, "cost": 1,
-      "prereqs": [{"all": ["pilot_gunnery_t0"]}]
+      "id": "so_gunnery_hair_trigger",
+      "name": "Hair Trigger",
+      "x": 0, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "ballisticRofBonus": 0.10, "energyRofBonus": 0.10 }
+      ]
+    },
+    {
+      "id": "so_gunnery_efficiency",
+      "name": "Weapon Efficiency",
+      "x": 1, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "weaponFluxCostReduction": 0.15 }
+      ]
+    },
+    {
+      "id": "so_gunnery_target_sol",
+      "name": "Target Solution",
+      "x": 3, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "projectileSpeedBonus": 0.20, "weaponTurnRateBonus": 0.10 }
+      ]
+    },
+    {
+      "id": "so_gunnery_ordnance_res",
+      "name": "Ordnance Reserve",
+      "x": 4, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "nonMissileAmmoCapBonus": 0.40 }
+      ]
+    },
+    {
+      "id": "so_gunnery_overload_hunter",
+      "name": "Overload Hunter",
+      "x": 0, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_gunnery_overload_hunter" }
+      ]
+    },
+    {
+      "id": "so_gunnery_threat_acq",
+      "name": "Threat Acquisition",
+      "x": 1, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_gunnery_threat_acq" }
+      ]
+    },
+    {
+      "id": "so_gunnery_berserker",
+      "name": "Berserker",
+      "x": 2, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_gunnery_berserker" }
+      ]
+    },
+    {
+      "id": "so_gunnery_surgical",
+      "name": "Surgical Strikes",
+      "x": 3, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_gunnery_surgical" }
+      ]
+    },
+    {
+      "id": "so_gunnery_glass_cannon",
+      "name": "Glass Cannon",
+      "x": 4, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_gunnery_glass_cannon" }
+      ]
+    },
+    {
+      "id": "so_gunnery_twist_knife",
+      "name": "Twist the Knife",
+      "x": 0, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_threat_acq"] }],
+      "effects": [
+        { "type": "SO_gunnery_twist_knife" }
+      ]
+    },
+    {
+      "id": "so_gunnery_dragon_slayer",
+      "name": "Dragon Slayer",
+      "x": 1, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_lock_on"] }],
+      "effects": [
+        { "type": "SO_gunnery_dragon_slayer" }
+      ]
+    },
+    {
+      "id": "so_gunnery_point_blank",
+      "name": "Point Blank",
+      "x": 2, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_berserker"] }],
+      "effects": [
+        { "type": "SO_gunnery_point_blank" }
+      ]
+    },
+    {
+      "id": "so_gunnery_dead_eye",
+      "name": "Dead Eye",
+      "x": 4, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_target_sol"] }],
+      "effects": [
+        { "type": "SO_gunnery_dead_eye" }
+      ]
+    },
+    {
+      "id": "so_gunnery_bounty_hunter",
+      "name": "Bounty Hunter",
+      "x": 0, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_twist_knife"] }],
+      "effects": [
+        { "type": "SO_gunnery_bounty_hunter" }
+      ]
+    },
+    {
+      "id": "so_gunnery_wolfpack",
+      "name": "Wolfpack",
+      "x": 1, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_dragon_slayer"] }],
+      "effects": [
+        { "type": "SO_gunnery_wolfpack" }
+      ]
+    },
+    {
+      "id": "so_gunnery_weapons_discipline",
+      "name": "Weapons Discipline",
+      "x": 3, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_gunnery_glass_cannon"] }],
+      "effects": [
+        { "type": "SO_gunnery_weapons_discipline" }
+      ]
+    },
+    {
+      "id": "so_gunnery_killing_machine",
+      "name": "Killing Machine",
+      "x": 2, "y": 5, "cost": 2,
+      "prereqs": [{ "all": ["so_gunnery_bounty_hunter", "so_gunnery_weapons_discipline"] }],
+      "effects": [
+        { "type": "SO_gunnery_killing_machine" }
+      ]
     }
   ]
 }

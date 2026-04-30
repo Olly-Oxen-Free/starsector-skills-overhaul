@@ -94,6 +94,31 @@ public final class EffectRegistry {
                     new skills_overhaul.effect.handlers.defense.SODefenseCarrierSupremacyHandler());
         }
 
+        // ── Pilot — Gunnery lane ───────────────────────────────────────────────
+        {
+            skills_overhaul.effect.handlers.gunnery.SOGunneryCombatScriptHandler gunScript =
+                    new skills_overhaul.effect.handlers.gunnery.SOGunneryCombatScriptHandler();
+            handlers.put("SO_gunnery_lock_on",           gunScript);
+            handlers.put("SO_gunnery_hair_trigger",      gunScript);
+            handlers.put("SO_gunnery_efficiency",        gunScript);
+            handlers.put("SO_gunnery_target_sol",        gunScript);
+            handlers.put("SO_gunnery_ordnance_res",      gunScript);
+            handlers.put("SO_gunnery_overload_hunter",   gunScript);
+            handlers.put("SO_gunnery_threat_acq",        gunScript);
+            handlers.put("SO_gunnery_berserker",         gunScript);
+            handlers.put("SO_gunnery_surgical",          gunScript);
+            handlers.put("SO_gunnery_twist_knife",       gunScript);
+            handlers.put("SO_gunnery_dragon_slayer",     gunScript);
+            handlers.put("SO_gunnery_point_blank",       gunScript);
+            handlers.put("SO_gunnery_bounty_hunter",     gunScript);
+            handlers.put("SO_gunnery_wolfpack",          gunScript);
+            handlers.put("SO_gunnery_weapons_discipline",gunScript);
+            handlers.put("SO_gunnery_dead_eye",          gunScript);
+            handlers.put("SO_gunnery_killing_machine",   gunScript);
+            handlers.put("SO_gunnery_glass_cannon",
+                    new skills_overhaul.effect.handlers.gunnery.SOGunneryGlassCannonHandler());
+        }
+
         handlers.put("SO_collective_t0",
                 new skills_overhaul.effect.handlers.collective.SOCollectiveT0Handler());
         // T1
