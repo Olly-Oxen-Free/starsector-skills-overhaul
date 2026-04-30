@@ -39,7 +39,7 @@ public final class SOEmergencyHeatsinkLogic {
                 usedHeatsink.add(id);
                 flux.setHardFlux(0f);
                 flux.ventFlux();
-                stats.getVentRateMult().modifyPercent(SRC_VENT, 50f);
+                stats.getVentRateMult().modifyPercent(SRC_VENT, 100f);
                 stats.getMaxSpeed().modifyPercent(SRC_SPEED, 20f);
                 wasVenting.put(id, Boolean.TRUE);
                 ventTimer.put(id, 0f);
