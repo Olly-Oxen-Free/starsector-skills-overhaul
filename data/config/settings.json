@@ -9,6 +9,7 @@
         "skills_overhaul_zealot_combat":"skills_overhaul.zealot.ZealotCombatPlugin",
         "skills_overhaul_forge_battle":"skills_overhaul.artificer.forge.ForgeBattlePlugin",
         "skills_overhaul_artificer_combat":"skills_overhaul.artificer.ArtificerCombatPlugin",
-        "skills_overhaul_alpha_storm_battle":"skills_overhaul.artificer.alphastorm.AlphaStormBattleScript"
+        "skills_overhaul_alpha_storm_battle":"skills_overhaul.artificer.alphastorm.AlphaStormBattleScript",
+        "skills_overhaul_collective_combat":"skills_overhaul.collective.CollectiveCombatPlugin"
     }
 }
