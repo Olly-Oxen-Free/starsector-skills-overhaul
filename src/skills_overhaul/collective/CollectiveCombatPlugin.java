@@ -36,7 +36,7 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
     private float integrityUpdateTimer = 0f;
     private static final float INTEGRITY_UPDATE_INTERVAL = 0.25f;
 
-    private final CombatMemoryTracker memoryTracker = new CombatMemoryTracker();
+    // memoryTracker state is persistent (MemoryAPI-backed); stacks read via static API
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
@@ -151,9 +151,10 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
         if (primaryFaction == null) return;
 
-        memoryTracker.recordEngagement(primaryFaction);
-        float dmgBonus    = memoryTracker.getDamageBonus(primaryFaction);
-        float resistBonus = memoryTracker.getResistBonus(primaryFaction);
+        // Stacks incremented in CollectiveBattleEndListener (once per won battle), not per-frame
+        MemoryView view = new MemoryAPIView(Global.getSector().getMemoryWithoutUpdate());
+        float dmgBonus    = CombatMemoryTracker.getDamageBonusPct(view, primaryFaction);
+        float resistBonus = CombatMemoryTracker.getResistBonusPct(view, primaryFaction);
 
         for (ShipAPI ship : engine.getShips()) {
             if (ship.getOwner() != 0 || !ship.isAlive() || !isAICored(ship)) continue;
@@ -281,9 +282,12 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (grid == null) return 1f;
         float[][] cells = grid.getGrid();
         if (cells == null || cells.length == 0) return 1f;
-        float total = 0f;
-        float max   = grid.getMaxArmorInCell();
+        float max = grid.getMaxArmorInCell();
         if (max <= 0f) return 1f;
+        // [KNOWN BIAS] Averages over rectangular grid including cells outside the hull footprint.
+        // Out-of-hull cells always read 0, pulling the fraction below the true value for
+        // non-rectangular ships. Acceptable for a [TUNE] node; fix requires hull-cell mask.
+        float total = 0f;
         int count = 0;
         for (float[] row : cells) {
             for (float cell : row) {
@@ -292,7 +296,7 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
             }
         }
         if (count == 0) return 1f;
-        return (total / count) / max;
+        return Math.min((total / count) / max, 1f);
     }
 
     private void advanceHardenedTargeting(CombatEngineAPI engine) {
