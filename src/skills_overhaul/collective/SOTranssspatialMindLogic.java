@@ -11,6 +11,7 @@ public final class SOTranssspatialMindLogic {
         try {
             MutableCharacterStatsAPI stats = Global.getSector().getPlayerPerson().getStats();
             // Forbid human officers
+            // Prevents new officer assignment; does not evict officers already in slots
             stats.getOfficerNumber().modifyFlat(SOURCE, -999f);
             // +90 automated ship points
             stats.getDynamic().getMod("so_automated_ship_points").modifyFlat(SOURCE, 90f);

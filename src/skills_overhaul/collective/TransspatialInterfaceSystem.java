@@ -80,14 +80,15 @@ public final class TransspatialInterfaceSystem extends BaseShipSystemScript {
     // ── Internal ─────────────────────────────────────────────────────────────
 
     private void onActivate(CombatEngineAPI engine, ShipAPI ship) {
-        decrementUses();
         ShipAPI target = ship.getShipTarget();
-        if (target == null) return;
+        if (target == null || !target.isAlive()) return;
 
         if (isAlliedAICored(target)) {
+            decrementUses();
             // Transfer player control to the allied AI-cored ship
             engine.setPlayerShip(target);
         } else if (isHostileLowDP(target)) {
+            decrementUses();
             // Override ownership to player side for OVERRIDE_DURATION seconds
             String id = target.getId();
             if (!overrideTimers.containsKey(id)) {
