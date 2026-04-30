@@ -63,6 +63,17 @@ public final class EffectRegistry {
         handlers.put("SO_nav_matrix", new skills_overhaul.effect.handlers.SONavMatrixHandler());
         handlers.put("SO_collective_t0",
                 new skills_overhaul.effect.handlers.collective.SOCollectiveT0Handler());
+        // T1
+        handlers.put("SO_collective_magnetic_shielding",
+                new skills_overhaul.effect.handlers.collective.SOMagneticShieldingHandler());
+        handlers.put("SO_collective_precision_fire_control",
+                new skills_overhaul.effect.handlers.collective.SOPrecisionFireControlHandler());
+        handlers.put("SO_collective_combat_memory",
+                new skills_overhaul.effect.handlers.collective.SOCombatMemoryHandler());
+        handlers.put("SO_collective_voltaic_conduits",
+                new skills_overhaul.effect.handlers.collective.SOVoltaicConduitsHandler());
+        handlers.put("SO_collective_integrated_logistics",
+                new skills_overhaul.effect.handlers.collective.SOIntegratedLogisticsHandler());
     }
 
     public static EffectHandler get(String type) {

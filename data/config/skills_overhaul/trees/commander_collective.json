@@ -1,12 +1,40 @@
 {
   "tree": "commander_collective",
   "nodes": [
-    {
-      "id": "so_collective_t0",
-      "name": "The Collective",
+    { "id": "so_collective_t0", "name": "The Collective",
       "x": 2, "y": 0, "cost": 1, "prereqs": [],
       "effects": [
         { "type": "SO_collective_t0" }
+      ]
+    },
+    { "id": "so_collective_magnetic_shielding", "name": "Magnetic Shielding",
+      "x": 0, "y": 1, "cost": 1, "prereqs": [{ "all": ["so_collective_t0"] }],
+      "effects": [
+        { "type": "SO_collective_magnetic_shielding" }
+      ]
+    },
+    { "id": "so_collective_precision_fire_control", "name": "Precision Fire Control",
+      "x": 1, "y": 1, "cost": 1, "prereqs": [{ "all": ["so_collective_t0"] }],
+      "effects": [
+        { "type": "SO_collective_precision_fire_control" }
+      ]
+    },
+    { "id": "so_collective_combat_memory", "name": "Combat Memory",
+      "x": 2, "y": 1, "cost": 1, "prereqs": [{ "all": ["so_collective_t0"] }],
+      "effects": [
+        { "type": "SO_collective_combat_memory" }
+      ]
+    },
+    { "id": "so_collective_voltaic_conduits", "name": "Voltaic Conduits",
+      "x": 3, "y": 1, "cost": 1, "prereqs": [{ "all": ["so_collective_t0"] }],
+      "effects": [
+        { "type": "SO_collective_voltaic_conduits" }
+      ]
+    },
+    { "id": "so_collective_integrated_logistics", "name": "Integrated Logistics",
+      "x": 4, "y": 1, "cost": 1, "prereqs": [{ "all": ["so_collective_t0"] }],
+      "effects": [
+        { "type": "SO_collective_integrated_logistics" }
       ]
     }
   ]
