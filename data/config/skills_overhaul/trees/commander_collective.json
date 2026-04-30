@@ -66,6 +66,36 @@
       "effects": [
         { "type": "SO_collective_hardened_targeting" }
       ]
+    },
+    { "id": "so_collective_mind_cascade", "name": "Mind Cascade",
+      "x": 1, "y": 3, "cost": 1, "prereqs": [{ "all": ["so_collective_battle_conditioning"] }],
+      "effects": [
+        { "type": "SO_collective_mind_cascade" }
+      ]
+    },
+    { "id": "so_collective_wide_range_propagation", "name": "Wide-Range Propagation",
+      "x": 0, "y": 3, "cost": 1, "prereqs": [{ "all": ["so_collective_deadly_persistence"] }],
+      "effects": [
+        { "type": "SO_collective_wide_range_propagation" }
+      ]
+    },
+    { "id": "so_collective_first_strike", "name": "First Strike",
+      "x": 2, "y": 3, "cost": 1, "prereqs": [{ "all": ["so_collective_shield_burst"] }],
+      "effects": [
+        { "type": "SO_collective_first_strike" }
+      ]
+    },
+    { "id": "so_collective_critical_state", "name": "Critical State",
+      "x": 3, "y": 3, "cost": 1, "prereqs": [{ "all": ["so_collective_structural_integrity"] }],
+      "effects": [
+        { "type": "SO_collective_critical_state" }
+      ]
+    },
+    { "id": "so_collective_furor_machinae", "name": "Furor Machinae",
+      "x": 4, "y": 3, "cost": 1, "prereqs": [{ "all": ["so_collective_hardened_targeting"] }],
+      "effects": [
+        { "type": "SO_collective_furor_machinae" }
+      ]
     }
   ]
 }
