@@ -61,7 +61,7 @@ public final class EffectRegistry {
         handlers.put("SO_final_gambit", new skills_overhaul.effect.handlers.SOFinalGambitHandler());
         handlers.put("SO_stealth_systems", new skills_overhaul.effect.handlers.SOStealthSystemsHandler());
         handlers.put("SO_nav_matrix", new skills_overhaul.effect.handlers.SONavMatrixHandler());
-        handlers.put("SO_COLLECTIVE_T0",
+        handlers.put("SO_collective_t0",
                 new skills_overhaul.effect.handlers.collective.SOCollectiveT0Handler());
     }
 

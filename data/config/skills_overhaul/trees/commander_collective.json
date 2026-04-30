@@ -6,7 +6,7 @@
       "name": "The Collective",
       "x": 2, "y": 0, "cost": 1, "prereqs": [],
       "effects": [
-        { "type": "SO_COLLECTIVE_T0" }
+        { "type": "SO_collective_t0" }
       ]
     }
   ]
