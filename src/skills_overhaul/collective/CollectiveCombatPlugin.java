@@ -132,7 +132,7 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
             furorMachinaeLogic.advance(engine, amount);
         }
         // T4
-        if (emergencyHeatsinkLogic != null) emergencyHeatsinkLogic.advance(engine);
+        if (emergencyHeatsinkLogic != null) emergencyHeatsinkLogic.advance(engine, amount);
         if (commandHierarchyLogic != null) commandHierarchyLogic.advance(engine);
         if (latticeDefenseLogic != null) latticeDefenseLogic.advance(engine);
         if (terminationProtocolLogic != null) terminationProtocolLogic.advance(engine, amount);

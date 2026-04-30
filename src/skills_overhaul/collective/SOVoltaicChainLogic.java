@@ -29,13 +29,17 @@ public final class SOVoltaicChainLogic implements DamageDealtModifier {
         ShipAPI source = weapon.getShip();
         if (source == null || !isAICored(source)) return null;
 
-        String pairKey = source.getId() + ":" + target.getId();
+        // Only apply aura to ships, not other entities
+        if (!(target instanceof ShipAPI)) return null;
+        ShipAPI targetShip = (ShipAPI) target;
+
+        String pairKey = source.getId() + ":" + targetShip.getId();
         tracker.addStack(pairKey);
 
         if (tracker.checkAndConsumeDetonation(pairKey)) {
             CombatEngineAPI engine = Global.getCombatEngine();
             if (engine != null) {
-                VoltaicArcEmitter.emitChainArc(engine, source, target, EMP_DMG, ENERGY_DMG);
+                VoltaicArcEmitter.emitChainArc(engine, source, targetShip, EMP_DMG, ENERGY_DMG);
             }
         }
 

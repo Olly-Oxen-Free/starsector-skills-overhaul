@@ -6,6 +6,8 @@ import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.util.Misc;
+import java.util.ArrayList;
+import java.util.List;
 
 public final class SOCommandHierarchyLogic {
 
@@ -16,31 +18,39 @@ public final class SOCommandHierarchyLogic {
     public void advance(CombatEngineAPI engine) {
         if (!CollectiveActiveNodes.isActive("so_collective_command_hierarchy")) return;
 
+        // 1. Gather all alive Alpha-cored player ships with their bonus
+        List<ShipAPI> alphas = new ArrayList<>();
+        for (ShipAPI s : engine.getShips()) {
+            if (s.getOwner() != 0 || !s.isAlive() || !isAlphaCore(s)) continue;
+            alphas.add(s);
+        }
+
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         MemoryView view = new MemoryAPIView(mem);
 
-        for (ShipAPI source : engine.getShips()) {
-            if (source.getOwner() != 0 || !source.isAlive()) continue;
-            if (!isAlphaCore(source)) continue;
+        // 2. For each automated player ship, compute max aura bonus from any alpha in range
+        for (ShipAPI target : engine.getShips()) {
+            if (target.getOwner() != 0 || !target.isAlive() || !isAICored(target)) continue;
 
-            String coreId = source.getCaptain().getId();
-            KnowledgeTier tier = KnowledgeTracker.getTier(view, coreId);
-            float bonusPct = tier.getAuraBonusPct();
-            if (bonusPct <= 0f) continue;
-
-            for (ShipAPI ship : engine.getShips()) {
-                if (ship.getOwner() != 0 || !ship.isAlive()) continue;
-                if (!isAICored(ship)) continue;
-
-                MutableShipStatsAPI stats = ship.getMutableStats();
-                float dist = Misc.getDistance(source.getLocation(), ship.getLocation());
+            float maxBonus = 0f;
+            for (ShipAPI alpha : alphas) {
+                if (alpha == target) continue;
+                float dist = Misc.getDistance(alpha.getLocation(), target.getLocation());
                 if (dist <= AURA) {
-                    stats.getBallisticWeaponDamageMult().modifyPercent(SRC, bonusPct);
-                    stats.getEnergyWeaponDamageMult().modifyPercent(SRC, bonusPct);
-                } else {
-                    stats.getBallisticWeaponDamageMult().unmodify(SRC);
-                    stats.getEnergyWeaponDamageMult().unmodify(SRC);
+                    String coreId = alpha.getCaptain().getId();
+                    KnowledgeTier tier = KnowledgeTracker.getTier(view, coreId);
+                    float bonus = tier.getAuraBonusPct();
+                    if (bonus > maxBonus) maxBonus = bonus;
                 }
+            }
+
+            MutableShipStatsAPI stats = target.getMutableStats();
+            if (maxBonus <= 0f) {
+                stats.getBallisticWeaponDamageMult().unmodify(SRC);
+                stats.getEnergyWeaponDamageMult().unmodify(SRC);
+            } else {
+                stats.getBallisticWeaponDamageMult().modifyPercent(SRC, maxBonus);
+                stats.getEnergyWeaponDamageMult().modifyPercent(SRC, maxBonus);
             }
         }
     }
