@@ -107,6 +107,9 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.collective.SOTerminationProtocolHandler());
         handlers.put("SO_collective_voltaic_chain",
                 new skills_overhaul.effect.handlers.collective.SOVoltaicChainHandler());
+        // T5 (Capstone)
+        handlers.put("SO_collective_transspatial_mind",
+                new skills_overhaul.effect.handlers.collective.SOTranssspatialMindHandler());
     }
 
     public static EffectHandler get(String type) {
