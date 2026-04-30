@@ -121,6 +121,13 @@
       "x": 4, "y": 4, "cost": 1,
       "prereqs": [{ "all": ["so_collective_furor_machinae"] }],
       "effects": [{ "type": "SO_collective_voltaic_chain" }]
+    },
+    { "id": "so_collective_transspatial_mind", "name": "Transspatial Mind",
+      "x": 2, "y": 5, "cost": 2,
+      "prereqs": [{ "all": ["so_collective_emergency_heatsink", "so_collective_command_hierarchy",
+                             "so_collective_lattice_defense", "so_collective_termination_protocol",
+                             "so_collective_voltaic_chain"] }],
+      "effects": [{ "type": "SO_collective_transspatial_mind" }]
     }
   ]
 }
