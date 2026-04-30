@@ -26,14 +26,30 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
     // Tracks which ships have already had a per-ship furor listener registered
     private final java.util.Set<String> furorListenersAdded = new java.util.HashSet<String>();
 
+    // ── T4 logic instances ─────────────────────────────────────────────────────
+    private SOEmergencyHeatsinkLogic emergencyHeatsinkLogic;
+    private SOCommandHierarchyLogic commandHierarchyLogic;
+    private SOLatticeDefenseLogic latticeDefenseLogic;
+    private SOTerminationProtocolLogic terminationProtocolLogic;
+    private SOVoltaicChainLogic voltaicChainLogic;
+
+    // Tracks which ships have already had a per-ship voltaic chain listener registered
+    private final java.util.Set<String> voltaicChainListenersAdded = new java.util.HashSet<String>();
+
     @Override
     public void init(CombatEngineAPI engine) {
         furorListenersAdded.clear();
+        voltaicChainListenersAdded.clear();
         mindCascadeLogic   = new SOMindCascadeListener();
         wideRangePropagation = new SOWideRangePropagationLogic(fighterTracker);
         firstStrikeLogic   = new SOFirstStrikeLogic();
         criticalStateLogic = new SOCriticalStateLogic();
         furorMachinaeLogic = new SOFurorMachinaeLogic();
+        emergencyHeatsinkLogic   = new SOEmergencyHeatsinkLogic();
+        commandHierarchyLogic    = new SOCommandHierarchyLogic();
+        latticeDefenseLogic      = new SOLatticeDefenseLogic();
+        terminationProtocolLogic = new SOTerminationProtocolLogic();
+        voltaicChainLogic        = new SOVoltaicChainLogic();
     }
 
     private static final String SRC              = "so_collective_assimilation";
@@ -114,6 +130,25 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
                 }
             }
             furorMachinaeLogic.advance(engine, amount);
+        }
+        // T4
+        if (emergencyHeatsinkLogic != null) emergencyHeatsinkLogic.advance(engine);
+        if (commandHierarchyLogic != null) commandHierarchyLogic.advance(engine);
+        if (latticeDefenseLogic != null) latticeDefenseLogic.advance(engine);
+        if (terminationProtocolLogic != null) terminationProtocolLogic.advance(engine, amount);
+        if (voltaicChainLogic != null) {
+            // Register the voltaic chain listener on each AI-cored player ship once
+            if (CollectiveActiveNodes.isActive("so_collective_voltaic_chain")) {
+                for (ShipAPI ship : engine.getShips()) {
+                    if (ship.getOwner() != 0 || !isAICored(ship)) continue;
+                    String id = ship.getId();
+                    if (!voltaicChainListenersAdded.contains(id)) {
+                        ship.addListener(voltaicChainLogic);
+                        voltaicChainListenersAdded.add(id);
+                    }
+                }
+            }
+            voltaicChainLogic.advance(amount);
         }
     }
 

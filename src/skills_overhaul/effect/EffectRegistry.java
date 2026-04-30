@@ -96,6 +96,17 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.collective.SOCriticalStateHandler());
         handlers.put("SO_collective_furor_machinae",
                 new skills_overhaul.effect.handlers.collective.SOFurorMachinaeHandler());
+        // T4
+        handlers.put("SO_collective_emergency_heatsink",
+                new skills_overhaul.effect.handlers.collective.SOEmergencyHeatsinkHandler());
+        handlers.put("SO_collective_command_hierarchy",
+                new skills_overhaul.effect.handlers.collective.SOCommandHierarchyHandler());
+        handlers.put("SO_collective_lattice_defense",
+                new skills_overhaul.effect.handlers.collective.SOLatticeDefenseHandler());
+        handlers.put("SO_collective_termination_protocol",
+                new skills_overhaul.effect.handlers.collective.SOTerminationProtocolHandler());
+        handlers.put("SO_collective_voltaic_chain",
+                new skills_overhaul.effect.handlers.collective.SOVoltaicChainHandler());
     }
 
     public static EffectHandler get(String type) {
