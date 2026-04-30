@@ -36,6 +36,36 @@
       "effects": [
         { "type": "SO_collective_integrated_logistics" }
       ]
+    },
+    { "id": "so_collective_deadly_persistence", "name": "Deadly Persistence",
+      "x": 0, "y": 2, "cost": 1, "prereqs": [{ "all": ["so_collective_magnetic_shielding"] }],
+      "effects": [
+        { "type": "SO_collective_deadly_persistence" }
+      ]
+    },
+    { "id": "so_collective_battle_conditioning", "name": "Battle Conditioning",
+      "x": 1, "y": 2, "cost": 1, "prereqs": [{ "all": ["so_collective_precision_fire_control"] }],
+      "effects": [
+        { "type": "SO_collective_battle_conditioning" }
+      ]
+    },
+    { "id": "so_collective_shield_burst", "name": "Shield Burst",
+      "x": 2, "y": 2, "cost": 1, "prereqs": [{ "all": ["so_collective_combat_memory"] }],
+      "effects": [
+        { "type": "SO_collective_shield_burst" }
+      ]
+    },
+    { "id": "so_collective_structural_integrity", "name": "Structural Integrity",
+      "x": 3, "y": 2, "cost": 1, "prereqs": [{ "all": ["so_collective_voltaic_conduits"] }],
+      "effects": [
+        { "type": "SO_collective_structural_integrity" }
+      ]
+    },
+    { "id": "so_collective_hardened_targeting", "name": "Hardened Targeting",
+      "x": 4, "y": 2, "cost": 1, "prereqs": [{ "all": ["so_collective_integrated_logistics"] }],
+      "effects": [
+        { "type": "SO_collective_hardened_targeting" }
+      ]
     }
   ]
 }

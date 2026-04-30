@@ -74,6 +74,17 @@ public final class EffectRegistry {
                 new skills_overhaul.effect.handlers.collective.SOVoltaicConduitsHandler());
         handlers.put("SO_collective_integrated_logistics",
                 new skills_overhaul.effect.handlers.collective.SOIntegratedLogisticsHandler());
+        // T2
+        handlers.put("SO_collective_deadly_persistence",
+                new skills_overhaul.effect.handlers.collective.SODeadlyPersistenceHandler());
+        handlers.put("SO_collective_battle_conditioning",
+                new skills_overhaul.effect.handlers.collective.SOBattleConditioningHandler());
+        handlers.put("SO_collective_shield_burst",
+                new skills_overhaul.effect.handlers.collective.SOShieldBurstHandler());
+        handlers.put("SO_collective_structural_integrity",
+                new skills_overhaul.effect.handlers.collective.SOStructuralIntegrityHandler());
+        handlers.put("SO_collective_hardened_targeting",
+                new skills_overhaul.effect.handlers.collective.SOHardenedTargetingHandler());
     }
 
     public static EffectHandler get(String type) {
