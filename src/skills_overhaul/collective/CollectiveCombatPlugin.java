@@ -50,6 +50,12 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         latticeDefenseLogic      = new SOLatticeDefenseLogic();
         terminationProtocolLogic = new SOTerminationProtocolLogic();
         voltaicChainLogic        = new SOVoltaicChainLogic();
+
+        // T5 (Capstone) — initialize Transspatial Interface uses from alpha assimilation count
+        if (CollectiveActiveNodes.isActive("so_collective_transspatial_mind")) {
+            MemoryAPI mem = Global.getSector().getCharacterData().getMemory();
+            TransspatialInterfaceSystem.initializeUses(mem);
+        }
     }
 
     private static final String SRC              = "so_collective_assimilation";
