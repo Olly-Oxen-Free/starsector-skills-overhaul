@@ -28,6 +28,9 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     // ── T4 logic instances ─────────────────────────────────────────────────────
     private SOEmergencyHeatsinkLogic emergencyHeatsinkLogic;
+
+    // ── T5 (Capstone) logic instances ──────────────────────────────────────────
+    private SODistributedConsciousnessListener distributedConsciousness;
     private SOCommandHierarchyLogic commandHierarchyLogic;
     private SOLatticeDefenseLogic latticeDefenseLogic;
     private SOTerminationProtocolLogic terminationProtocolLogic;
@@ -50,6 +53,8 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         latticeDefenseLogic      = new SOLatticeDefenseLogic();
         terminationProtocolLogic = new SOTerminationProtocolLogic();
         voltaicChainLogic        = new SOVoltaicChainLogic();
+
+        distributedConsciousness = new SODistributedConsciousnessListener();
 
         // T5 (Capstone) — initialize Transspatial Interface uses from alpha assimilation count
         if (CollectiveActiveNodes.isActive("so_collective_transspatial_mind")) {
@@ -156,6 +161,8 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
             }
             voltaicChainLogic.advance(amount);
         }
+        // T5
+        if (distributedConsciousness != null) distributedConsciousness.advance(engine);
     }
 
     public static boolean isAICored(ShipAPI ship) {
