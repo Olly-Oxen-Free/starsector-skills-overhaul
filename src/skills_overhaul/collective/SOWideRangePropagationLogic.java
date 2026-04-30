@@ -27,8 +27,7 @@ public final class SOWideRangePropagationLogic {
             if (source == null) continue;
             if (!isAICored(source)) continue;
 
-            String wingKey = ship.getWing().getSpec().getId() + "_" + source.getId();
-            if (!tracker.markIfNew(wingKey)) continue;
+            if (!tracker.markIfNew(ship.getId())) continue;
 
             MutableShipStatsAPI stats = ship.getMutableStats();
             stats.getMaxSpeed().modifyPercent(SRC, 10f);

@@ -5,6 +5,7 @@ import java.util.Map;
 
 public final class SOFirstStrikeTracker {
 
+    // FSM is one-way by design: First Strike fires once per ship per battle.
     public enum FSState { UNENGAGED, STRUCK, DECAYING }
 
     private static final float DECAY_DURATION = 30f;

@@ -28,6 +28,7 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     @Override
     public void init(CombatEngineAPI engine) {
+        furorListenersAdded.clear();
         mindCascadeLogic   = new SOMindCascadeListener();
         wideRangePropagation = new SOWideRangePropagationLogic(fighterTracker);
         firstStrikeLogic   = new SOFirstStrikeLogic();

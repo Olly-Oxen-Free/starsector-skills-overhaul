@@ -21,6 +21,9 @@ public final class SOMindCascadeListener {
     /** Tracks alive state of AI-cored ships: id -> wasAlive. */
     private final Map<String, Boolean> aliveState = new HashMap<String, Boolean>();
 
+    /** ID of the last ship that received cascade mods, or null if none. */
+    private String lastRecipientId = null;
+
     public void advance(CombatEngineAPI engine) {
         if (!CollectiveActiveNodes.isActive("so_collective_mind_cascade")) return;
 
@@ -41,6 +44,22 @@ public final class SOMindCascadeListener {
     }
 
     private void applyToRecipient(CombatEngineAPI engine) {
+        // Remove mods from the previous recipient before applying to a new one
+        if (lastRecipientId != null) {
+            for (ShipAPI ship : engine.getShips()) {
+                if (ship.getId().equals(lastRecipientId)) {
+                    MutableShipStatsAPI prev = ship.getMutableStats();
+                    prev.getHullDamageTakenMult().unmodify(SRC);
+                    prev.getBallisticWeaponDamageMult().unmodify(SRC);
+                    prev.getEnergyWeaponDamageMult().unmodify(SRC);
+                    prev.getMissileWeaponDamageMult().unmodify(SRC);
+                    prev.getEmpDamageTakenMult().unmodify(SRC);
+                    break;
+                }
+            }
+            lastRecipientId = null;
+        }
+
         ShipAPI recipient = null;
         for (ShipAPI ship : engine.getShips()) {
             if (ship.getOwner() != 0) continue;
@@ -58,6 +77,7 @@ public final class SOMindCascadeListener {
         stats.getEnergyWeaponDamageMult().modifyPercent(SRC, 10f);
         stats.getMissileWeaponDamageMult().modifyPercent(SRC, 10f);
         stats.getEmpDamageTakenMult().modifyMult(SRC, 0.75f);
+        lastRecipientId = recipient.getId();
     }
 
     private static boolean isAICored(ShipAPI ship) {
