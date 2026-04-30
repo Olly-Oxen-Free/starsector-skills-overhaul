@@ -96,6 +96,31 @@
       "effects": [
         { "type": "SO_collective_furor_machinae" }
       ]
+    },
+    { "id": "so_collective_emergency_heatsink", "name": "Emergency Heatsink",
+      "x": 1, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_collective_mind_cascade"] }],
+      "effects": [{ "type": "SO_collective_emergency_heatsink" }]
+    },
+    { "id": "so_collective_command_hierarchy", "name": "Command Hierarchy",
+      "x": 0, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_collective_wide_range_propagation"] }],
+      "effects": [{ "type": "SO_collective_command_hierarchy" }]
+    },
+    { "id": "so_collective_lattice_defense", "name": "Lattice Defense",
+      "x": 2, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_collective_first_strike"] }],
+      "effects": [{ "type": "SO_collective_lattice_defense" }]
+    },
+    { "id": "so_collective_termination_protocol", "name": "Termination Protocol",
+      "x": 3, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_collective_critical_state"] }],
+      "effects": [{ "type": "SO_collective_termination_protocol" }]
+    },
+    { "id": "so_collective_voltaic_chain", "name": "Voltaic Chain",
+      "x": 4, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_collective_furor_machinae"] }],
+      "effects": [{ "type": "SO_collective_voltaic_chain" }]
     }
   ]
 }
