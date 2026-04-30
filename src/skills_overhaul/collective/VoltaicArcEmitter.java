@@ -33,15 +33,14 @@ public final class VoltaicArcEmitter {
             missiles.add(m);
         }
 
-        List<CombatEntityAPI> prioritized = new ArrayList<CombatEntityAPI>();
-        prioritized.addAll(missiles);
-        prioritized.addAll(fighters);
-        prioritized.addAll(ships);
-        if (prioritized.isEmpty()) return;
+        // Strict PD priority: nearest within highest non-empty class
+        List<CombatEntityAPI> chosen = !missiles.isEmpty() ? missiles
+                : !fighters.isEmpty() ? fighters : ships;
+        if (chosen.isEmpty()) return;
 
-        CombatEntityAPI arcTarget = prioritized.get(0);
+        CombatEntityAPI arcTarget = chosen.get(0);
         float minDist = Float.MAX_VALUE;
-        for (CombatEntityAPI e : prioritized) {
+        for (CombatEntityAPI e : chosen) {
             float d = Misc.getDistance(source.getLocation(), e.getLocation());
             if (d < minDist) { minDist = d; arcTarget = e; }
         }
