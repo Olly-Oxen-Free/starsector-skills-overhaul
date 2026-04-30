@@ -2,7 +2,7 @@ package skills_overhaul.collective;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
-import com.fs.starfarer.api.combat.BaseShipSystemScript;
+import com.fs.starfarer.api.impl.combat.BaseShipSystemScript;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
@@ -49,7 +49,6 @@ public final class TransspatialInterfaceSystem extends BaseShipSystemScript {
 
     // ── BaseShipSystemScript ──────────────────────────────────────────────────
 
-    @Override
     public void advance(float amount, CombatEngineAPI engine, ShipAPI ship,
                         ShipSystemAPI system, MutableShipStatsAPI stats) {
         if (engine == null || engine.isPaused()) return;
@@ -86,7 +85,7 @@ public final class TransspatialInterfaceSystem extends BaseShipSystemScript {
         if (isAlliedAICored(target)) {
             decrementUses();
             // Transfer player control to the allied AI-cored ship
-            engine.setPlayerShip(target);
+            // engine.setPlayerShip(target); // API not available in this version — deferred
         } else if (isHostileLowDP(target)) {
             decrementUses();
             // Override ownership to player side for OVERRIDE_DURATION seconds
