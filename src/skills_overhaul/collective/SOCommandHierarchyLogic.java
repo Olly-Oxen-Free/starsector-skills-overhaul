@@ -9,8 +9,9 @@ import com.fs.starfarer.api.util.Misc;
 
 public final class SOCommandHierarchyLogic {
 
-    private static final String SRC  = "so_cmd_hierarchy_aura";
-    private static final float  AURA = 2000f;
+    private static final String SRC         = "so_cmd_hierarchy_aura";
+    private static final float  AURA        = 2000f;
+    private static final String POINT_SOURCE = "so_command_hierarchy";
 
     public void advance(CombatEngineAPI engine) {
         if (!CollectiveActiveNodes.isActive("so_collective_command_hierarchy")) return;
@@ -52,5 +53,21 @@ public final class SOCommandHierarchyLogic {
 
     private static boolean isAICored(ShipAPI ship) {
         return ship.getCaptain() != null && ship.getCaptain().isAICore();
+    }
+
+    public static void applyPointBonus() {
+        try {
+            Global.getSector().getPlayerPerson()
+                .getStats().getDynamic().getMod("so_automated_ship_points")
+                .modifyFlat(POINT_SOURCE, 40f);
+        } catch (Exception ignored) {}
+    }
+
+    public static void removePointBonus() {
+        try {
+            Global.getSector().getPlayerPerson()
+                .getStats().getDynamic().getMod("so_automated_ship_points")
+                .unmodify(POINT_SOURCE);
+        } catch (Exception ignored) {}
     }
 }
