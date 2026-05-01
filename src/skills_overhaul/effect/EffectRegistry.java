@@ -169,6 +169,34 @@ public final class EffectRegistry {
         handlers.put("SO_collective_transspatial_mind",
                 new skills_overhaul.effect.handlers.collective.SOTranssspatialMindHandler());
 
+        // ── Pilot — Systems lane ──────────────────────────────────────────────
+        {
+            skills_overhaul.effect.handlers.systems.SOSystemsCombatScriptHandler sysScript =
+                    new skills_overhaul.effect.handlers.systems.SOSystemsCombatScriptHandler();
+            // Plugin-activation no-op markers
+            handlers.put("SO_systems_phase_coil",              sysScript);
+            handlers.put("SO_systems_flux_exploitation",       sysScript);
+            handlers.put("SO_systems_strike_coord",            sysScript);
+            handlers.put("SO_systems_target_painter",          sysScript);
+            handlers.put("SO_systems_kill_sync",               sysScript);
+            handlers.put("SO_systems_reactive_systems",        sysScript);
+            handlers.put("SO_systems_red_line",                sysScript);
+            handlers.put("SO_systems_void_strike",             sysScript);
+            handlers.put("SO_systems_phase_mastery",           sysScript);
+            handlers.put("SO_systems_precision_strike",        sysScript);
+            handlers.put("SO_systems_carrier_command",         sysScript);
+            handlers.put("SO_systems_phase_resonance_merge",   sysScript);
+            // Flat-stat + memory handlers
+            handlers.put("SO_systems_emp_specialist",
+                    new skills_overhaul.effect.handlers.systems.SOSystemsEMPSpecialistHandler());
+            handlers.put("SO_systems_automata_integra",
+                    new skills_overhaul.effect.handlers.systems.SOSystemsAutomataIntegraHandler());
+            handlers.put("SO_systems_synaptic_relay",
+                    new skills_overhaul.effect.handlers.systems.SOSystemsSynapticRelayHandler());
+            handlers.put("SO_systems_experimental_overrides",
+                    new skills_overhaul.effect.handlers.systems.SOSystemsExperimentalOverridesHandler());
+        }
+
         // ── Pilot — Maneuvering lane ───────────────────────────────────────────
         {
             skills_overhaul.effect.handlers.maneuvering.SOManeuverCombatScriptHandler manScript =

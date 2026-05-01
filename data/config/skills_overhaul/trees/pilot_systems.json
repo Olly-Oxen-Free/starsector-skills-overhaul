@@ -2,18 +2,202 @@
   "tree": "pilot_systems",
   "nodes": [
     {
-      "id": "pilot_systems_t0",
-      "name": "Systems",
-      "desc": "Placeholder T0 — content TBD.",
+      "id": "so_systems_capacitor_banks",
+      "name": "Capacitor Banks",
       "x": 2, "y": 0, "cost": 1,
-      "prereqs": []
+      "prereqs": [],
+      "effects": [
+        { "type": "SO_piloted_stat", "fluxCapBonus": 0.20, "ventRateBonus": 0.10 }
+      ]
     },
     {
-      "id": "pilot_systems_t5",
-      "name": "Systems Capstone",
-      "desc": "Placeholder capstone — content TBD.",
-      "x": 2, "y": 5, "cost": 1,
-      "prereqs": [{"all": ["pilot_systems_t0"]}]
+      "id": "so_systems_energy_mastery",
+      "name": "Energy Weapon Mastery",
+      "x": 1, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "energyFluxReduction": 0.20 }
+      ]
+    },
+    {
+      "id": "so_systems_precision_optics",
+      "name": "Precision Optics",
+      "x": 2, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "energyDamageBonus": 0.10, "energyRangeBonus": 0.10, "allWeaponTurnRateBonus": 0.15 }
+      ]
+    },
+    {
+      "id": "so_systems_ecm",
+      "name": "Electronic Countermeasures",
+      "x": 3, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "sensorProfileReduction": 0.25, "ecmRatingBonus": 0.05, "enemyAccuracyReduction": 0.05 }
+      ]
+    },
+    {
+      "id": "so_systems_quickened_response",
+      "name": "Quickened Response",
+      "x": 4, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "shieldRotationSpeedBonus": 0.25, "shieldRaiseSpeedBonus": 0.25, "maneuverBonus": 0.10 }
+      ]
+    },
+    {
+      "id": "so_systems_phase_coil",
+      "name": "Phase Coil Tuning",
+      "x": 0, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_systems_phase_coil" }
+      ]
+    },
+    {
+      "id": "so_systems_emp_specialist",
+      "name": "EMP Specialist",
+      "x": 1, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_ecm"] }],
+      "effects": [
+        { "type": "SO_systems_emp_specialist" }
+      ]
+    },
+    {
+      "id": "so_systems_flux_exploitation",
+      "name": "Flux Exploitation",
+      "x": 2, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_energy_mastery"] }],
+      "effects": [
+        { "type": "SO_systems_flux_exploitation" }
+      ]
+    },
+    {
+      "id": "so_systems_strike_coord",
+      "name": "Strike Coordination",
+      "x": 3, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_systems_strike_coord" }
+      ]
+    },
+    {
+      "id": "so_systems_target_painter",
+      "name": "Target Painter",
+      "x": 4, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_precision_optics"] }],
+      "effects": [
+        { "type": "SO_systems_target_painter" }
+      ]
+    },
+    {
+      "id": "so_systems_kill_sync",
+      "name": "Kill Sync",
+      "x": 0, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_systems_kill_sync" }
+      ]
+    },
+    {
+      "id": "so_systems_reactive_systems",
+      "name": "Reactive Systems",
+      "x": 1, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_phase_coil"] }],
+      "effects": [
+        { "type": "SO_systems_reactive_systems" }
+      ]
+    },
+    {
+      "id": "so_systems_red_line",
+      "name": "Red Line",
+      "x": 2, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_flux_exploitation"] }],
+      "effects": [
+        { "type": "SO_systems_red_line" }
+      ]
+    },
+    {
+      "id": "so_systems_void_strike",
+      "name": "Void Strike",
+      "x": 3, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_phase_coil"] }],
+      "effects": [
+        { "type": "SO_systems_void_strike" }
+      ]
+    },
+    {
+      "id": "so_systems_air_superiority",
+      "name": "Air Superiority",
+      "x": 4, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_strike_coord"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "bomberDamageVsCruiserCapital": 0.30, "interceptorSpeedBonus": 0.30, "interceptorDamageVsFighters": 0.25 }
+      ]
+    },
+    {
+      "id": "so_systems_automata_integra",
+      "name": "Automata Integra",
+      "x": 0, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
+      "effects": [
+        { "type": "SO_systems_automata_integra" }
+      ]
+    },
+    {
+      "id": "so_systems_phase_mastery",
+      "name": "Phase Mastery",
+      "x": 1, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_void_strike", "so_systems_reactive_systems"] }],
+      "effects": [
+        { "type": "SO_systems_phase_mastery" }
+      ]
+    },
+    {
+      "id": "so_systems_precision_strike",
+      "name": "Precision Strike",
+      "x": 3, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_target_painter"] }],
+      "effects": [
+        { "type": "SO_systems_precision_strike" }
+      ]
+    },
+    {
+      "id": "so_systems_carrier_command",
+      "name": "Carrier Command",
+      "x": 4, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_air_superiority"] }],
+      "effects": [
+        { "type": "SO_systems_carrier_command" }
+      ]
+    },
+    {
+      "id": "so_systems_synaptic_relay",
+      "name": "Synaptic Relay",
+      "x": 0, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_automata_integra"] }],
+      "effects": [
+        { "type": "SO_systems_synaptic_relay" }
+      ]
+    },
+    {
+      "id": "so_systems_phase_resonance_merge",
+      "name": "Phase Resonance",
+      "x": 2, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_systems_reactive_systems"] }],
+      "effects": [
+        { "type": "SO_systems_phase_resonance_merge" }
+      ]
+    },
+    {
+      "id": "so_systems_experimental_overrides",
+      "name": "Experimental Overrides",
+      "x": 2, "y": 5, "cost": 2,
+      "prereqs": [{ "all": ["so_systems_phase_mastery", "so_systems_synaptic_relay"] }],
+      "effects": [
+        { "type": "SO_systems_experimental_overrides" }
+      ]
     }
   ]
 }
