@@ -2,18 +2,193 @@
   "tree": "pilot_maneuvering",
   "nodes": [
     {
-      "id": "pilot_maneuvering_t0",
-      "name": "Maneuvering",
-      "desc": "Placeholder T0 — content TBD.",
+      "id": "so_maneuver_drift_instinct",
+      "name": "Drift Instinct",
       "x": 2, "y": 0, "cost": 1,
-      "prereqs": []
+      "prereqs": [],
+      "effects": [
+        { "type": "SO_piloted_stat", "maxSpeedBonus": 0.10, "engineHPBonus": 0.20 }
+      ]
     },
     {
-      "id": "pilot_maneuvering_t5",
-      "name": "Maneuvering Capstone",
-      "desc": "Placeholder capstone — content TBD.",
-      "x": 2, "y": 5, "cost": 1,
-      "prereqs": [{"all": ["pilot_maneuvering_t0"]}]
+      "id": "so_maneuver_evasive_action",
+      "name": "Evasive Action",
+      "x": 0, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "turnRateBonus": 0.15 }
+      ]
+    },
+    {
+      "id": "so_maneuver_running_guns",
+      "name": "Running Guns",
+      "x": 1, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "weaponTurnRateBonus": 0.15, "weaponSpreadReduction": 0.20 }
+      ]
+    },
+    {
+      "id": "so_maneuver_engine_tuning",
+      "name": "Engine Flux Tuning",
+      "x": 2, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
+      "effects": [
+        { "type": "SO_piloted_stat", "accelBonus": 0.25 }
+      ]
+    },
+    {
+      "id": "so_maneuver_stealth_adapt",
+      "name": "Stealth Adaptation",
+      "x": 3, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
+      "effects": [
+        { "type": "SO_piloted_stat" }
+      ]
+    },
+    {
+      "id": "so_maneuver_phase_entry",
+      "name": "Phase Entry",
+      "x": 4, "y": 1, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
+      "effects": [
+        { "type": "SO_piloted_stat" }
+      ]
+    },
+    {
+      "id": "so_maneuver_vent_sprint",
+      "name": "Vent Sprint",
+      "x": 0, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_evasive_action"] }],
+      "effects": [
+        { "type": "SO_maneuver_vent_sprint" }
+      ]
+    },
+    {
+      "id": "so_maneuver_deep_vent",
+      "name": "Deep Vent",
+      "x": 1, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_vent_sprint"] }],
+      "effects": [
+        { "type": "SO_maneuver_deep_vent" }
+      ]
+    },
+    {
+      "id": "so_maneuver_knife_fighter",
+      "name": "Knife Fighter",
+      "x": 2, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_engine_tuning"] }],
+      "effects": [
+        { "type": "SO_maneuver_knife_fighter" }
+      ]
+    },
+    {
+      "id": "so_maneuver_reactive_drive",
+      "name": "Reactive Drive",
+      "x": 3, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_engine_tuning"] }],
+      "effects": [
+        { "type": "SO_maneuver_reactive_drive" }
+      ]
+    },
+    {
+      "id": "so_maneuver_phase_dancer",
+      "name": "Phase Dancer",
+      "x": 4, "y": 2, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_phase_entry"] }],
+      "effects": [
+        { "type": "SO_maneuver_phase_dancer" }
+      ]
+    },
+    {
+      "id": "so_maneuver_crossfire",
+      "name": "Crossfire",
+      "x": 0, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_knife_fighter"] }],
+      "effects": [
+        { "type": "SO_maneuver_crossfire" }
+      ]
+    },
+    {
+      "id": "so_maneuver_zfm",
+      "name": "Zero-Flux Mastery",
+      "x": 1, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_vent_sprint"] }],
+      "effects": [
+        { "type": "SO_maneuver_zfm" }
+      ]
+    },
+    {
+      "id": "so_maneuver_kinetic_cooling",
+      "name": "Kinetic Cooling",
+      "x": 2, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_deep_vent"] }],
+      "effects": [
+        { "type": "SO_maneuver_kinetic_cooling" }
+      ]
+    },
+    {
+      "id": "so_maneuver_ace",
+      "name": "The Ace",
+      "x": 3, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_evasive_action"] }],
+      "effects": [
+        { "type": "SO_maneuver_ace" }
+      ]
+    },
+    {
+      "id": "so_maneuver_ghost_protocol",
+      "name": "Ghost Protocol",
+      "x": 4, "y": 3, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_phase_dancer"] }],
+      "effects": [
+        { "type": "SO_maneuver_ghost_protocol" }
+      ]
+    },
+    {
+      "id": "so_maneuver_perfect_timing",
+      "name": "Perfect Timing",
+      "x": 0, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_ace"] }],
+      "effects": [
+        { "type": "SO_maneuver_perfect_timing" }
+      ]
+    },
+    {
+      "id": "so_maneuver_battle_focus",
+      "name": "Battle Focus",
+      "x": 1, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_perfect_timing"] }],
+      "effects": [
+        { "type": "SO_maneuver_battle_focus" }
+      ]
+    },
+    {
+      "id": "so_maneuver_flanking",
+      "name": "Flanking Mastery",
+      "x": 2, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_crossfire"] }],
+      "effects": [
+        { "type": "SO_maneuver_flanking" }
+      ]
+    },
+    {
+      "id": "so_maneuver_tactical_break",
+      "name": "Tactical Break",
+      "x": 3, "y": 4, "cost": 1,
+      "prereqs": [{ "all": ["so_maneuver_zfm", "so_maneuver_ghost_protocol"] }],
+      "effects": [
+        { "type": "SO_maneuver_tactical_break" }
+      ]
+    },
+    {
+      "id": "so_maneuver_untouchable",
+      "name": "The Untouchable",
+      "x": 2, "y": 5, "cost": 2,
+      "prereqs": [{ "all": ["so_maneuver_perfect_timing", "so_maneuver_tactical_break"] }],
+      "effects": [
+        { "type": "SO_maneuver_untouchable" }
+      ]
     }
   ]
 }

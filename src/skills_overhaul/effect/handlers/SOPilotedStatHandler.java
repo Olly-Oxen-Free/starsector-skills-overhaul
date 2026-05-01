@@ -70,6 +70,10 @@ public final class SOPilotedStatHandler implements EffectHandler {
                 break;
             case "projectileSpeedBonus":    s.getProjectileSpeedMult().modifyMult(id, 1f + v); break;
             case "weaponTurnRateBonus":     s.getWeaponTurnRateBonus().modifyPercent(id, v * 100f); break;
+            case "maxSpeedBonus":           s.getMaxSpeed().modifyPercent(id, v * 100f); break;
+            case "turnRateBonus":           s.getMaxTurnRate().modifyPercent(id, v * 100f); break;
+            case "accelBonus":              s.getAcceleration().modifyPercent(id, v * 100f); break;
+            case "weaponSpreadReduction":   s.getRecoilPerShotMult().modifyMult(id, 1f - v); break;
             case "nonMissileAmmoCapBonus":
                 Global.getLogger(SOPilotedStatHandler.class)
                         .info("[SO] SOPilotedStatHandler: nonMissileAmmoCapBonus has no direct API, requires EveryFrame plugin logic");
@@ -79,6 +83,11 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "moduleRepairMult": case "crDeclineStart": case "crRegenInCombat":
             case "massMult": case "collisionDamageDealt": case "crMalfunctionThreshold":
             case "hitChance": case "missileTrackingSpeed": case "ammoRegenBonus":
+            // Maneuvering params with no direct API — handled in plugin or deferred
+            case "momentumRetention": case "weaponTurnRateBonusAtSpeed": case "accelDecelBonus":
+            case "maneuverBonus": case "overloadRecoveryReduction": case "timescaleAtSpeed":
+            case "timescaleWhilePhased": case "phaseEntryFluxReduction": case "firstPhaseFree":
+            case "maneuverabilityBonus":
                 Global.getLogger(SOPilotedStatHandler.class)
                         .info("[SO] SOPilotedStatHandler: param '" + key + "' handled in combat plugin, skipping static apply");
                 break;
@@ -115,6 +124,10 @@ public final class SOPilotedStatHandler implements EffectHandler {
                 break;
             case "projectileSpeedBonus":    s.getProjectileSpeedMult().unmodify(id); break;
             case "weaponTurnRateBonus":     s.getWeaponTurnRateBonus().unmodifyPercent(id); break;
+            case "maxSpeedBonus":           s.getMaxSpeed().unmodifyPercent(id); break;
+            case "turnRateBonus":           s.getMaxTurnRate().unmodifyPercent(id); break;
+            case "accelBonus":              s.getAcceleration().unmodifyPercent(id); break;
+            case "weaponSpreadReduction":   s.getRecoilPerShotMult().unmodify(id); break;
         }
     }
 

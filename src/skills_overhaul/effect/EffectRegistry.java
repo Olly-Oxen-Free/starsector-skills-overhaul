@@ -168,6 +168,27 @@ public final class EffectRegistry {
         // T5 (Capstone)
         handlers.put("SO_collective_transspatial_mind",
                 new skills_overhaul.effect.handlers.collective.SOTranssspatialMindHandler());
+
+        // ── Pilot — Maneuvering lane ───────────────────────────────────────────
+        {
+            skills_overhaul.effect.handlers.maneuvering.SOManeuverCombatScriptHandler manScript =
+                    new skills_overhaul.effect.handlers.maneuvering.SOManeuverCombatScriptHandler();
+            handlers.put("SO_maneuver_vent_sprint",     manScript);
+            handlers.put("SO_maneuver_deep_vent",       manScript);
+            handlers.put("SO_maneuver_knife_fighter",   manScript);
+            handlers.put("SO_maneuver_reactive_drive",  manScript);
+            handlers.put("SO_maneuver_phase_dancer",    manScript);
+            handlers.put("SO_maneuver_crossfire",       manScript);
+            handlers.put("SO_maneuver_zfm",             manScript);
+            handlers.put("SO_maneuver_kinetic_cooling", manScript);
+            handlers.put("SO_maneuver_ace",             manScript);
+            handlers.put("SO_maneuver_ghost_protocol",  manScript);
+            handlers.put("SO_maneuver_perfect_timing",  manScript);
+            handlers.put("SO_maneuver_battle_focus",    manScript);
+            handlers.put("SO_maneuver_flanking",        manScript);
+            handlers.put("SO_maneuver_tactical_break",  manScript);
+            handlers.put("SO_maneuver_untouchable",     manScript);
+        }
     }
 
     public static EffectHandler get(String type) {
