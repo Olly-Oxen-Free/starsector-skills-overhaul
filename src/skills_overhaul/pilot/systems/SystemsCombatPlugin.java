@@ -3,8 +3,10 @@ package skills_overhaul.pilot.systems;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
+import org.lwjgl.input.Keyboard;
 import skills_overhaul.pilot.maneuvering.ManeuveringCombatPlugin;
 import skills_overhaul.pilot.maneuvering.PhaseStateTracker;
+import skills_overhaul.pilot.systems.secondary.*;
 
 import java.util.*;
 
@@ -26,11 +28,13 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final Set<String> prevAliveEnemyIds = new HashSet<String>();
     private boolean initialized = false;
 
-    // Phase-exit detection: track previous phased state
     private boolean wasPhased = false;
-    // Shield-raised detection for Phase Coil
     private boolean shieldWasRaised = false;
     private float shieldLoweredTimer = 0f;
+
+    // Secondary system (Experimental Overrides capstone)
+    private SecondarySystemHullmod activeSecondary = null;
+    private static final int SECONDARY_KEY = Keyboard.KEY_R;
 
     @Override
     public void init(CombatEngineAPI engine) {
@@ -38,6 +42,17 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         ACTIVE_NODES.clear();
         prevAliveEnemyIds.clear();
         gameTime = 0f;
+    }
+
+    @Override
+    public void processInputPreCoreControls(float amount, List<InputEventAPI> events) {
+        if (activeSecondary == null || flagship == null) return;
+        for (InputEventAPI event : events) {
+            if (event.isKeyDownEvent() && event.getEventValue() == SECONDARY_KEY) {
+                activeSecondary.activate(flagship, Global.getCombatEngine());
+                if (ACTIVE_NODES.contains("so_systems_kill_sync")) killSync.onSecondaryActivation();
+            }
+        }
     }
 
     @Override
@@ -150,9 +165,12 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
                     target.getMutableStats().getShieldDamageTakenMult().modifyMult("so_target_painter", 1f + debuff);
                 }
             } else if (flagship.getShipTarget() == null) {
-                // clear debuff from all ships when no target
                 lastTargetId = null;
             }
+        }
+
+        if (activeSecondary != null && ACTIVE_NODES.contains("so_systems_experimental_overrides")) {
+            activeSecondary.advance(dt, flagship, Global.getCombatEngine());
         }
     }
 
@@ -241,13 +259,27 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         wasPhased      = flagship.isPhased();
         shieldWasRaised = flagship.getShield() != null && flagship.getShield().isOn();
 
-        // Snapshot current alive enemies
+        activeSecondary = detectSecondaryHullmod(flagship);
+
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() == 1 && s.isAlive() && !s.isFighter()) {
                 prevAliveEnemyIds.add(s.getId());
             }
         }
         initialized = true;
+    }
+
+    private SecondarySystemHullmod detectSecondaryHullmod(ShipAPI ship) {
+        if (ship == null) return null;
+        if (ship.getVariant().hasHullMod("so_secondary_domain_overclock")) return new SODomainOverclock();
+        if (ship.getVariant().hasHullMod("so_secondary_flux_dissolver"))   return new SOFluxDissolverBattery();
+        if (ship.getVariant().hasHullMod("so_secondary_reflector"))        return new SOReflectorProtocol();
+        if (ship.getVariant().hasHullMod("so_secondary_dissonance"))       return new SODissonanceProjector();
+        if (ship.getVariant().hasHullMod("so_secondary_skimmer"))          return new SODimensionalSkimmer();
+        if (ship.getVariant().hasHullMod("so_secondary_stasis"))           return new SOStasisEmitter();
+        if (ship.getVariant().hasHullMod("so_secondary_snapshot"))         return new SOCombatSnapshot();
+        if (ship.getVariant().hasHullMod("so_secondary_ghost"))            return new SOFluxGhostProjector();
+        return null;
     }
 
     public TargetPainterState getTargetPainter() { return targetPainter; }

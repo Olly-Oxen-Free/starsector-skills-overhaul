@@ -1,0 +1,10 @@
+name,id,tier,rarity,tech/manufacturer,tags,uiTags,base value,unlocked,hidden,hiddenEverywhere,cost_frigate,cost_dest,cost_cruiser,cost_capital,script,desc,short,sModDesc,sprite
+# Skills Overhaul — Experimental Overrides secondary systems (player-only, hidden)
+Domain Overclock,so_secondary_domain_overclock,5,0,Domain,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Accelerates local time for 4 seconds at +60% timescale.,,,,
+Flux Dissolver Battery,so_secondary_flux_dissolver,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Emergency flux vent at 300% rate; launches micromissiles from dissipated flux.,,,,
+Reflector Protocol,so_secondary_reflector,5,0,Domain,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Reflects incoming projectiles for 3s; high reflected volume grants a damage and ROF bonus.,,,,
+Dissonance Projector,so_secondary_dissonance,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,EMP pulse scaled by current flux. Higher flux yields greater damage.,,,,
+Dimensional Skimmer,so_secondary_skimmer,5,0,Domain,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Teleports the ship 800u in thrust direction and detonates an EMP pulse on arrival.,,,,
+Stasis Emitter,so_secondary_stasis,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Slows all ships within 700u; this ship gains damage reduction for 6s.,,,,
+Combat Snapshot,so_secondary_snapshot,5,0,Domain,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Records position and flux. Reverts after 8s or on second activation. Hull damage is permanent.,,,,
+Flux Ghost Projector,so_secondary_ghost,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Spawns an autonomous clone of this ship for 20s at reduced effectiveness. [v1 stub],,,,
