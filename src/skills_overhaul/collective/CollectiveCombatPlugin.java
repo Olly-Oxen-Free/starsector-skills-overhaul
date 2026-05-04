@@ -43,6 +43,7 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
     public void init(CombatEngineAPI engine) {
         furorListenersAdded.clear();
         voltaicChainListenersAdded.clear();
+        TesseraMimicHullMod.clearSpawned();
         mindCascadeLogic   = new SOMindCascadeListener();
         wideRangePropagation = new SOWideRangePropagationLogic(fighterTracker);
         firstStrikeLogic   = new SOFirstStrikeLogic();

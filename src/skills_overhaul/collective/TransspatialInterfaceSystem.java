@@ -85,7 +85,7 @@ public final class TransspatialInterfaceSystem extends BaseShipSystemScript {
         if (isAlliedAICored(target)) {
             decrementUses();
             // Transfer player control to the allied AI-cored ship
-            // engine.setPlayerShip(target); // API not available in this version — deferred
+            engine.setPlayerShipExternal(target);
         } else if (isHostileLowDP(target)) {
             decrementUses();
             // Override ownership to player side for OVERRIDE_DURATION seconds

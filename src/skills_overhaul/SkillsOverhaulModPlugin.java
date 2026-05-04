@@ -2,6 +2,8 @@ package skills_overhaul;
 
 import com.fs.starfarer.api.BaseModPlugin;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
+import skills_overhaul.barevents.SeasonedCrewBarEvent;
 import skills_overhaul.config.ConfigLoader;
 import skills_overhaul.tree.TreeRegistry;
 import skills_overhaul.state.Tree;
@@ -91,6 +93,14 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
                 new skills_overhaul.artificer.alphastorm.AlphaStormCampaignTicker());
         Global.getSector().addTransientListener(
                 new skills_overhaul.collective.CollectiveBattleEndListener());
+        Global.getSector().addTransientScript(
+                new skills_overhaul.supply.ForgeCampaignBuffsTicker());
+        if (!Boolean.TRUE.equals(Global.getSector().getMemoryWithoutUpdate()
+                .get("$so_bar_seasoned_crew_registered"))) {
+            BarEventManager.getInstance().addEventCreator(new SeasonedCrewBarEvent());
+            Global.getSector().getMemoryWithoutUpdate().set(
+                    "$so_bar_seasoned_crew_registered", true, 0f);
+        }
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
         Global.getLogger(SkillsOverhaulModPlugin.class).info(

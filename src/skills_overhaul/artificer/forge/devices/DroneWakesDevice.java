@@ -23,7 +23,7 @@ public final class DroneWakesDevice implements ForgeDeviceEffect {
         boolean combatDrones = Boolean.TRUE.equals(
                 Global.getSector().getMemoryWithoutUpdate().get(
                         "$skills.artificer.forge.drone_wakes_combat"));
-        String shipId = combatDrones ? "borer_drone" : "borer_drone";  // PD drone for v1; combat variant TBD
+        String shipId = combatDrones ? "mining_drone" : "borer_drone";
 
         for (int i = 0; i < count; i++) {
             float angle = (360f / count) * i;

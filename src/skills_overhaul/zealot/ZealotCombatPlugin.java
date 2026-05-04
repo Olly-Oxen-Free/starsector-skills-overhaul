@@ -25,6 +25,12 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final DeathCheatState deathCheat = new DeathCheatState();
 
     @Override
+    public void init(CombatEngineAPI engine) {
+        Steelbound.attached.clear();
+        ACTIVE_NODES.clear();
+    }
+
+    @Override
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
@@ -60,6 +66,7 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("zealot_t3_last_stand")) LastStand.apply(s, zealStacks);
         if (ACTIVE_NODES.contains("zealot_t3_iron_discipline")) IronDiscipline.apply(s);
         if (ACTIVE_NODES.contains("zealot_t4_sanctum")) Sanctum.apply(s, engine);
+        if (ACTIVE_NODES.contains("zealot_t4_doctrinal_authority")) DoctrinalAuthority.apply(s);
     }
 
     static final class T0BallisticRange {
@@ -149,8 +156,6 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     static final class Steelbound {
-        // Tracks which ships have the armor-crit listener attached (per-battle scope).
-        // TODO: clear `attached` on combat-start to avoid cross-battle leakage for long sessions.
         static final java.util.Set<ShipAPI> attached = new java.util.HashSet<>();
 
         static void apply(ShipAPI s, int zealStacks) {
@@ -296,6 +301,23 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
                     if (listener.isExpired()) Global.getCombatEngine().removePlugin(this);
                 }
             });
+        }
+    }
+
+    static final class DoctrinalAuthority {
+        static void apply(ShipAPI s) {
+            boolean active = Boolean.TRUE.equals(
+                    Global.getSector().getMemoryWithoutUpdate().get(
+                            "$zealot.doctrinal_authority.commission_active"));
+            if (active) {
+                s.getMutableStats().getBallisticWeaponDamageMult().modifyMult("zealot_doctrinal", 1.10f);
+                s.getMutableStats().getEnergyWeaponDamageMult().modifyMult("zealot_doctrinal", 1.10f);
+                s.getMutableStats().getMissileWeaponDamageMult().modifyMult("zealot_doctrinal", 1.10f);
+            } else {
+                s.getMutableStats().getBallisticWeaponDamageMult().unmodify("zealot_doctrinal");
+                s.getMutableStats().getEnergyWeaponDamageMult().unmodify("zealot_doctrinal");
+                s.getMutableStats().getMissileWeaponDamageMult().unmodify("zealot_doctrinal");
+            }
         }
     }
 

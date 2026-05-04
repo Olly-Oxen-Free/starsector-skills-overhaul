@@ -7,4 +7,6 @@ Dissonance Projector,so_secondary_dissonance,5,0,Unknown,"player_only, so_second
 Dimensional Skimmer,so_secondary_skimmer,5,0,Domain,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Teleports the ship 800u in thrust direction and detonates an EMP pulse on arrival.,,,,
 Stasis Emitter,so_secondary_stasis,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Slows all ships within 700u; this ship gains damage reduction for 6s.,,,,
 Combat Snapshot,so_secondary_snapshot,5,0,Domain,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Records position and flux. Reverts after 8s or on second activation. Hull damage is permanent.,,,,
-Flux Ghost Projector,so_secondary_ghost,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Spawns an autonomous clone of this ship for 20s at reduced effectiveness. [v1 stub],,,,
+Flux Ghost Projector,so_secondary_ghost,5,0,Unknown,"player_only, so_secondary","",0,,true,true,0,0,0,0,,Spawns an autonomous clone of this ship for 20s; clone deals 30% weapon damage and takes 1.5× damage.,,,,
+Neural Uplink,so_neural_uplink,5,0,Unknown,player_only,"",0,,true,true,0,0,0,0,skills_overhaul.pilot.systems.NeuralUplinkHullmod,Applies neural uplink bonuses from Synaptic Relay.,Neural Uplink,,,
+Tessera Mimic,so_tessera_mimic,5,0,Unknown,"player_only","",0,,true,true,0,0,0,0,skills_overhaul.collective.TesseraMimicHullMod,Spawns bio-mechanical fragments on ship destruction.,Tessera Mimic,,,

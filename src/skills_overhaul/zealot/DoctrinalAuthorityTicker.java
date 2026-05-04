@@ -5,10 +5,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;
 
-/**
- * v1 scaffold: tracks player commission faction. Per-tick faction-fleet buff propagation
- * is logged but not applied (concrete fleet-stat application TBD).
- */
+/** Tracks player commission faction; sets memory key read by ZealotCombatPlugin.DoctrinalAuthority. */
 public final class DoctrinalAuthorityTicker implements EveryFrameScript {
 
     public static final String STAT_KEY = "skills_overhaul_doctrinal_authority";
@@ -45,6 +42,12 @@ public final class DoctrinalAuthorityTicker implements EveryFrameScript {
             Global.getSector().getMemoryWithoutUpdate().unset(K_COMMISSION_LAST);
         }
 
-        // TODO: per-fleet buff propagation requires fleet-stat key for "weapon damage" via dynamic bonus.
+        if (commissionId != null) {
+            Global.getSector().getMemoryWithoutUpdate().set(
+                    "$zealot.doctrinal_authority.commission_active", true, 0f);
+        } else {
+            Global.getSector().getMemoryWithoutUpdate().unset(
+                    "$zealot.doctrinal_authority.commission_active");
+        }
     }
 }
