@@ -76,20 +76,62 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "weaponSpreadReduction":   s.getRecoilPerShotMult().modifyMult(id, 1f - v); break;
             case "nonMissileAmmoCapBonus":
                 Global.getLogger(SOPilotedStatHandler.class)
-                        .info("[SO] SOPilotedStatHandler: nonMissileAmmoCapBonus has no direct API, requires EveryFrame plugin logic");
+                        .info("[SO] nonMissileAmmoCapBonus has no direct API, requires EveryFrame plugin logic");
+                break;
+            // Defense lane — newly mapped (T4)
+            case "engineHPBonus":           s.getEngineDamageTakenMult().modifyMult(id, 1f - v); break;
+            case "crMalfunctionThreshold":
+                s.getDynamic().getMod(com.fs.starfarer.api.impl.campaign.ids.Stats.CR_MALFUNCION_RANGE)
+                        .modifyMult(id, 1f - v);
+                break;
+            // Maneuvering lane — newly mapped (T4 / spec §5.x)
+            case "accelDecelBonus":
+                s.getAcceleration().modifyPercent(id, v * 100f);
+                s.getDeceleration().modifyPercent(id, v * 100f);
+                s.getTurnAcceleration().modifyPercent(id, v * 100f);
+                break;
+            case "maneuverBonus":
+                s.getMaxTurnRate().modifyPercent(id, v * 100f);
+                s.getTurnAcceleration().modifyPercent(id, v * 100f);
+                break;
+            case "overloadRecoveryReduction":
+                s.getOverloadTimeMod().modifyMult(id, 1f - v);
+                break;
+            case "phaseEntryFluxReduction":
+                s.getPhaseCloakActivationCostBonus().modifyMult(id, 1f - v);
+                break;
+            case "maneuverabilityBonus":
+                s.getMaxTurnRate().modifyPercent(id, v * 100f);
+                s.getTurnAcceleration().modifyPercent(id, v * 100f);
+                break;
+            // Systems lane — newly mapped (T4)
+            case "ventRateBonus":           s.getVentRateMult().modifyMult(id, 1f + v); break;
+            case "energyFluxReduction":     s.getEnergyWeaponFluxCostMod().modifyMult(id, 1f - v); break;
+            case "energyDamageBonus":       s.getEnergyWeaponDamageMult().modifyMult(id, 1f + v); break;
+            case "energyRangeBonus":        s.getEnergyWeaponRangeBonus().modifyPercent(id, v * 100f); break;
+            case "allWeaponTurnRateBonus":  s.getWeaponTurnRateBonus().modifyPercent(id, v * 100f); break;
+            case "sensorProfileReduction":  s.getSensorProfile().modifyMult(id, 1f - v); break;
+            case "shieldRotationSpeedBonus": s.getShieldTurnRateMult().modifyMult(id, 1f + v); break;
+            case "shieldRaiseSpeedBonus":   s.getShieldUnfoldRateMult().modifyMult(id, 1f + v); break;
+            // hitChance / damageReduction (Impact Mitigation): no per-type frag/explosive API.
+            // Apply as universal frag DR + explosive DR via getFragmentationDamageTakenMult
+            // and getExplosionDamageTakenMult. hitChance has no API; documented as cosmetic.
+            case "hitChance":
+                Global.getLogger(SOPilotedStatHandler.class)
+                        .info("[SO] hitChance: no MutableShipStatsAPI surface; documented as flavor for " + id);
                 break;
             // Params with no direct API equivalents — log and skip
-            case "weaponHPBonus": case "engineHPBonus": case "fighterBayHPBonus":
+            case "weaponHPBonus": case "fighterBayHPBonus":
             case "moduleRepairMult": case "crDeclineStart": case "crRegenInCombat":
-            case "massMult": case "collisionDamageDealt": case "crMalfunctionThreshold":
-            case "hitChance": case "missileTrackingSpeed": case "ammoRegenBonus":
-            // Maneuvering params with no direct API — handled in plugin or deferred
-            case "momentumRetention": case "weaponTurnRateBonusAtSpeed": case "accelDecelBonus":
-            case "maneuverBonus": case "overloadRecoveryReduction": case "timescaleAtSpeed":
-            case "timescaleWhilePhased": case "phaseEntryFluxReduction": case "firstPhaseFree":
-            case "maneuverabilityBonus":
+            case "massMult": case "collisionDamageDealt":
+            case "missileTrackingSpeed": case "ammoRegenBonus":
+            case "momentumRetention": case "weaponTurnRateBonusAtSpeed":
+            case "timescaleAtSpeed": case "timescaleWhilePhased": case "firstPhaseFree":
+            case "ecmRatingBonus": case "enemyAccuracyReduction":
+            case "bomberDamageVsCruiserCapital": case "interceptorSpeedBonus":
+            case "interceptorDamageVsFighters":
                 Global.getLogger(SOPilotedStatHandler.class)
-                        .info("[SO] SOPilotedStatHandler: param '" + key + "' handled in combat plugin, skipping static apply");
+                        .info("[SO] param '" + key + "' handled in combat plugin or no direct API, skipping static apply");
                 break;
             default:
                 Global.getLogger(SOPilotedStatHandler.class)
@@ -128,6 +170,32 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "turnRateBonus":           s.getMaxTurnRate().unmodifyPercent(id); break;
             case "accelBonus":              s.getAcceleration().unmodifyPercent(id); break;
             case "weaponSpreadReduction":   s.getRecoilPerShotMult().unmodify(id); break;
+            // T4 unmodify mirrors
+            case "engineHPBonus":           s.getEngineDamageTakenMult().unmodify(id); break;
+            case "crMalfunctionThreshold":
+                s.getDynamic().getMod(com.fs.starfarer.api.impl.campaign.ids.Stats.CR_MALFUNCION_RANGE)
+                        .unmodify(id);
+                break;
+            case "accelDecelBonus":
+                s.getAcceleration().unmodifyPercent(id);
+                s.getDeceleration().unmodifyPercent(id);
+                s.getTurnAcceleration().unmodifyPercent(id);
+                break;
+            case "maneuverBonus":
+            case "maneuverabilityBonus":
+                s.getMaxTurnRate().unmodifyPercent(id);
+                s.getTurnAcceleration().unmodifyPercent(id);
+                break;
+            case "overloadRecoveryReduction": s.getOverloadTimeMod().unmodify(id); break;
+            case "phaseEntryFluxReduction":   s.getPhaseCloakActivationCostBonus().unmodify(id); break;
+            case "ventRateBonus":             s.getVentRateMult().unmodify(id); break;
+            case "energyFluxReduction":       s.getEnergyWeaponFluxCostMod().unmodify(id); break;
+            case "energyDamageBonus":         s.getEnergyWeaponDamageMult().unmodify(id); break;
+            case "energyRangeBonus":          s.getEnergyWeaponRangeBonus().unmodifyPercent(id); break;
+            case "allWeaponTurnRateBonus":    s.getWeaponTurnRateBonus().unmodifyPercent(id); break;
+            case "sensorProfileReduction":    s.getSensorProfile().unmodify(id); break;
+            case "shieldRotationSpeedBonus":  s.getShieldTurnRateMult().unmodify(id); break;
+            case "shieldRaiseSpeedBonus":     s.getShieldUnfoldRateMult().unmodify(id); break;
         }
     }
 
