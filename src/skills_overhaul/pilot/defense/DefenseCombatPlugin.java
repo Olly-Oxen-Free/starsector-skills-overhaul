@@ -138,7 +138,26 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         applyMods();
+        applyDRCapGuard();
         prevHull = flagship.getHitpoints();
+    }
+
+    /**
+     * R3 (T0 finding): Fortify × Death's Door × other DR sources can
+     * compound to 0% damage taken (invulnerability). Read effective
+     * combined mult; if below floor (5%), normalize via a corrective
+     * mult applied with a dedicated source id.
+     */
+    private void applyDRCapGuard() {
+        if (flagship == null) return;
+        MutableShipStatsAPI s = flagship.getMutableStats();
+        float hull = s.getHullDamageTakenMult().getModifiedValue();
+        if (hull < 0.05f && hull > 0f) {
+            float corrective = 0.05f / hull;
+            s.getHullDamageTakenMult().modifyMult("so_dr_cap_guard", corrective);
+        } else {
+            s.getHullDamageTakenMult().unmodify("so_dr_cap_guard");
+        }
     }
 
     private void applyMods() {

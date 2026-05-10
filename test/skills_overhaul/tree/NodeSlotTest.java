@@ -14,7 +14,7 @@ public class NodeSlotTest {
         assert n.getTier() == 2 : "legacy getTier mirrors y";
         assert !n.isCapstone();
         assert !n.isMerge();
-        assert n.getLane() == null;
+        assert "default".equals(n.getLane()) : "getLane() returns 'default' fallback (multi-tree WIP, PRD 005)";
         assert n.getParentLanes().isEmpty();
         System.out.println("ALL PASSED");
     }

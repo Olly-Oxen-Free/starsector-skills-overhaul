@@ -15,10 +15,10 @@ public final class AdamantineState {
     public AdamantineState(float maxFlux) { this.maxFlux = maxFlux; }
 
     public void updateFlux(float currFlux) {
-        // spec §5.4 line 39: buffer recharges as flux climbs (track delta).
-        // Buffer is min(currFlux × 1.0, maxFlux × 0.20).
-        float fluxDelta = Math.max(0f, currFlux - lastKnownFlux);
-        buffer = Math.min(maxFlux * BUFFER_FRACTION, buffer + fluxDelta);
+        // Spec §5.4 line 39: Buffer = min(currFlux, maxFlux × 0.20).
+        // "Recharges as flux rebuilds" via lastKnownFlux delta tracking
+        // is only relevant when buffer drops via damage absorption mid-combat.
+        buffer = Math.min(maxFlux * BUFFER_FRACTION, currFlux);
         lastKnownFlux = currFlux;
     }
 
