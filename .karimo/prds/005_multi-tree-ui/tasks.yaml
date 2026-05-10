@@ -1,0 +1,145 @@
+prd: multi-tree-ui
+tasks:
+  - id: T0
+    title: "Read UI specs + reconcile WIP"
+    priority: must
+    complexity: 2
+    depends_on: []
+    description: |
+      Read both UI spec docs in full:
+      - 2026-04-19-skills-overhaul-ui-design.md
+      - 2026-04-26-skills-overhaul-base-system-refactor.md
+      Document spec'd: active-basics displacement UX, scroll model (per-tab vs per-tree),
+      multi-tree navigation pattern. Identify any other in-flight refactor scope this
+      PRD should cover. Output to research/internal/t0-spec-reconciliation.md.
+    files: []
+    acceptance:
+      - "Both spec docs read"
+      - "Active-basics modal UX documented"
+      - "Scroll-position model decision recorded"
+
+  - id: T1
+    title: "Fix lane header label + Metrics.laneCount semantic split"
+    priority: must
+    complexity: 2
+    depends_on: []
+    description: |
+      Two bug fixes in PathTreeBuilder.java:
+      1. Line 539 emitLaneColumn: pass `lane` to prettyLaneName, not `def.getTree()`.
+         If lane key is namespaced (e.g. "tree0:defense"), strip the prefix.
+      2. Line 477 Metrics constructor: split `laneCount` field into `treeCount` +
+         `totalLaneCount` OR rename + add explicit accessor. Audit all callers and
+         update.
+      Stale comment cleanup at lines 108-112 (refs old 3.76 factor).
+    files:
+      - src/skills_overhaul/ui/PathTreeBuilder.java
+    acceptance:
+      - "Lane headers display lane names, not tree names"
+      - "Metrics has unambiguous tree-count vs lane-count fields"
+      - "All Metrics.laneCount callers updated for new semantics"
+      - "Stale comments at 108-112 updated"
+
+  - id: T2
+    title: "Verify single-tree factorW regression on PILOT tab"
+    priority: must
+    complexity: 1
+    depends_on: [T1]
+    description: |
+      factorW changed 3.76→6.12 for single-tree path too. Node size will shrink
+      proportionally. Run build, in-game test PILOT tab. If nodes too small,
+      branch single-tree path back to 3.76 OR adopt 6.12 universally with explicit
+      decision documented.
+    files:
+      - src/skills_overhaul/ui/PathTreeBuilder.java (if branch needed)
+    acceptance:
+      - "PILOT nodes render at acceptable size"
+      - "Decision documented (branch vs universal)"
+
+  - id: T3
+    title: "Implement active-basics displacement modal"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Per T0-confirmed UX. Replace silent active.get(0) displace at
+      CharacterTabPanelPlugin.java:1185-1186 with chooser modal:
+      - CustomPanelAPI overlay or createCustomDialog.
+      - List currently active T0 nodes (max 2).
+      - Cancel button: no-op, restore prior state.
+      - Confirm button per slot: calls ActiveLaneService.swap(mem, displaced, nodeId)
+        then rebuild().
+      ~80-120 LOC. Helper panel builder.
+    files:
+      - src/skills_overhaul/ui/CharacterTabPanelPlugin.java
+    acceptance:
+      - "3rd T0 click opens chooser modal"
+      - "Cancel preserves active list"
+      - "Confirm swaps and rebuilds"
+      - "TODO at line 1185-1186 removed"
+
+  - id: T4
+    title: "Add PathTreeBuilder + buildPaths multi-tree unit tests"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      New test classes:
+      - PathTreeBuilderMetricsTest: configureForViewport(List<TreeDef>, w, h) total
+        width <= viewportW for 1, 2, 3 trees; single-tree overload at range of sizes.
+      - BuildPathsMultiTreeTest: 2-def render produces non-overlapping xContent;
+        unique "tree0:" / "tree1:" lane key prefixes.
+      - LaneColumnKeyspaceTest: verify no collision between trees with same lane key.
+      Pure arithmetic tests; no Global init needed.
+    files:
+      - test/skills_overhaul/ui/PathTreeBuilderMetricsTest.java (new)
+      - test/skills_overhaul/ui/BuildPathsMultiTreeTest.java (new)
+      - test/skills_overhaul/ui/LaneColumnKeyspaceTest.java (new)
+    acceptance:
+      - "3 new test files compile and pass with java -ea"
+      - "build.sh test exits 0"
+
+  - id: T5
+    title: "Add multi-tree purchase-flow tests"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      New test classes (use TreeRegistry reflection injection per TreeRegistryTest pattern):
+      - SumPendingCostMultiTreeTest: pending across 2 defs sums correctly; null
+        findTreeOf path exercised.
+      - CommitPendingPartitionTest: pending spans 2 defs, per-def topo sort,
+        unified order produced; topo failure case.
+      - RemovePendingDependentsMultiTreeTest: cascade across defs.
+    files:
+      - test/skills_overhaul/ui/SumPendingCostMultiTreeTest.java (new)
+      - test/skills_overhaul/ui/CommitPendingPartitionTest.java (new)
+      - test/skills_overhaul/ui/RemovePendingDependentsMultiTreeTest.java (new)
+    acceptance:
+      - "3 new test files compile and pass"
+      - "Cover happy path + null + topo failure"
+
+  - id: T6
+    title: "Active-basics displacement test + audit-only doc + commit + smoke"
+    priority: must
+    complexity: 3
+    depends_on: [T2, T3, T4, T5]
+    description: |
+      Post-modal: extract displacement logic into testable method;
+      ActiveBasicsDisplaceTest covers cancel + confirm paths.
+      Audit-only doc: R3 (global-static save-reload), R4 (scroll model), R6
+      (overflow guard), R7 (Node.getLane footgun). Add notes to
+      research/internal/audit-followups.md for future PRDs if action needed.
+      Final commit: stage all WIP UI files + JSON + class artifacts.
+      Build + in-game smoke (PILOT/COMMANDER/ADMIN tabs render).
+      CHANGELOG entry.
+    files:
+      - src/skills_overhaul/ui/CharacterTabPanelPlugin.java (extract method for testability)
+      - test/skills_overhaul/ui/ActiveBasicsDisplaceTest.java (new)
+      - CHANGELOG.md
+    acceptance:
+      - "ActiveBasicsDisplaceTest passes"
+      - "Audit-only doc covers R3/R4/R6/R7"
+      - "All WIP UI changes committed"
+      - "./build.sh + test exit 0"
+      - "All 3 tabs render in-game without overlap"
+      - "CHANGELOG entry"

@@ -1,0 +1,15 @@
+prd: multi-tree-ui
+waves:
+  - wave: 1
+    parallel: [T0, T1]
+    rationale: "T0 spec read independent. T1 bug fixes don't need spec context."
+  - wave: 2
+    parallel: [T2, T3, T4, T5]
+    rationale: "T2 + T4/T5 only need T1. T3 modal needs T0 spec."
+  - wave: 3
+    parallel: [T6]
+    rationale: "Final test + commit + smoke."
+
+longest_chain: "T0 → T3 → T6"
+total_tasks: 7
+total_complexity: 19
