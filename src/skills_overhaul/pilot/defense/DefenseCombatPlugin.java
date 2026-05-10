@@ -100,6 +100,21 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
             float drMult = fortify.getDRMult();
             stats.getHullDamageTakenMult().modifyMult("so_fortify", drMult);
             stats.getArmorDamageTakenMult().modifyMult("so_fortify", drMult);
+            // Spec §5.1 line 81: shield mult also part of Fortify (research caught).
+            stats.getShieldDamageTakenMult().modifyMult("so_fortify", drMult);
+        }
+
+        // Shield Mastery (spec line 54): hard→soft flux conversion 8%/s while shielded.
+        if (ACTIVE_NODES.contains("so_defense_shield_mastery")
+                && flagship.getShield() != null && flagship.getShield().isOn()) {
+            com.fs.starfarer.api.combat.FluxTrackerAPI flux = flagship.getFluxTracker();
+            float dt = Global.getCombatEngine().getElapsedInLastFrame();
+            float convertAmount = flux.getHardFlux() * 0.08f * dt;
+            if (convertAmount > 0f) {
+                float newHard = Math.max(0f, flux.getHardFlux() - convertAmount);
+                flux.setHardFlux(newHard);
+                // Soft flux fills in as hard drops; engine recomputes total automatically.
+            }
         }
 
         if (ACTIVE_NODES.contains("so_defense_targe")) {

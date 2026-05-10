@@ -39,7 +39,9 @@ public final class LeadFromTheFrontListener implements AdvanceableListener {
 
         float selfBonus = Math.min(0.10f, alliesInRange * 0.01f);
         MutableShipStatsAPI self = flagship.getMutableStats();
+        // Spec line 41: self DR is hull+armor.
         self.getHullDamageTakenMult().modifyMult(KEY + "_self", 1f - selfBonus);
+        self.getArmorDamageTakenMult().modifyMult(KEY + "_self", 1f - selfBonus);
         self.getBallisticWeaponDamageMult().modifyMult(KEY + "_self", 1f + selfBonus);
         self.getEnergyWeaponDamageMult().modifyMult(KEY + "_self", 1f + selfBonus);
         self.getMissileWeaponDamageMult().modifyMult(KEY + "_self", 1f + selfBonus);
