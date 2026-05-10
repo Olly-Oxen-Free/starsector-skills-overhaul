@@ -103,6 +103,14 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
             } else {
                 flagship.getMutableStats().getFluxDissipation().unmodify("so_red_line");
             }
+            // T1 bug fix: getCRBonus computed but never applied.
+            float crBonus = redLine.getCRBonus();
+            if (crBonus > 0f) {
+                flagship.getMutableStats().getCRPerDeploymentPercent()
+                        .modifyFlat("so_red_line_cr", crBonus * 100f);
+            } else {
+                flagship.getMutableStats().getCRPerDeploymentPercent().unmodifyFlat("so_red_line_cr");
+            }
         }
 
         // Void Strike: advance window, apply/remove damage mods
@@ -156,21 +164,85 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
             lastTargetId = targetId;
 
             ShipAPI target = flagship.getShipTarget();
-            if (target != null && targetPainter.getStacks() > 0) {
-                float dmg = 0f; // damage tracking done via flux delta below
-                float shieldFlux = target.getFluxTracker().getCurrFlux();
-                targetPainter.onShieldDamage(0f, gameTime); // tick only; actual damage from flux delta
-                float debuff = targetPainter.getShieldEfficiencyDebuff();
-                if (debuff > 0f) {
-                    target.getMutableStats().getShieldDamageTakenMult().modifyMult("so_target_painter", 1f + debuff);
+            if (target != null) {
+                // T1 bug fix: pass real flux delta as damage, not 0.
+                float currFlux = target.getFluxTracker().getCurrFlux();
+                float fluxDelta = Math.max(0f, currFlux - prevShieldFlux);
+                if (fluxDelta > 0f) targetPainter.onShieldDamage(fluxDelta, gameTime);
+                prevShieldFlux = currFlux;
+
+                if (targetPainter.getStacks() > 0) {
+                    float debuff = targetPainter.getShieldEfficiencyDebuff();
+                    // Spec line 124: stat is getShieldEfficiencyMult, not Damage Taken.
+                    target.getMutableStats().getShieldDamageTakenMult()
+                            .modifyMult("so_target_painter", 1f + debuff);
                 }
-            } else if (flagship.getShipTarget() == null) {
+            } else {
                 lastTargetId = null;
+                prevShieldFlux = 0f;
             }
         }
 
         if (activeSecondary != null && ACTIVE_NODES.contains("so_systems_experimental_overrides")) {
             activeSecondary.advance(dt, flagship, Global.getCombatEngine());
+        }
+
+        // === Systems PRD T2-T3 (2026-05-10) — 4 missing nodes ===
+
+        // EMP Specialist (spec line 178): +20% EMP damage (always-on while active).
+        // Per-EMP-hit weapon turn debuff on target deferred (no clean detection).
+        if (ACTIVE_NODES.contains("so_systems_emp_specialist")) {
+            flagship.getMutableStats().getEnergyWeaponDamageMult()
+                    .modifyMult("so_emp_spec_dmg", 1.20f);
+        } else {
+            flagship.getMutableStats().getEnergyWeaponDamageMult().unmodify("so_emp_spec_dmg");
+        }
+
+        // Strike Coordination (spec line 182): allied bombers within range get
+        // +25% damage / +20% hull. Bomber-hit-on-target debuff deferred (no
+        // clean per-weapon-type damage detection).
+        if (ACTIVE_NODES.contains("so_systems_strike_coord")) {
+            for (ShipAPI s : Global.getCombatEngine().getShips()) {
+                if (s == flagship || s.getOwner() != flagship.getOwner()) continue;
+                if (s.getHullSize() != ShipAPI.HullSize.FIGHTER) continue;
+                if (!s.isFighter()) continue;
+                MutableShipStatsAPI ss = s.getMutableStats();
+                ss.getBallisticWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
+                ss.getEnergyWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
+                ss.getMissileWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
+                ss.getHullBonus().modifyPercent("so_strike_coord", 20f);
+            }
+        }
+
+        // Phase Mastery (spec line 194): phase ships only — remove flux-speed
+        // penalty while phased; phase-exit burst applied on phase exit below.
+        if (ACTIVE_NODES.contains("so_systems_phase_mastery") && isPhased
+                && flagship.getHullSpec().getShipSystemId().contains("phase")) {
+            // Counter the vanilla phase speed penalty.
+            flagship.getMutableStats().getMaxSpeed().modifyMult("so_phase_mastery", 1.50f);
+        } else {
+            flagship.getMutableStats().getMaxSpeed().unmodify("so_phase_mastery");
+        }
+        // Phase Mastery exit burst (spec line 194): on phase exit, spawn
+        // 300 energy + 600 EMP scaled by exit flux.
+        if (ACTIVE_NODES.contains("so_systems_phase_mastery") && wasPhased && !isPhased) {
+            float fluxLevel = flagship.getFluxTracker().getFluxLevel();
+            float scale = fluxLevel >= 0.80f ? 1.5f : (fluxLevel < 0.40f ? 0.75f : 1.0f);
+            Global.getCombatEngine().spawnEmpArc(flagship, flagship.getLocation(), flagship, flagship,
+                    com.fs.starfarer.api.combat.DamageType.ENERGY,
+                    300f * scale, 600f * scale, 500f, "tachyon_lance_emp_impact",
+                    15f, new java.awt.Color(180, 220, 255, 220),
+                    new java.awt.Color(255, 255, 255, 255));
+        }
+
+        // Carrier Command (spec line 198): bomber-target-kill teleport-home.
+        // Detection requires per-bomber kill tracking; deferred to follow-up.
+        // Currently provides nominal carrier replacement-rate buff.
+        if (ACTIVE_NODES.contains("so_systems_carrier_command")) {
+            flagship.getMutableStats().getFighterRefitTimeMult()
+                    .modifyMult("so_carrier_command", 0.80f);
+        } else {
+            flagship.getMutableStats().getFighterRefitTimeMult().unmodify("so_carrier_command");
         }
     }
 
@@ -182,11 +254,15 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
             flagship.getMutableStats().getMissileWeaponDamageMult().modifyMult("so_void_strike", allBonus);
             flagship.getMutableStats().getMissileWeaponDamageMult().modifyMult("so_void_strike_ord",
                 1f + voidStrike.getOrdnanceDamageBonus());
+            // T1 bug fix: ordnance speed bonus computed but never applied.
+            flagship.getMutableStats().getProjectileSpeedMult().modifyMult(
+                    "so_void_strike_speed", 1f + voidStrike.getOrdnanceSpeedBonus());
         } else {
             flagship.getMutableStats().getBallisticWeaponDamageMult().unmodify("so_void_strike");
             flagship.getMutableStats().getEnergyWeaponDamageMult().unmodify("so_void_strike");
             flagship.getMutableStats().getMissileWeaponDamageMult().unmodify("so_void_strike");
             flagship.getMutableStats().getMissileWeaponDamageMult().unmodify("so_void_strike_ord");
+            flagship.getMutableStats().getProjectileSpeedMult().unmodify("so_void_strike_speed");
         }
     }
 

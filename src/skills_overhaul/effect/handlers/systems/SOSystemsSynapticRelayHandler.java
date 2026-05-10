@@ -15,5 +15,8 @@ public final class SOSystemsSynapticRelayHandler implements EffectHandler {
     @Override
     public void remove(String nodeId, JSONObject params) {
         SystemsCombatPlugin.ACTIVE_NODES.remove(nodeId);
+        // T1 bug fix: missing remove() call leaked so_neural_uplink hullmod
+        // fleet-wide on respec. Now properly strips it.
+        SynapticRelayService.remove();
     }
 }
