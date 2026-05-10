@@ -20,6 +20,15 @@ public final class SODefenseDerelictFortHandler implements EffectHandler {
         MutableShipStatsAPI s = ship.getMutableStats();
         s.getArmorBonus().modifyPercent(nodeId, bonus * 100f);
         s.getHullBonus().modifyPercent(nodeId, bonus * 100f);
+        // Spec line 60: −20% d-mod negatives. No per-d-mod stat key in API; use
+        // counter-buff approximation on commonly-impacted stats. Each d-mod
+        // typically costs ~3%; apply 20% of that as positive (=0.6% per d-mod,
+        // cap 5).
+        float counter = Math.min(5, dmodCount) * 0.006f;
+        s.getMaxSpeed().modifyPercent(nodeId + "_dmod_counter", counter * 100f);
+        s.getBallisticRoFMult().modifyMult(nodeId + "_dmod_counter", 1f + counter);
+        s.getEnergyRoFMult().modifyMult(nodeId + "_dmod_counter", 1f + counter);
+        s.getCRLossPerSecondPercent().modifyMult(nodeId + "_dmod_counter", 1f - counter);
     }
 
     @Override
@@ -30,6 +39,10 @@ public final class SODefenseDerelictFortHandler implements EffectHandler {
         MutableShipStatsAPI s = ship.getMutableStats();
         s.getArmorBonus().unmodifyPercent(nodeId);
         s.getHullBonus().unmodifyPercent(nodeId);
+        s.getMaxSpeed().unmodifyPercent(nodeId + "_dmod_counter");
+        s.getBallisticRoFMult().unmodify(nodeId + "_dmod_counter");
+        s.getEnergyRoFMult().unmodify(nodeId + "_dmod_counter");
+        s.getCRLossPerSecondPercent().unmodify(nodeId + "_dmod_counter");
     }
 
     private int countDMods(ShipAPI ship) {

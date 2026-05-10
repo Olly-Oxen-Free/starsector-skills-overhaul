@@ -23,6 +23,10 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
     private IronBastionState ironBastion;
     private float prevHull = -1f;
     private boolean initialized = false;
+    private final java.util.Map<ShipAPI, Boolean> fighterAliveMap = new java.util.WeakHashMap<>();
+    private final com.fs.starfarer.api.util.IntervalUtil targeRegenInterval =
+            new com.fs.starfarer.api.util.IntervalUtil(0.5f, 0.5f);
+    private float targeRegenAccumulator = 0f;
 
     @Override
     public void init(CombatEngineAPI engine) {
@@ -57,10 +61,16 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
             fortify.onQualifyingHit();
         fortify.advance(dt);
 
-        if (ACTIVE_NODES.contains("so_defense_targe") && hullDelta > 0f) {
-            targe.recordHullLost(hullDelta / maxHull);
-            float regen = targe.getRegenPerSecondFraction() * maxHull * dt;
-            flagship.setHitpoints(Math.min(maxHull, flagship.getHitpoints() + regen));
+        if (ACTIVE_NODES.contains("so_defense_targe")) {
+            if (hullDelta > 0f) targe.recordHullLost(hullDelta / maxHull);
+            // Tick-based regen (spec §5.2 line 92): accumulate, apply once per 0.5s
+            // to avoid fighting vanilla repair tracker (was per-frame setHitpoints).
+            targeRegenAccumulator += targe.getRegenPerSecondFraction() * maxHull * dt;
+            targeRegenInterval.advance(dt);
+            if (targeRegenInterval.intervalElapsed() && targeRegenAccumulator > 0f) {
+                flagship.setHitpoints(Math.min(maxHull, flagship.getHitpoints() + targeRegenAccumulator));
+                targeRegenAccumulator = 0f;
+            }
         }
 
         if (ACTIVE_NODES.contains("so_defense_deaths_door")) {
@@ -86,6 +96,19 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("so_defense_iron_bastion")) {
             if (hullDelta > 0f) ironBastion.onHullOrArmorDamage();
             ironBastion.advance(dt);
+            // Fighter-kill heal (spec §5.5 line 120): no ShipDestroyedListener in
+            // 0.98a-RC8; poll for alive→dead transitions on owned fighters.
+            for (ShipAPI s : engine.getShips()) {
+                if (s.getHullSize() != ShipAPI.HullSize.FIGHTER) continue;
+                boolean wasAlive = Boolean.TRUE.equals(fighterAliveMap.get(s));
+                boolean isAlive = s.isAlive();
+                fighterAliveMap.put(s, isAlive);
+                if (wasAlive && !isAlive && s.getOwner() != flagship.getOwner()) {
+                    float heal = ironBastion.computeFighterKillHeal(s.getMaxHitpoints());
+                    flagship.setHitpoints(Math.min(flagship.getMaxHitpoints(),
+                            flagship.getHitpoints() + heal));
+                }
+            }
         }
 
         applyMods();
