@@ -1,0 +1,157 @@
+prd: maneuvering-handlers
+tasks:
+  - id: T0
+    title: "Investigate phase APIs, ZFB threshold, momentumRetention, DamageListener"
+    priority: must
+    complexity: 4
+    depends_on: []
+    description: |
+      Resolve open API questions before impl:
+      1. `ship.isVenting()` modifiability while phased — can phase-while-venting be
+         enabled? Search SiC + Combat Activators + Combat Chatter for precedent.
+      2. `getFluxGenFromPhase()` — confirm exists or design synthetic-flux fallback.
+      3. `getZeroFluxSpeedBoost` interaction with permanent-ZFB-while-firing logic.
+      4. `momentumRetention` — find any vanilla / mod precedent for velocity damping.
+      5. DamageListener attach lifecycle for projectile negation (combat-start hook).
+      6. Survey SiC `SCCRPluginImpl.java:319-329` accel/decel/turnAccel pattern; confirm
+         applicability to engine_tuning expansion.
+      Output: `.karimo/prds/maneuvering-handlers/research/internal/t0-findings.md`.
+    files: []
+    acceptance:
+      - "t0-findings.md documents API decisions for each of 6 items"
+      - "Reference mod citations (SiC paths) included"
+
+  - id: T1
+    title: "Extend SOPilotedStatHandler for 7 currently-skipped keys"
+    priority: must
+    complexity: 3
+    depends_on: [T0]
+    description: |
+      Add apply/unapply cases for: `momentumRetention`, `engineHPBonus` (→
+      `getEngineDamageTakenMult`), `phaseEntryFluxReduction` (→
+      `getPhaseActivationFluxLevel`), `accelDecelBonus` (→ accel + decel +
+      turnAccel triple, SiC pattern), `maneuverBonus` (→ turn rate scalar),
+      `overloadRecoveryReduction` (→ `getOverloadTimeMod`), `maneuverabilityBonus`.
+      Remove log-and-skip blocks for these keys (lines 82-93). `momentumRetention`
+      may require plugin assist — implement via plugin if no stat path exists.
+    files:
+      - src/skills_overhaul/effect/handlers/SOPilotedStatHandler.java
+    acceptance:
+      - "All 7 keys produce stat changes when present in JSON"
+      - "Mirror unapply for each"
+      - "No log warnings for these keys on mod load"
+
+  - id: T2
+    title: "Implement stealth_adapt (timescale + phase variant)"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      Spec line 138. Plugin-side conditional in ManeuveringCombatPlugin.applyMods():
+      Normal ships at speedFrac > 0.80: getTimeMult.modifyMult +1.15. Phase ships
+      while phased: +1.25. Add JSON params to pilot_maneuvering.json node.
+    files:
+      - src/skills_overhaul/pilot/maneuvering/ManeuveringCombatPlugin.java
+      - data/config/skills_overhaul/trees/pilot_maneuvering.json
+    acceptance:
+      - "Timescale applied/removed cleanly per condition"
+      - "Phase variant only fires for phase hulls"
+
+  - id: T3
+    title: "Implement phase_entry (flux reduction + first-phase-free flag)"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      Spec line 139. JSON: `phaseEntryFluxReduction:0.25`. Plugin tracks
+      `firstPhaseUsed` flag per combat (reset on battle start). Until first phase:
+      override phase activation flux to 0.
+    files:
+      - src/skills_overhaul/pilot/maneuvering/ManeuveringCombatPlugin.java
+      - src/skills_overhaul/pilot/maneuvering/PhaseStateTracker.java
+      - data/config/skills_overhaul/trees/pilot_maneuvering.json
+    acceptance:
+      - "Phase-flux-cost reduced 25% after first phase"
+      - "First phase per combat is free; resets on combat start"
+
+  - id: T4
+    title: "Implement ghost_protocol (no phase flux damage + phase-while-venting)"
+    priority: must
+    complexity: 5
+    depends_on: [T0, T3]
+    description: |
+      Spec lines 105-107. Two mechanics:
+      (a) While phased: zero or near-zero flux generation from phase maintenance.
+          Use getFluxGenFromPhase if present; else synthetic per-frame reduction
+          (T0 decides path).
+      (b) Allow vent to continue during phase. T0 must determine if isVenting can
+          stay true through phase entry, or if vent-cancel event can be suppressed.
+    files:
+      - src/skills_overhaul/pilot/maneuvering/ManeuveringCombatPlugin.java
+      - src/skills_overhaul/pilot/maneuvering/PhaseStateTracker.java
+    acceptance:
+      - "Phase flux generation suppressed while node active"
+      - "Vent persists through phase OR documented as engine-blocked with fallback"
+
+  - id: T5
+    title: "Expand drift_instinct + evasive_action + running_guns + engine_tuning"
+    priority: must
+    complexity: 4
+    depends_on: [T1]
+    description: |
+      Spec lines 134-137. Updates:
+      - drift_instinct: add momentumRetention:0.30 + engineHPBonus:0.20 to JSON.
+      - evasive_action: add maneuverabilityBonus:0.20 + plugin missile-proximity
+        block (+4% turn rate per missile within 1000u, polled 0.25s).
+      - running_guns: gate existing weapon stats on speedFrac > 0.50 in plugin,
+        remove from static SO_piloted_stat handler.
+      - engine_tuning: replace accelBonus with accelDecelBonus + maneuverBonus +
+        overloadRecoveryReduction; add post-overload surge (+20% accel for 4s
+        after overload-end via plugin tracker).
+    files:
+      - data/config/skills_overhaul/trees/pilot_maneuvering.json
+      - src/skills_overhaul/pilot/maneuvering/ManeuveringCombatPlugin.java
+      - src/skills_overhaul/effect/EffectRegistry.java
+    acceptance:
+      - "drift_instinct produces engine-DR + momentum effects"
+      - "evasive_action missile-proximity block fires per spec"
+      - "running_guns weapon bonuses gate on >50% speed"
+      - "engine_tuning post-overload surge produces 4s window"
+
+  - id: T6
+    title: "Complete untouchable capstone (3 missing mechanics)"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Spec lines 66, 80-82. Add to existing threshold-only impl:
+      (a) Permanent ZFB while firing OR accelerating. Per-frame check in plugin;
+          force-apply ZFB stats regardless of flux level.
+      (b) 30% projectile negation. DamageListener if available (T0 confirms);
+          otherwise per-frame hull-delta probability gate.
+      (c) Phase ships only: zero phase flux costs. Mirror ghost_protocol path
+          but unconditional while node active.
+    files:
+      - src/skills_overhaul/pilot/maneuvering/ManeuveringCombatPlugin.java
+      - src/skills_overhaul/pilot/maneuvering/ZFBThresholdManager.java
+    acceptance:
+      - "Permanent ZFB-while-firing applied/removed correctly"
+      - "30% projectile negation functional via chosen API"
+      - "Phase ships: phase flux cost = 0"
+
+  - id: T7
+    title: "Wire-up + build/load smoke test"
+    priority: must
+    complexity: 2
+    depends_on: [T2, T3, T4, T5, T6]
+    description: |
+      EffectRegistry: confirm all maneuvering ids resolve to plugin marker or real
+      handler (no NoOp). Run ./build.sh and ./build.sh test. CHANGELOG entry.
+    files:
+      - src/skills_overhaul/effect/EffectRegistry.java
+      - CHANGELOG.md
+    acceptance:
+      - "./build.sh exits 0"
+      - "./build.sh test exits 0"
+      - "Mod load logs zero NoOpHandler warnings for SO_maneuver_* / SO_piloted_stat keys"
+      - "CHANGELOG entry for spec-gap closure"

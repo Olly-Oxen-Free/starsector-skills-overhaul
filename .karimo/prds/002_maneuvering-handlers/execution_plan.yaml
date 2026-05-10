@@ -1,0 +1,21 @@
+prd: maneuvering-handlers
+waves:
+  - wave: 1
+    parallel: [T0]
+    rationale: "Investigation gates phase APIs, ZFB, momentumRetention, DamageListener. Blocks T4, T6."
+  - wave: 2
+    parallel: [T1]
+    rationale: "Stat-handler key extensions. Blocks T2, T3, T5."
+  - wave: 3
+    parallel: [T2, T3, T5, T6]
+    rationale: "T2/T3 only need T1. T6 needs T0. T5 only needs T1. All touch separate code regions where possible (T2/T3/T5/T6 all edit ManeuveringCombatPlugin — coordinate sequential merges)."
+  - wave: 4
+    parallel: [T4]
+    rationale: "Ghost protocol depends on T0 (phase APIs) + T3 (PhaseStateTracker firstPhaseUsed flag may be reused)."
+  - wave: 5
+    parallel: [T7]
+    rationale: "Final wire-up + smoke."
+
+longest_chain: "T0 → T3 → T4 → T7"
+total_tasks: 8
+total_complexity: 29
