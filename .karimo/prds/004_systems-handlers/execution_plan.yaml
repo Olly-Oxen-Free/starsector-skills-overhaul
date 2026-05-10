@@ -1,0 +1,17 @@
+prd: systems-handlers
+waves:
+  - wave: 1
+    parallel: [T0, T1]
+    rationale: "T0 investigation. T1 = 4 isolated bug fixes, no T0 deps."
+  - wave: 2
+    parallel: [T2, T3, T4, T5]
+    rationale: "All gated by T0. T2/T3 are plugin-block adds. T4 independent (event hook). T5 is stat-handler keys. T2/T3/T5 may touch SystemsCombatPlugin — coordinate sequential merge."
+  - wave: 3
+    parallel: [T6]
+    rationale: "Final wire-up + smoke."
+
+longest_chain: "T0 → T3 → T6"
+total_tasks: 7
+total_complexity: 26
+cross_prd_dependencies:
+  - "Defense PRD T6 (ACTIVE_NODES persistence) must land first — verified in T6"

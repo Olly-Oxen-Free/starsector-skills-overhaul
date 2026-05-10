@@ -1,0 +1,143 @@
+prd: systems-handlers
+tasks:
+  - id: T0
+    title: "Investigate hit-detection APIs, phase speed factor, wing API, PlayerShipChangedEvent"
+    priority: must
+    complexity: 4
+    depends_on: []
+    description: |
+      Resolve R1-R6 before impl:
+      1. Bomber-hit detection: DamageDealtModifier vs target damage-delta polling.
+         Reference vanilla skills/mods for precedent.
+      2. EMP-hit detection: target.getEMPDamageStaggered() delta vs DamageTakenModifier.
+      3. Vanilla phase-speed penalty factor — read API or test in-game.
+      4. Wing API: getWingAPI(), getFighterRefitData(), per-fighter-type stat application.
+      5. PlayerShipChangedEvent exact hook name + lifecycle.
+      6. enemyAccuracyReduction feasibility — confirm no per-combat API exists.
+      Output: t0-findings.md.
+    files: []
+    acceptance:
+      - "All 6 R-items have documented decision"
+
+  - id: T1
+    title: "Bug fixes: Target Painter, SynapticRelay leak, Red Line CR, Void Strike speed"
+    priority: must
+    complexity: 3
+    depends_on: []
+    description: |
+      Four isolated bug fixes:
+      - Target Painter (SystemsCombatPlugin:160-161): track previous frame
+        `target.getFluxTracker().getCurrFlux()`, compute delta, pass real value
+        to onShieldDamage(delta, gameTime).
+      - SynapticRelayHandler.remove(): call SynapticRelayService.remove() to
+        strip so_neural_uplink hullmod from fleet members.
+      - Red Line: apply redLine.getCRBonus() via flagship.getMutableStats() per-frame.
+      - Void Strike: apply voidStrike.getOrdnanceSpeedBonus() per-frame in
+        applyVoidStrikeMods().
+    files:
+      - src/skills_overhaul/pilot/systems/SystemsCombatPlugin.java
+      - src/skills_overhaul/effect/handlers/systems/SOSystemsSynapticRelayHandler.java
+      - src/skills_overhaul/pilot/systems/SynapticRelayService.java
+    acceptance:
+      - "Target Painter accumulates real damage stacks"
+      - "SynapticRelay refund removes Neural Uplink fleet-wide"
+      - "Red Line provides CR bonus"
+      - "Void Strike applies ordnance speed bonus"
+
+  - id: T2
+    title: "Implement EMP Specialist + Strike Coordination plugin blocks"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Both T2 nodes. Per spec lines 178, 182:
+      - EMP Specialist: getEmpDamageMult ×1.20 (static via SO_piloted_stat OR
+        plugin-side). On EMP hit: target weapon turn rate ×0.80 for 3s.
+      - Strike Coord: bomber +25% dmg / +20% HP via wing API. On bomber hit
+        connecting: target getIncomingDamageMult ×1.15 for 5s.
+      Both share hit-detection path from T0.
+    files:
+      - src/skills_overhaul/pilot/systems/SystemsCombatPlugin.java
+      - src/skills_overhaul/effect/handlers/systems/SOSystemsEMPSpecialistHandler.java (new)
+      - src/skills_overhaul/effect/handlers/systems/SOSystemsStrikeCoordHandler.java (new)
+    acceptance:
+      - "EMP hits debuff target weapon turn rate"
+      - "Bomber hits buff target damage taken"
+      - "Static stat parts apply/remove cleanly"
+
+  - id: T3
+    title: "Implement Phase Mastery + Carrier Command"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Both T4 nodes. Per spec lines 194, 198:
+      - Phase Mastery: getPhaseSpeedMult inverse (T0 supplies vanilla factor).
+        On phase exit (PhaseStateTracker listener): spawn 300 energy + 600 EMP
+        explosion at ship location, scaled by exit flux (×1.5 ≥80%, ×0.75 <40%, linear).
+      - Carrier Command: on bomber wing kill of player's getShipTarget: teleport
+        wing to carrier (set member locations to carrier pos, reset flight cycle).
+        30s cooldown tracker.
+    files:
+      - src/skills_overhaul/pilot/systems/SystemsCombatPlugin.java
+      - src/skills_overhaul/effect/handlers/systems/SOSystemsPhaseMasteryHandler.java (new)
+      - src/skills_overhaul/effect/handlers/systems/SOSystemsCarrierCommandHandler.java (new)
+    acceptance:
+      - "Phase ships pilot at full speed while phased"
+      - "Phase exit spawns flux-scaled explosion"
+      - "Bomber target-kill teleports wing home with 30s CD"
+
+  - id: T4
+    title: "Implement Automata Integra consumer"
+    priority: must
+    complexity: 3
+    depends_on: [T0]
+    description: |
+      Per spec line 192. Hook PlayerShipChangedEvent (T0 confirms hook name).
+      Consumer reads memory key `$pilot.automated_piloting_enabled` (set by handler).
+      When true: skip automated-ship-point deduction check on flagship swap.
+    files:
+      - src/skills_overhaul/effect/handlers/systems/SOSystemsAutomataIntegraHandler.java
+      - src/skills_overhaul/SkillsOverhaulModPlugin.java (event listener registration)
+    acceptance:
+      - "Player can pilot automated ship without point cost when node active"
+      - "Cost re-applied when node refunded"
+
+  - id: T5
+    title: "Extend SOPilotedStatHandler for systems lane skipped keys"
+    priority: must
+    complexity: 4
+    depends_on: [T0]
+    description: |
+      Add cases to SOPilotedStatHandler for: ventRateBonus, energyFluxReduction,
+      energyDamageBonus, energyRangeBonus, allWeaponTurnRateBonus,
+      sensorProfileReduction, ecmRatingBonus (campaign-only — note in tooltip),
+      enemyAccuracyReduction (per T0 feasibility), shieldRotationSpeedBonus,
+      shieldRaiseSpeedBonus, maneuverBonus, and air_superiority's three carrier
+      keys (bomberDamageVsCruiserCapital via DamageTakenModifier, interceptorSpeedBonus
+      and interceptorDamageVsFighters via wing API per T0).
+      Some need plugin assist (per-frame wing iteration for fighter stats).
+    files:
+      - src/skills_overhaul/effect/handlers/SOPilotedStatHandler.java
+      - src/skills_overhaul/pilot/systems/SystemsCombatPlugin.java (wing iteration)
+    acceptance:
+      - "All listed keys produce stat changes"
+      - "No default-warn log lines for systems-lane params"
+
+  - id: T6
+    title: "Wire-up + ACTIVE_NODES verification + smoke test"
+    priority: must
+    complexity: 2
+    depends_on: [T1, T2, T3, T4, T5]
+    description: |
+      EffectRegistry: confirm all systems ids resolve to real handler/plugin block.
+      Verify ACTIVE_NODES save-reload fix from defense PRD T6 covers
+      SystemsCombatPlugin too. Build + test + CHANGELOG.
+    files:
+      - src/skills_overhaul/effect/EffectRegistry.java
+      - CHANGELOG.md
+    acceptance:
+      - "./build.sh + test exit 0"
+      - "Mod load logs zero NoOp/skip warnings for SO_systems_*"
+      - "ACTIVE_NODES survives save-reload (cross-PRD verification)"
+      - "CHANGELOG entry"
