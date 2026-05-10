@@ -2,7 +2,9 @@ package skills_overhaul.suppress;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import com.fs.starfarer.api.characters.CharacterStatsSkillEffect;
 import com.fs.starfarer.api.characters.MutableCharacterStatsAPI;
+import com.fs.starfarer.api.characters.SkillSpecAPI;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,9 +13,10 @@ import java.util.List;
  * Zeros all non-so_ skill levels on load, stashing prior levels under SUPPRESS_TAG
  * so vanilla XP/point counters survive and skills can be restored on uninstall.
  *
- * FIXME(playtest): verify setSkillLevel(id, 0f) actually unregisters the vanilla
- * skill's stat mods on an existing save — if vanilla caches bonuses elsewhere,
- * may need additional teardown path.
+ * Per spec §7.2: explicit unregister of registered SkillEffect modifiers is
+ * required, not just setSkillLevel(0). We invoke each effect's unapply() before
+ * zeroing the level. Defensive — no harm if setSkillLevel(0) already
+ * unregisters; explicit unapply on already-clean stats is a no-op.
  */
 public final class VanillaSuppressor {
     private static final String SUPPRESS_TAG = "$so_suppressed_";
@@ -32,6 +35,7 @@ public final class VanillaSuppressor {
                 if (!mem.contains(key)) {
                     mem.set(key, prev);
                 }
+                unapplyAllEffects(s, sl.getSkill());
                 s.setSkillLevel(id, 0f);
             }
         }
@@ -52,4 +56,30 @@ public final class VanillaSuppressor {
         }
         for (String k : toClear) mem.unset(k);
     }
+
+    /**
+     * Explicitly invoke unapply() on every SkillEffect type the spec registers
+     * (CharacterStats, FleetStats). Defensive: if vanilla setSkillLevel(0)
+     * already does this, no harm. Without it, registered effects may persist
+     * even at level 0.
+     */
+    private static void unapplyAllEffects(MutableCharacterStatsAPI stats, SkillSpecAPI spec) {
+        try {
+            for (SkillSpecAPI.SkillEffectSpecAPI eff : spec.getEffectsAPI()) {
+                CharacterStatsSkillEffect cs = eff.getAsStatsEffect();
+                if (cs != null) {
+                    try { cs.unapply(stats, spec.getId()); }
+                    catch (Throwable ignored) {}
+                }
+                // Fleet-level effects apply to MutableFleetStatsAPI, not
+                // character stats — skip; vanilla detaches them on
+                // setSkillLevel(0) via fleet recompute.
+            }
+        } catch (Throwable t) {
+            Global.getLogger(VanillaSuppressor.class).warn(
+                    "[SO] unapplyAllEffects(" + spec.getId() + ") failed: " + t);
+        }
+    }
+
+    private VanillaSuppressor() {}
 }

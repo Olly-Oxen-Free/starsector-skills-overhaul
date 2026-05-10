@@ -31,6 +31,52 @@ Persists in MemoryAPI; re-applied on game load.
 
 **Deferred:** Redundant Bays disabled-bay 75% capacity (needs deeper FighterLaunchBayAPI work); massMult (no MutableShipStatsAPI surface).
 
+## Unreleased — Gunnery, Maneuvering, Systems, Suppressor (2026-05-10)
+
+**Gunnery (PRD 001):**
+- Surgical Strikes (T2): target weapon + engine damage taken mults +30%.
+- Twist the Knife (T3): target <60% hull or retreating → +25% attacker dmg, target speed ×0.85, target ZFB removed.
+- Dead Eye (T3): +10% non-missile range, perfect autofire (modifyFlat 1.0); −10% flux beyond 750u.
+- Weapons Discipline (T4): malfunction frequencies zeroed; flux costs ×0.80.
+- Ordnance Reserve (T1, was broken): nonMissileAmmoCapBonus + ammoRegenBonus now wired via getBallisticAmmoBonus / getEnergyAmmoBonus / getMissileAmmoRegenMult.
+
+**Maneuvering (PRD 002):**
+- Stealth Adaptation (T1): timescale +0.15 at >80% speed (normal); +0.25 while phased.
+- Phase Entry (T1, phase): phaseEntryFluxReduction:0.25 wired via SOPilotedStatHandler.
+- Engine Flux Tuning (T1): expanded to accelDecelBonus + maneuverBonus + overloadRecoveryReduction (was accelBonus only).
+- Ghost Protocol (T3, phase): phase upkeep cost ×0.10 while phased.
+- The Untouchable (capstone): permanent ZFB while firing or accelerating; phase ships → zero phase activation/upkeep costs.
+
+**Systems (PRD 004):**
+- Bug fixes: TargetPainter damage delta tracking (was always 0); Red Line CR bonus wiring; Void Strike ordnance speed wiring; SynapticRelay.remove() leak (so_neural_uplink hullmod was permanent on respec).
+- EMP Specialist (T2): +20% energy weapon damage.
+- Strike Coordination (T2): allied fighters in fleet get +25% dmg / +20% hull.
+- Phase Mastery (T4): max speed ×1.5 while phased (counters vanilla penalty); phase-exit burst spawns 300 energy + 600 EMP scaled by exit flux.
+- Carrier Command (T4): +20% fighter replacement rate.
+
+**Vanilla Suppressor (PRD 007):**
+- Hardened: explicit `CharacterStatsSkillEffect.unapply()` invocation on each non-so_ skill before setSkillLevel(0). Spec §7.2 mandates explicit unregister; defensive — no harm if vanilla already unregisters via setSkillLevel.
+
+**Multi-tree UI (PRD 005):**
+- Lane header label bug fixed (was showing tree name on every lane).
+- Metrics.laneCount semantic split (added explicit treeCount + isMultiTree()).
+- WIP multi-tree refactor + 8 secondary-system hullmod CSV entries committed (BaseHullMod is intentional detection-tag pattern; mechanics live in 8 SOSecondarySystem state machines + SystemsCombatPlugin wiring).
+
+**Secondary System hullmods (PRD 006):**
+- Verification: all 8 state machines (DomainOverclock, FluxDissolverBattery, ReflectorProtocol, DissonanceProjector, DimensionalSkimmer, StasisEmitter, CombatSnapshot, FluxGhostProjector) functional; mechanics live in plugin via hullmod-tag detection. CSV BaseHullMod confirmed intentional.
+
+**Deferred to follow-up:**
+- Phase Entry first-phase-free flag (vanilla phase-cost intercept needed)
+- Untouchable 30% projectile negation (DamageTakenModifier + probability gate)
+- Evasive Action missile-proximity bonus
+- EMP Specialist per-EMP-hit weapon turn debuff (per-shot detection)
+- Strike Coordination bomber-hit target debuff
+- Carrier Command bomber-target-kill teleport-home
+- Active-basics displacement modal (PRD 005 T3)
+- Multi-tree unit tests (PRD 005 T4-T5)
+- VanillaSuppressor empirical in-game test (PRD 007 T0)
+- Redundant Bays disabled-bay 75% capacity (PRD 003 follow-up)
+
 ## v0.2 — Character tab UI takeover (2026-04-20)
 
 - Replaced v0.1 dialog stopgap with full character-tab takeover.
