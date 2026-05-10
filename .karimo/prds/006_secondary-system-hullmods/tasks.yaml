@@ -1,0 +1,72 @@
+prd: secondary-system-hullmods
+tasks:
+  - id: T0
+    title: "Per-secondary spec verification"
+    priority: must
+    complexity: 4
+    depends_on: []
+    description: |
+      Read each of 7 unverified state machines and compare to spec lines 150-157:
+      SOFluxDissolverBattery, SOReflectorProtocol, SODissonanceProjector,
+      SODimensionalSkimmer, SOStasisEmitter, SOCombatSnapshot, SOFluxGhostProjector.
+      Document per-secondary: spec mechanic, actual code behavior, deviation list.
+      Output: research/internal/t0-verification-table.md.
+    files: []
+    acceptance:
+      - "Per-secondary verification table complete"
+      - "Deviation list ranks fixes by complexity"
+
+  - id: T1
+    title: "Fix spec deviations"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Address deviations identified in T0. Likely high-risk targets:
+      - Reflector projectile reflection mechanism (DamageDealtModifier path)
+      - Combat Snapshot revert edge cases (ship destroyed during snapshot)
+      - Flux Ghost clone lifecycle (spawn API, cleanup)
+      Other secondaries likely require minor tuning only.
+    files:
+      - src/skills_overhaul/pilot/systems/secondary/*.java (per T0 findings)
+    acceptance:
+      - "All identified deviations resolved or documented as won't-fix"
+      - "Reflector reflects projectiles (verifiable in-game)"
+      - "Combat Snapshot revert handles destruction edge case"
+      - "Flux Ghost clone spawns + despawns cleanly"
+
+  - id: T2
+    title: "Add POJO unit tests for state machines"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      State machines extend SOSecondarySystem (template with tickCooldown +
+      activeTimer). Test cooldown countdown, active duration timer, flux-scaling
+      math (Dissonance), arrival-EMP-radius math (Skimmer), etc.
+      Engine-bound mechanics deferred to in-game smoke.
+    files:
+      - test/skills_overhaul/pilot/systems/secondary/*Test.java (new, ~5 files)
+    acceptance:
+      - "5+ test classes compile and pass via java -ea"
+      - "Cover cooldown/active-timer for all 8 state machines"
+
+  - id: T3
+    title: "Activation wiring + save-reload + smoke"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      Verify keypress → state.activate routing. Test save-reload: confirm
+      cooldown state persists OR resets cleanly (no exploit). Cross-PRD: defense
+      T6 ACTIVE_NODES persistence must cover this. In-game smoke: equip each
+      hullmod, activate via R-key (or confirmed key), verify mechanic fires.
+      CHANGELOG entry. CSV review (size-cost slots = 0 confirm).
+    files:
+      - src/skills_overhaul/pilot/systems/SystemsCombatPlugin.java (if wiring fix needed)
+      - CHANGELOG.md
+    acceptance:
+      - "All 8 secondaries activate in-game"
+      - "Save-reload preserves OR cleanly resets state"
+      - "ACTIVE_NODES persistence verified post-defense T6"
+      - "CHANGELOG entry"

@@ -1,0 +1,17 @@
+prd: secondary-system-hullmods
+waves:
+  - wave: 1
+    parallel: [T0]
+    rationale: "Verification gates fixes."
+  - wave: 2
+    parallel: [T1]
+    rationale: "Fix deviations."
+  - wave: 3
+    parallel: [T2, T3]
+    rationale: "Tests + smoke independent of each other."
+
+longest_chain: "T0 → T1 → T3"
+total_tasks: 4
+total_complexity: 15
+cross_prd_dependencies:
+  - "Defense PRD T6 (ACTIVE_NODES persistence) must land — verified in T3"
