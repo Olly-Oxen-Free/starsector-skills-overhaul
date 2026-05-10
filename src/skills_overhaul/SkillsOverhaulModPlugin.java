@@ -102,6 +102,7 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
                     "$so_bar_seasoned_crew_registered", true, 0f);
         }
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
+        skills_overhaul.console.OrphanSkillGranter.applyAllOnLoad();
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
                 LOG_PREFIX + "listeners registered; newGame=" + newGame);
