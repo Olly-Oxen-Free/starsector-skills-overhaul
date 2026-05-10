@@ -47,7 +47,7 @@ public final class PathTreeBuilder {
     public static float LANE_INNER_PAD = 10f;
 
     // Derived widths — recomputed whenever metrics are reconfigured.
-    public static float LANE_CONTENT_W = 3f * NODE + 2f * SLOT_GAP_X;
+    public static float LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
     public static float LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
     // Extra top padding inside a lane column before the first node row.
     // Raises the tier-0 slot away from the header so it isn't clipped.
@@ -78,7 +78,7 @@ public final class PathTreeBuilder {
         LANE_GAP_X  = clamp(NODE * 0.40f, 16f, 52f);
         LANE_INNER_PAD = clamp(NODE * 0.20f, 8f, 28f);
         SUBLANE_W = NODE;
-        LANE_CONTENT_W = 3f * NODE + 2f * SLOT_GAP_X;
+        LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
         LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
         TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
         HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
@@ -109,7 +109,7 @@ public final class PathTreeBuilder {
         //         + sublaneCount*(n + 2*laneGap)
         //   ratios: slotGap=0.18n, innerPad=0.20n, laneGap=0.40n
         //   total = n * (3.76*laneCount + 1.80*sublaneCount)
-        float factorW = 3.76f * laneCount + 1.80f * sublaneCount;
+        float factorW = 6.12f * laneCount + 1.80f * sublaneCount;
         if (factorW < 1f) factorW = 1f;
         float nodeFromW = usableH > 0f ? (usableW / factorW) : 48f;
 
@@ -129,7 +129,7 @@ public final class PathTreeBuilder {
         float innerPad = clamp(node * 0.20f, 8f, 28f);
 
         // One more correction pass if clamped values now overflow/underflow.
-        float laneContentW = 3f * node + 2f * slotGap;
+        float laneContentW = 5f * node + 4f * slotGap;
         float laneW = laneContentW + 2f * innerPad;
         float total = laneCount * laneW + sublaneCount * (node + 2f * laneGap);
         if (total > usableW + 0.5f) {
@@ -146,7 +146,7 @@ public final class PathTreeBuilder {
         SLOT_GAP_X = slotGap;
         LANE_GAP_X = laneGap;
         LANE_INNER_PAD = innerPad;
-        LANE_CONTENT_W = 3f * NODE + 2f * SLOT_GAP_X;
+        LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
         LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
         TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
         HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
@@ -167,13 +167,13 @@ public final class PathTreeBuilder {
             SLOT_GAP_X = slotGap;
             LANE_GAP_X = laneGap;
             LANE_INNER_PAD = innerPad;
-            LANE_CONTENT_W = 3f * NODE + 2f * SLOT_GAP_X;
+            LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
             LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
             TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
             HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
             LANE_TOP_PAD = clamp(NODE * 0.14f, 4f, 10f);
             // Re-check horizontal width after vertical shrink.
-            laneContentW = 3f * NODE + 2f * SLOT_GAP_X;
+            laneContentW = 5f * NODE + 4f * SLOT_GAP_X;
             laneW = laneContentW + 2f * innerPad;
             total = laneCount * laneW + sublaneCount * (node + 2f * laneGap);
             if (total > usableW + 0.5f) {
@@ -188,7 +188,7 @@ public final class PathTreeBuilder {
                 SLOT_GAP_X = slotGap;
                 LANE_GAP_X = laneGap;
                 LANE_INNER_PAD = innerPad;
-                LANE_CONTENT_W = 3f * NODE + 2f * SLOT_GAP_X;
+                LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
                 LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
                 TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
                 HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
@@ -216,7 +216,7 @@ public final class PathTreeBuilder {
             SLOT_GAP_X = slotGap;
             LANE_GAP_X = laneGap;
             LANE_INNER_PAD = innerPad;
-            LANE_CONTENT_W = 3f * NODE + 2f * SLOT_GAP_X;
+            LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
             LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
             TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
             HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
@@ -250,10 +250,104 @@ public final class PathTreeBuilder {
         public final float totalW, totalH;
         public final int rowCount;     // tiers including capstone row
         public final int maxTier;
+        /**
+         * In single-tree mode: lane count of the tree.
+         * In multi-tree mode (buildPaths(List<TreeDef>) return): tree count.
+         * Use {@link #treeCount} / {@link #isMultiTree} for unambiguous reads.
+         */
         public final int laneCount;
+        public final int treeCount;
         public Metrics(float totalW, float totalH, int rowCount, int maxTier, int laneCount) {
+            this(totalW, totalH, rowCount, maxTier, laneCount, 1);
+        }
+        public Metrics(float totalW, float totalH, int rowCount, int maxTier,
+                       int laneCount, int treeCount) {
             this.totalW = totalW; this.totalH = totalH;
-            this.rowCount = rowCount; this.maxTier = maxTier; this.laneCount = laneCount;
+            this.rowCount = rowCount; this.maxTier = maxTier;
+            this.laneCount = laneCount; this.treeCount = treeCount;
+        }
+        public boolean isMultiTree() { return treeCount > 1; }
+    }
+
+    /** Multi-tree overload: sizes the layout to fit all trees side by side. */
+    public static void configureForViewport(List<TreeDef> defs, float viewportW, float viewportH) {
+        resetLayoutDefaults();
+        int numTrees = Math.max(1, defs.size());
+        int maxTier = 0;
+        for (TreeDef d : defs) for (Node n : d.getNodes()) if (n.getTier() > maxTier) maxTier = n.getTier();
+        int rowCount = maxTier + 1;
+
+        float usableW = Math.max(200f, viewportW - 8f);
+        float usableH = Math.max(200f, viewportH - 8f);
+
+        // factorW per tree = 6.12n (5 slots + 4*slotGap + 2*innerPad)
+        // factorW per tree gap = 0.80n (2 * laneGap ratio 0.40)
+        float factorW = 6.12f * numTrees + 0.80f * Math.max(0, numTrees - 1);
+        if (factorW < 1f) factorW = 1f;
+        float nodeFromW = usableW / factorW;
+
+        float factorH = 0.45f + 0.14f + rowCount + Math.max(0, rowCount - 1) * 0.30f;
+        if (factorH < 1f) factorH = 1f;
+        float nodeFromH = (usableH - 24f) / factorH;
+
+        float node = clamp(Math.min(nodeFromW, nodeFromH), 44f, 120f);
+        float slotGap  = clamp(node * 0.18f, 6f, 22f);
+        float laneGap  = clamp(node * 0.40f, 16f, 52f);
+        float innerPad = clamp(node * 0.20f, 8f, 28f);
+
+        float laneW = 5f * node + 4f * slotGap + 2f * innerPad;
+        float treeGap = 2f * laneGap;
+        float total = numTrees * laneW + Math.max(0, numTrees - 1) * treeGap;
+        if (total > usableW + 0.5f) {
+            node = clamp(node * (usableW / total), 40f, 120f);
+            slotGap  = clamp(node * 0.18f, 6f, 22f);
+            laneGap  = clamp(node * 0.40f, 16f, 52f);
+            innerPad = clamp(node * 0.20f, 8f, 28f);
+        }
+
+        NODE = node; SUBLANE_W = node; SLOT_GAP_X = slotGap; LANE_GAP_X = laneGap;
+        LANE_INNER_PAD = innerPad;
+        LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
+        LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
+        TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
+        HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
+        LANE_TOP_PAD = clamp(NODE * 0.14f, 4f, 10f);
+
+        float bodyH = rowCount * NODE + Math.max(0, rowCount - 1) * TIER_GAP_Y;
+        float totalH = HEADER_H + LANE_TOP_PAD + bodyH + 8f;
+        if (totalH > usableH + 0.5f) {
+            node = clamp(node * (usableH / totalH), 40f, 120f);
+            slotGap  = clamp(node * 0.18f, 6f, 22f);
+            laneGap  = clamp(node * 0.40f, 16f, 52f);
+            innerPad = clamp(node * 0.20f, 8f, 28f);
+            NODE = node; SUBLANE_W = node; SLOT_GAP_X = slotGap; LANE_GAP_X = laneGap;
+            LANE_INNER_PAD = innerPad;
+            LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
+            LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
+            TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
+            HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
+            LANE_TOP_PAD = clamp(NODE * 0.14f, 4f, 10f);
+        }
+
+        // Fine-grained fit loop.
+        final float marginW = 2f, marginH = 2f;
+        for (int iter = 0; iter < 16; iter++) {
+            float tw = numTrees * LANE_W + Math.max(0, numTrees - 1) * 2f * LANE_GAP_X;
+            float th = totalContentHeight(rowCount);
+            if (tw <= viewportW - marginW && th <= viewportH - marginH) break;
+            float scale = Math.min((viewportW - marginW) / Math.max(tw, 1f),
+                    (viewportH - marginH) / Math.max(th, 1f));
+            node = clamp(NODE * scale, 36f, 120f);
+            slotGap  = clamp(node * 0.18f, 6f, 22f);
+            laneGap  = clamp(node * 0.40f, 16f, 52f);
+            innerPad = clamp(node * 0.20f, 8f, 28f);
+            NODE = node; SUBLANE_W = node; SLOT_GAP_X = slotGap; LANE_GAP_X = laneGap;
+            LANE_INNER_PAD = innerPad;
+            LANE_CONTENT_W = 5f * NODE + 4f * SLOT_GAP_X;
+            LANE_W = LANE_CONTENT_W + 2f * LANE_INNER_PAD;
+            TIER_GAP_Y   = clamp(NODE * 0.30f, 12f, 22f);
+            HEADER_H     = clamp(NODE * 0.45f, 22f, 32f);
+            LANE_TOP_PAD = clamp(NODE * 0.14f, 4f, 10f);
         }
     }
 
@@ -308,82 +402,93 @@ public final class PathTreeBuilder {
                                      float scrollX,
                                      List<UIComponentAPI> tracker,
                                      List<LaneColumn> laneColumnsOut) {
-        // NOTE: post-multi-tree refactor, buildPaths renders only the first tree of each tab.
-        // Full per-tab multi-tree navigation lands with the Commander content rebuild.
-        TreeDef def = TreeRegistry.getTrees(t).get(0);
-        Metrics metrics = computeMetrics(def);
+        List<TreeDef> defs = TreeRegistry.getTrees(t);
+        float treeGapX = 2f * LANE_GAP_X;
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         Set<String> owned = new HashSet<String>();
         Map<String, Object> memSnapshot = new HashMap<String, Object>();
-        for (Node n : def.getNodes()) {
-            String k = SkillMemory.purchasedKey(n.getId());
-            if (mem.contains(k) && mem.getBoolean(k)) {
-                owned.add(n.getId());
-                memSnapshot.put(k, Boolean.TRUE);
+        for (TreeDef def : defs) {
+            for (Node n : def.getNodes()) {
+                String k = SkillMemory.purchasedKey(n.getId());
+                if (mem.contains(k) && mem.getBoolean(k)) {
+                    owned.add(n.getId());
+                    memSnapshot.put(k, Boolean.TRUE);
+                }
             }
         }
         Set<String> pending = host.pendingByTree.get(t);
 
-        List<String> mainLanes = deriveLanes(def);
-
-        // Compute each main-lane's X inside the unscrolled content.
-        float[] laneX = new float[mainLanes.size()];
-        float[] sublaneX = new float[Math.max(0, mainLanes.size() - 1)];
-        float cursor = 0f;
-        for (int i = 0; i < mainLanes.size(); i++) {
-            laneX[i] = cursor;
-            cursor += LANE_W;
-            if (i < mainLanes.size() - 1) {
-                cursor += LANE_GAP_X;
-                sublaneX[i] = cursor;
-                cursor += SUBLANE_W + LANE_GAP_X;
-            }
+        // Compute combined content dimensions.
+        float contentW = 0f;
+        float contentH = 0f;
+        for (int di = 0; di < defs.size(); di++) {
+            Metrics m = computeMetrics(defs.get(di));
+            if (di > 0) contentW += treeGapX;
+            contentW += m.totalW;
+            contentH = Math.max(contentH, m.totalH);
         }
 
-        float contentW = metrics.totalW;
-        float contentH = metrics.totalH;
-
-        // Vertically center the full column stack (headers + tiers) in the viewport.
         float bodyY0 = originY + Math.max(0f, (viewportH - contentH) * 0.5f);
 
-        // Emit main lane columns.
-        for (int li = 0; li < mainLanes.size(); li++) {
-            String lane = mainLanes.get(li);
-            float colXContent = laneX[li];
-            float colXViewport = originX + (colXContent - scrollX);
+        float treeCursor = 0f;
+        for (int di = 0; di < defs.size(); di++) {
+            TreeDef def = defs.get(di);
+            Metrics metrics = computeMetrics(def);
+            if (di > 0) treeCursor += treeGapX;
 
-            LaneColumn col = new LaneColumn();
-            col.lane = lane;
-            col.xContent = colXContent;
-            col.yContent = 0f;
-            col.width = LANE_W;
-            col.height = contentH;
-            laneColumnsOut.add(col);
+            List<String> mainLanes = deriveLanes(def);
+            float[] laneX = new float[mainLanes.size()];
+            float[] sublaneX = new float[Math.max(0, mainLanes.size() - 1)];
+            float laneCursor = treeCursor;
+            for (int i = 0; i < mainLanes.size(); i++) {
+                laneX[i] = laneCursor;
+                laneCursor += LANE_W;
+                if (i < mainLanes.size() - 1) {
+                    laneCursor += LANE_GAP_X;
+                    sublaneX[i] = laneCursor;
+                    laneCursor += SUBLANE_W + LANE_GAP_X;
+                }
+            }
+            treeCursor = laneCursor;
 
-            // Always emit; viewport scissor handles clipping without dropping the
-            // rightmost lane when content width meets viewW (fp edge case).
-            emitLaneColumn(panel, host, def, lane, metrics,
-                    colXViewport, bodyY0, owned, pending, memSnapshot, tracker);
+            for (int li = 0; li < mainLanes.size(); li++) {
+                String lane = mainLanes.get(li);
+                float colXContent = laneX[li];
+                float colXViewport = originX + (colXContent - scrollX);
+
+                LaneColumn col = new LaneColumn();
+                col.lane = "tree" + di + ":" + lane;
+                col.xContent = colXContent;
+                col.yContent = 0f;
+                col.width = LANE_W;
+                col.height = contentH;
+                laneColumnsOut.add(col);
+
+                emitLaneColumn(panel, host, def, lane, metrics,
+                        colXViewport, bodyY0, owned, pending, memSnapshot, tracker);
+            }
+
+            for (int i = 0; i < mainLanes.size() - 1; i++) {
+                String a = mainLanes.get(i);
+                String b = mainLanes.get(i + 1);
+                List<String> pair = new ArrayList<String>(Arrays.asList(a, b));
+                Collections.sort(pair);
+                String sublaneKey = "merge:" + pair.get(0) + "_" + pair.get(1);
+                float subViewportX = originX + (sublaneX[i] - scrollX);
+                emitSublaneColumn(panel, host, def, sublaneKey, metrics,
+                        subViewportX, bodyY0, owned, pending, memSnapshot, tracker);
+            }
+
+            syncNodeGeometryFromResolvedPositions(panel, host, def);
         }
+        host.edges.clear();
+        for (TreeDef def : defs) buildEdges(host, def, owned, pending);
 
-        // Emit merge sublane columns between adjacent main lanes.
-        for (int i = 0; i < mainLanes.size() - 1; i++) {
-            String a = mainLanes.get(i);
-            String b = mainLanes.get(i + 1);
-            List<String> pair = new ArrayList<String>(Arrays.asList(a, b));
-            Collections.sort(pair);
-            String sublaneKey = "merge:" + pair.get(0) + "_" + pair.get(1);
-
-            float subContentX = sublaneX[i];
-            float subViewportX = originX + (subContentX - scrollX);
-
-            emitSublaneColumn(panel, host, def, sublaneKey, metrics,
-                    subViewportX, bodyY0, owned, pending, memSnapshot, tracker);
-        }
-
-        refreshEdgesAfterLayout(panel, host, t, def, owned, pending);
-        return metrics;
+        Metrics first = computeMetrics(defs.get(0));
+        // Multi-tree return: laneCount preserved for first tree; treeCount = defs.size().
+        return new Metrics(contentW, contentH, first.rowCount, first.maxTier,
+                first.laneCount, defs.size());
     }
 
     /**
@@ -407,16 +512,19 @@ public final class PathTreeBuilder {
      */
     public static void refreshEdgesAfterLayout(CustomPanelAPI panel, CharacterTabPanelPlugin host) {
         Tree tree = host.currentTree;
-        // NOTE: post-multi-tree refactor, renders only the first tree of each tab.
-        TreeDef def = TreeRegistry.getTrees(tree).get(0);
+        List<TreeDef> defs = TreeRegistry.getTrees(tree);
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         Set<String> owned = new HashSet<String>();
-        for (Node n : def.getNodes()) {
-            String k = SkillMemory.purchasedKey(n.getId());
-            if (mem.contains(k) && mem.getBoolean(k)) owned.add(n.getId());
+        for (TreeDef def : defs) {
+            for (Node n : def.getNodes()) {
+                String k = SkillMemory.purchasedKey(n.getId());
+                if (mem.contains(k) && mem.getBoolean(k)) owned.add(n.getId());
+            }
         }
         Set<String> pending = host.pendingByTree.get(tree);
-        refreshEdgesAfterLayout(panel, host, tree, def, owned, pending);
+        for (TreeDef def : defs) syncNodeGeometryFromResolvedPositions(panel, host, def);
+        host.edges.clear();
+        for (TreeDef def : defs) buildEdges(host, def, owned, pending);
     }
 
     private static void syncNodeGeometryFromResolvedPositions(CustomPanelAPI panel,
@@ -443,7 +551,9 @@ public final class PathTreeBuilder {
                                        Set<String> owned, Set<String> pending,
                                        Map<String, Object> memSnapshot,
                                        List<UIComponentAPI> tracker) {
-        // Header band with lane name.
+        // Header band with lane name. (R1 fix: pass lane key, not tree key —
+        // lane key may be namespaced "tree{N}:..." in multi-tree path; strip
+        // prefix in prettyLaneName.)
         TooltipMakerAPI header = panel.createUIElement(LANE_W, HEADER_H, false);
         String label = prettyLaneName(lane);
         Color laneAccent = new Color(150, 200, 240);
@@ -488,7 +598,7 @@ public final class PathTreeBuilder {
                     emitNode(panel, host, n, owned, pending, memSnapshot, nx, rowY, tracker);
                 }
             } else {
-                for (int slot = 0; slot < 3; slot++) {
+                for (int slot = 0; slot < 5; slot++) {
                     Node n = findNode(def, lane, tier, slot);
                     if (n == null) continue;
                     float nx = colX + LANE_INNER_PAD + slot * (NODE + SLOT_GAP_X);
@@ -677,8 +787,13 @@ public final class PathTreeBuilder {
     private static String prettyLaneName(String lane) {
         if (lane == null || lane.isEmpty()) return "";
         if (lane.startsWith("merge:")) return "BRIDGE";
-        // Replace underscores with spaces, uppercase.
-        return lane.replace('_', ' ').toUpperCase();
+        // Strip multi-tree prefix "tree{N}:" if present.
+        int colon = lane.indexOf(':');
+        String s = colon >= 0 ? lane.substring(colon + 1) : lane;
+        // Strip leading tab prefix (e.g. "pilot_defense" → "defense").
+        int underscore = s.indexOf('_');
+        String label = underscore >= 0 ? s.substring(underscore + 1) : s;
+        return label.replace('_', ' ').toUpperCase();
     }
 
     // --- Helper types used by the plugin -----------------------------------
