@@ -25,6 +25,7 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
     private float hitAccum = 0f;
     private final IntervalUtil wolfpackInterval = new IntervalUtil(0.5f, 0.5f);
     private boolean initialized = false;
+    private ShipAPI prevSurgicalTarget;
 
     @Override
     public void init(CombatEngineAPI engine) {
@@ -171,6 +172,79 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
                 stats.getMissileWeaponDamageMult().unmodify("so_point_blank");
                 stats.getWeaponTurnRateBonus().unmodifyPercent("so_point_blank");
             }
+        }
+
+        // === Gunnery PRD T1-T5 (2026-05-10) ===
+
+        // Surgical Strikes (spec line 134): +30% damage to target's weapon
+        // mounts and engines via target-side subsystem damage taken mults.
+        // Approximation since DamageAPI lacks per-anatomy hit type.
+        ShipAPI surgicalTarget = flagship.getShipTarget();
+        if (ACTIVE_NODES.contains("so_gunnery_surgical")) {
+            if (prevSurgicalTarget != null && prevSurgicalTarget != surgicalTarget) {
+                MutableShipStatsAPI ts = prevSurgicalTarget.getMutableStats();
+                ts.getWeaponDamageTakenMult().unmodify("so_surgical");
+                ts.getEngineDamageTakenMult().unmodify("so_surgical");
+            }
+            if (surgicalTarget != null) {
+                MutableShipStatsAPI ts = surgicalTarget.getMutableStats();
+                ts.getWeaponDamageTakenMult().modifyMult("so_surgical", 1.30f);
+                ts.getEngineDamageTakenMult().modifyMult("so_surgical", 1.30f);
+            }
+            prevSurgicalTarget = surgicalTarget;
+        }
+
+        // Twist the Knife (spec line 52): target <60% hull OR retreating →
+        // attacker +25% dmg, target −15% speed, target ZFB removed.
+        if (ACTIVE_NODES.contains("so_gunnery_twist_knife") && surgicalTarget != null) {
+            float hullFrac = surgicalTarget.getHullLevel();
+            boolean retreating = surgicalTarget.isRetreating();
+            boolean active = hullFrac < 0.60f || retreating;
+            if (active) {
+                stats.getBallisticWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+                stats.getEnergyWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+                stats.getMissileWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+                MutableShipStatsAPI ts = surgicalTarget.getMutableStats();
+                ts.getMaxSpeed().modifyMult("so_twist_knife_target", 0.85f);
+                ts.getZeroFluxSpeedBoost().modifyMult("so_twist_knife_target", 0f);
+            } else {
+                stats.getBallisticWeaponDamageMult().unmodify("so_twist_knife");
+                stats.getEnergyWeaponDamageMult().unmodify("so_twist_knife");
+                stats.getMissileWeaponDamageMult().unmodify("so_twist_knife");
+                MutableShipStatsAPI ts = surgicalTarget.getMutableStats();
+                ts.getMaxSpeed().unmodify("so_twist_knife_target");
+                ts.getZeroFluxSpeedBoost().unmodify("so_twist_knife_target");
+            }
+        }
+
+        // Dead Eye (spec line 142): static range + accuracy parts done in
+        // SODefenseUnbreakableHandler-style handler (pending). Conditional
+        // flux: −10% beyond 75% of weapon range.
+        if (ACTIVE_NODES.contains("so_gunnery_dead_eye") && surgicalTarget != null) {
+            float dist = com.fs.starfarer.api.util.Misc.getDistance(
+                    flagship.getLocation(), surgicalTarget.getLocation());
+            // Approx max range = 1000u; "75% of range" ≈ 750u.
+            if (dist > 750f) {
+                stats.getBallisticWeaponFluxCostMod().modifyMult("so_dead_eye_range", 0.90f);
+                stats.getEnergyWeaponFluxCostMod().modifyMult("so_dead_eye_range", 0.90f);
+            } else {
+                stats.getBallisticWeaponFluxCostMod().unmodify("so_dead_eye_range");
+                stats.getEnergyWeaponFluxCostMod().unmodify("so_dead_eye_range");
+            }
+            // Static parts (apply once, always-on while node active):
+            stats.getBallisticWeaponRangeBonus().modifyPercent("so_dead_eye", 10f);
+            stats.getEnergyWeaponRangeBonus().modifyPercent("so_dead_eye", 10f);
+            stats.getAutofireAimAccuracy().modifyFlat("so_dead_eye", 1.0f);
+        }
+
+        // Weapons Discipline (spec line 58): suppress malfunction + amplify
+        // existing flux reductions by +20%.
+        if (ACTIVE_NODES.contains("so_gunnery_weapons_discipline")) {
+            stats.getWeaponMalfunctionChance().modifyMult("so_weapons_disc", 0f);
+            stats.getEngineMalfunctionChance().modifyMult("so_weapons_disc", 0f);
+            stats.getCriticalMalfunctionChance().modifyMult("so_weapons_disc", 0f);
+            stats.getBallisticWeaponFluxCostMod().modifyMult("so_weapons_disc", 0.80f);
+            stats.getEnergyWeaponFluxCostMod().modifyMult("so_weapons_disc", 0.80f);
         }
 
         // Wolfpack: +5% per nearby ally, +1% per nearby fighter (polled every 0.5s)

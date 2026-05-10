@@ -74,9 +74,15 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "turnRateBonus":           s.getMaxTurnRate().modifyPercent(id, v * 100f); break;
             case "accelBonus":              s.getAcceleration().modifyPercent(id, v * 100f); break;
             case "weaponSpreadReduction":   s.getRecoilPerShotMult().modifyMult(id, 1f - v); break;
+            // Gunnery — ordnance_res (gunnery PRD T5)
             case "nonMissileAmmoCapBonus":
-                Global.getLogger(SOPilotedStatHandler.class)
-                        .info("[SO] nonMissileAmmoCapBonus has no direct API, requires EveryFrame plugin logic");
+                s.getBallisticAmmoBonus().modifyPercent(id, v * 100f);
+                s.getEnergyAmmoBonus().modifyPercent(id, v * 100f);
+                break;
+            case "ammoRegenBonus":
+                s.getMissileAmmoRegenMult().modifyMult(id, 1f + v);
+                // Non-missile per-weapon reload boost handled in GunneryCombatPlugin
+                // when so_gunnery_ordnance_res node is active.
                 break;
             // Defense lane — newly mapped (T4)
             case "engineHPBonus":           s.getEngineDamageTakenMult().modifyMult(id, 1f - v); break;
@@ -124,7 +130,7 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "weaponHPBonus": case "fighterBayHPBonus":
             case "moduleRepairMult": case "crDeclineStart": case "crRegenInCombat":
             case "massMult": case "collisionDamageDealt":
-            case "missileTrackingSpeed": case "ammoRegenBonus":
+            case "missileTrackingSpeed":
             case "momentumRetention": case "weaponTurnRateBonusAtSpeed":
             case "timescaleAtSpeed": case "timescaleWhilePhased": case "firstPhaseFree":
             case "ecmRatingBonus": case "enemyAccuracyReduction":
@@ -170,6 +176,11 @@ public final class SOPilotedStatHandler implements EffectHandler {
             case "turnRateBonus":           s.getMaxTurnRate().unmodifyPercent(id); break;
             case "accelBonus":              s.getAcceleration().unmodifyPercent(id); break;
             case "weaponSpreadReduction":   s.getRecoilPerShotMult().unmodify(id); break;
+            case "nonMissileAmmoCapBonus":
+                s.getBallisticAmmoBonus().unmodifyPercent(id);
+                s.getEnergyAmmoBonus().unmodifyPercent(id);
+                break;
+            case "ammoRegenBonus":          s.getMissileAmmoRegenMult().unmodify(id); break;
             // T4 unmodify mirrors
             case "engineHPBonus":           s.getEngineDamageTakenMult().unmodify(id); break;
             case "crMalfunctionThreshold":
