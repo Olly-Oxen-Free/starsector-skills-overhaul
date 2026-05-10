@@ -1,0 +1,138 @@
+prd: gunnery-handlers
+tasks:
+  - id: T0
+    title: "Investigate ammo-cap API + onKill wiring + reference mods"
+    priority: must
+    complexity: 3
+    depends_on: []
+    description: |
+      Resolve open questions before implementation:
+      1. Confirm `WeaponAPI` ammo manipulation surface: `setAmmo(int)`, `resetAmmo()`,
+         `getMaxAmmo()`, `getAmmo()`. Document timing — when is ammo initialized
+         relative to combat plugin lifecycle?
+      2. Survey reference mods for ammo-cap precedent. Required: Second-in-Command.
+         Optional: any AoTD / Industrial Evolution / DME / Combat Chatter mods that
+         expose ammo bonuses. Look in `~/Games/Starsector/mods/` and
+         `workspace/overrides/patches/`. Document chosen approach.
+      3. Verify `GunneryCombatPlugin.onKill()` call site. Grep workspace for callers;
+         if none, identify which CombatListenerAPI / battle-end hook should invoke it.
+      4. Verify `getZeroFluxSpeedBoost`, `getMalfunctionFreqMult` (or equivalents)
+         exist on MutableShipStatsAPI for twist_knife/weapons_discipline targets.
+      Output: short investigation note in `.karimo/prds/gunnery-handlers/research/internal/t0-findings.md`.
+    files: []
+    acceptance:
+      - "t0-findings.md written with API decisions for ammo-cap, ZFB-removal, malfunction-suppression"
+      - "onKill() call-site identified or flagged as gap"
+
+  - id: T1
+    title: "Implement SOGunnerySurgicalHandler (+30% dmg vs WEAPON_MOUNT/ENGINE)"
+    priority: must
+    complexity: 3
+    depends_on: []
+    description: |
+      Per spec line 134: +30% damage when hit type is WEAPON_MOUNT or ENGINE.
+      If MutableShipStatsAPI offers no attacker-side hit-type modifier, fall back to
+      a `DamageListener` attached to the player ship that boosts outgoing damage when
+      `param.getType() == HIT_TYPE.WEAPON_MOUNT || HIT_TYPE.ENGINE`.
+      Pattern: copy SOGunneryGlassCannonHandler structure. Register in EffectRegistry
+      replacing the shared CombatScript stub for SO_gunnery_surgical.
+    files:
+      - src/skills_overhaul/effect/handlers/gunnery/SOGunnerySurgicalHandler.java
+      - src/skills_overhaul/effect/EffectRegistry.java
+    acceptance:
+      - "Handler class compiles, follows EffectHandler interface"
+      - "apply()/remove() symmetric with unique source id"
+      - "EffectRegistry.SO_gunnery_surgical → new handler"
+
+  - id: T2
+    title: "Implement SO_gunnery_twist_knife (applyMods conditional block)"
+    priority: must
+    complexity: 4
+    depends_on: [T0]
+    description: |
+      Per spec line 52: target <60% hull OR retreating → attacker +25% dmg, target
+      −15% speed, target loses ZeroFluxBoost. Plugin-side conditional logic in
+      GunneryCombatPlugin.applyMods(). Mirror existing dragon_slayer/point_blank
+      pattern. Track currently-debuffed target; on target change or condition false,
+      unmodify target stats.
+    files:
+      - src/skills_overhaul/pilot/gunnery/GunneryCombatPlugin.java
+      - src/skills_overhaul/effect/EffectRegistry.java
+    acceptance:
+      - "applyMods() applies +25% damageDealtMult on attacker when condition true"
+      - "Target speed −15% and ZFB modifier set when applicable; unmodify on transition"
+      - "No leaked target-side mods after combat or target swap"
+
+  - id: T3
+    title: "Implement SOGunneryDeadEyeHandler (+10% range, perfect aim, conditional flux)"
+    priority: must
+    complexity: 3
+    depends_on: []
+    description: |
+      Per spec line 142: getNonMissileWeaponRangeBonus +10%, autofireAimAccuracy
+      modifyFlat 1.0 (perfect leading), and a per-frame check (in plugin) that
+      applies getWeaponFluxCostMult ×0.9 while distance-to-target > 75% of weapon
+      range. Static parts in handler; conditional flux in GunneryCombatPlugin.applyMods().
+    files:
+      - src/skills_overhaul/effect/handlers/gunnery/SOGunneryDeadEyeHandler.java
+      - src/skills_overhaul/pilot/gunnery/GunneryCombatPlugin.java
+      - src/skills_overhaul/effect/EffectRegistry.java
+    acceptance:
+      - "Static: range +10%, aim flat +1.0 applied/removed cleanly"
+      - "Conditional flux ×0.9 only while distance > 75% of weapon range"
+
+  - id: T4
+    title: "Implement SOGunneryWeaponsDisciplineHandler (no malfunction, +20% flux reductions)"
+    priority: must
+    complexity: 2
+    depends_on: [T0]
+    description: |
+      Per spec line 58: suppress weapon malfunction; amplify existing flux-reduction
+      mods by +20%. T0 must confirm exact API name for malfunction-frequency.
+      Implementation likely: MutableShipStatsAPI.getMalfunctionFreqMult().modifyMult
+      (..., 0f) — confirm in T0.
+    files:
+      - src/skills_overhaul/effect/handlers/gunnery/SOGunneryWeaponsDisciplineHandler.java
+      - src/skills_overhaul/effect/EffectRegistry.java
+    acceptance:
+      - "Malfunction suppressed when node active"
+      - "Flux reduction amplification applied/removed cleanly"
+
+  - id: T5
+    title: "Fix SO_gunnery_ordnance_res (nonMissileAmmoCapBonus + ammoRegenBonus)"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Per spec line 124: nonMissileAmmoCapBonus 0.40, ammoRegenBonus 0.25. Currently
+      logged-and-skipped in SOPilotedStatHandler:78-80. Implementation path TBD by
+      T0 (likely: extend SOPilotedStatHandler to register node id with a new
+      EveryFrameCombatPlugin that on first frame iterates ship.getAllWeapons()
+      and bumps maxAmmo on non-missile slots; ammoRegen via getAmmoBonusPerSecond
+      or per-weapon manipulation). Document chosen approach inline.
+    files:
+      - src/skills_overhaul/effect/handlers/SOPilotedStatHandler.java
+      - src/skills_overhaul/pilot/gunnery/GunneryCombatPlugin.java (or new helper plugin)
+    acceptance:
+      - "Non-missile ammo cap +40% applied to player ship at combat start"
+      - "Ammo regen +25% applied via chosen API"
+      - "No warning logs from SOPilotedStatHandler for these params"
+
+  - id: T6
+    title: "EffectRegistry wire-up + build/load smoke test"
+    priority: must
+    complexity: 2
+    depends_on: [T1, T2, T3, T4, T5]
+    description: |
+      Final wiring pass: confirm all 5 effect ids in EffectRegistry resolve to real
+      handlers/blocks (no shared CombatScript no-op for any of the 5). Run
+      ./build.sh and ./build.sh test. Document a minimal in-game smoke procedure
+      (purchase node → check active → refund → check inactive) in CHANGELOG.md.
+    files:
+      - src/skills_overhaul/effect/EffectRegistry.java
+      - CHANGELOG.md
+    acceptance:
+      - "./build.sh exits 0"
+      - "./build.sh test exits 0"
+      - "Mod load logs show no NoOpHandler warnings for SO_gunnery_*"
+      - "CHANGELOG entry under v0.3 (or next version) listing the 5 nodes"

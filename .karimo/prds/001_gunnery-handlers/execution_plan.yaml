@@ -1,0 +1,18 @@
+prd: gunnery-handlers
+waves:
+  - wave: 1
+    parallel: [T0]
+    rationale: "Investigation gates ammo-cap (T5), twist_knife ZFB (T2), weapons_discipline malfunction (T4)."
+  - wave: 2
+    parallel: [T1, T3]
+    rationale: "Independent static handlers — no shared files except EffectRegistry (mergeable)."
+  - wave: 3
+    parallel: [T2, T4, T5]
+    rationale: "Each unblocked by T0 findings. T2 + T5 both touch GunneryCombatPlugin — sequential merge OR coordinate."
+  - wave: 4
+    parallel: [T6]
+    rationale: "Final wire-up + smoke test. Depends on all five impls."
+
+longest_chain: "T0 → T5 → T6"
+total_tasks: 7
+total_complexity: 22

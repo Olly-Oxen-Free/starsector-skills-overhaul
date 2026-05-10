@@ -1,0 +1,35 @@
+project:
+  name: "Skills Overhaul"
+  runtime: "java8"
+  framework: "starsector-modding-api"
+  package_manager: "none"
+
+commands:
+  build: "./build.sh"
+  lint: null
+  test: "./build.sh test"
+  typecheck: "./build.sh"
+
+boundaries:
+  never_touch:
+    - "jars/classes/"
+    - "jars/*.jar"
+    - "game/"
+    - ".env*"
+  require_review:
+    - "src/skills_overhaul/SkillsOverhaulModPlugin.java"
+    - "data/config/skills_overhaul/trees/*.json"
+    - "data/hullmods/hull_mods.csv"
+    - "mod_info.json"
+
+github:
+  owner_type: "personal"
+  owner: "jayden-eppcohen"
+  repo: "Skills Overhaul"
+  default_branch: "master"
+
+notes:
+  - "Java 8 source/target; hand-rolled build.sh (no Maven/Gradle)"
+  - "Compiled JARs committed to git per Starsector modding convention"
+  - "Tests use plain java -ea + *Test.class glob, no JUnit"
+  - "Game API jars from ~/Games/Starsector/ (hardcoded path)"
