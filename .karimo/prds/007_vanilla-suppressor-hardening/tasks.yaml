@@ -1,0 +1,84 @@
+prd: vanilla-suppressor-hardening
+tasks:
+  - id: T0
+    title: "Empirical test: confirm setSkillLevel(0) actually unregisters stat mods"
+    priority: must
+    complexity: 3
+    depends_on: []
+    description: |
+      Load save with vanilla skills, snapshot player.stats values for affected
+      stats (e.g., Combat aptitude → fluxCapacity, weaponDamage; Leadership →
+      officer count, fleet stats; Industry → CR; Tech → various). Capture
+      pre-suppression vs post-suppression for: each aptitude × {level 1, 5, 10}.
+      Document: which stats actually clear, which persist (bug).
+    files: []
+    acceptance:
+      - "12 test scenarios captured (4 aptitudes × 3 levels)"
+      - "Pre/post stat tables in research/internal/t0-empirical.md"
+      - "Pass/fail per skill documented"
+
+  - id: T1
+    title: "Hardening: explicit SkillEffect.unapply() if T0 confirms gap"
+    priority: must
+    complexity: 4
+    depends_on: [T0]
+    description: |
+      Conditional on T0 finding stat-mod persistence. Add to applyOnEveryLoad():
+      ```
+      SkillSpecAPI spec = Global.getSettings().getSkillSpec(id);
+      for (SkillSpecAPI.SkillEffect eff : spec.getEffects()) {
+        eff.unapply(s);  // explicit teardown
+      }
+      ```
+      Then proceed with stash + setSkillLevel(0). Re-run T0 verification round 2.
+      If gap NOT confirmed in T0: skip this task, mark FIXME removed.
+    files:
+      - src/skills_overhaul/suppress/VanillaSuppressor.java
+    acceptance:
+      - "If R1 gap confirmed: explicit unapply added; T0 round-2 shows zero stat mods post-suppression"
+      - "If R1 not confirmed: FIXME comment removed, task marked won't-fix"
+
+  - id: T2
+    title: "Mod-skill policy decision + documentation"
+    priority: must
+    complexity: 1
+    depends_on: []
+    description: |
+      Decide: suppress-all (current `!startsWith("so_")`) vs whitelist (e.g.,
+      explicit `vanilla:` prefix or curated list). Default recommendation:
+      suppress-all + document in README ("any non-Skills-Overhaul skill is
+      suppressed; mod-added skills with vanilla-style effects affected").
+      Add CHANGELOG/README note + verify decision against any UAF/Tahlan/VIC
+      compatibility commitments (spec line 513 lists as untested).
+    files:
+      - README.md
+      - CHANGELOG.md
+    acceptance:
+      - "Policy documented in README"
+      - "CHANGELOG entry"
+
+  - id: T3
+    title: "Integration test + uninstall round-trip + smoke"
+    priority: must
+    complexity: 3
+    depends_on: [T1]
+    description: |
+      Test class: stub MutableCharacterStatsAPI via reflection or interface,
+      preload non-so_ skills at level 5, invoke applyOnEveryLoad, verify
+      memory keys set + skills zeroed. Then invoke restoreAll, verify levels
+      restored + memory cleared.
+      Also: confirm uninstall path. If no auto-invoke trigger for restoreAll
+      exists, add one (e.g., onApplicationLoad detects mod-removed flag) OR
+      document that uninstall = mod removal + manual respec via vanilla.
+      In-game smoke: install + load + character tab → no vanilla bonuses;
+      uninstall + load → vanilla bonuses restored.
+    files:
+      - test/skills_overhaul/suppress/VanillaSuppressorTest.java (new)
+      - src/skills_overhaul/suppress/VanillaSuppressor.java (uninstall trigger if needed)
+      - CHANGELOG.md
+    acceptance:
+      - "VanillaSuppressorTest passes via java -ea"
+      - "Round-trip applyOnEveryLoad → restoreAll preserves state"
+      - "Uninstall behavior documented or trigger added"
+      - "In-game smoke: 4 aptitudes × {install, uninstall} = 8 scenarios"
+      - "CHANGELOG entry"

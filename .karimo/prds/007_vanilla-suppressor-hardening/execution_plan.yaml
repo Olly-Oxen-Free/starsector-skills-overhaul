@@ -1,0 +1,15 @@
+prd: vanilla-suppressor-hardening
+waves:
+  - wave: 1
+    parallel: [T0, T2]
+    rationale: "T0 empirical test independent. T2 policy decision independent."
+  - wave: 2
+    parallel: [T1]
+    rationale: "Conditional on T0. May be no-op if T0 shows no gap."
+  - wave: 3
+    parallel: [T3]
+    rationale: "Test + uninstall + smoke."
+
+longest_chain: "T0 → T1 → T3"
+total_tasks: 4
+total_complexity: 11
