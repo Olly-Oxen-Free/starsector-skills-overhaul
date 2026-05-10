@@ -1,0 +1,18 @@
+prd: defense-handlers
+waves:
+  - wave: 1
+    parallel: [T0, T1, T5]
+    rationale: "T0 investigation. T1 wires existing state machines (no T0 dep). T5 fixes 3 partial impls touching independent files."
+  - wave: 2
+    parallel: [T2, T4, T6]
+    rationale: "All gated by T0 only. T2 = JSON node adds. T4 = stat-handler keys. T6 = ACTIVE_NODES persistence (cross-cutting fix)."
+  - wave: 3
+    parallel: [T3, T7]
+    rationale: "T3 needs T0 + new damage-listener pattern. T7 needs T1 (IronBastion buff window must exist before listener attaches)."
+  - wave: 4
+    parallel: [T8]
+    rationale: "Wire-up + DR cap + smoke."
+
+longest_chain: "T0 → T3 → T8"
+total_tasks: 9
+total_complexity: 33

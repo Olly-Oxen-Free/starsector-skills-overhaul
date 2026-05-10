@@ -1,0 +1,193 @@
+prd: defense-handlers
+tasks:
+  - id: T0
+    title: "Investigate damage-interception API, ACTIVE_NODES persistence, mass override, CR stat keys"
+    priority: must
+    complexity: 4
+    depends_on: []
+    description: |
+      Resolve R1-R5 before impl:
+      1. Damage interception: `TakeDamageResultListener`, `DamageDealtModifier`, or
+         `DamageListener` (per spec line 82 reference). Survey vanilla + SiC + any
+         combat-modifying mod (Combat Chatter, Combat Activators) for working
+         examples.
+      2. ACTIVE_NODES persistence design: pick between (a) PersistentData store +
+         reload hook, or (b) re-invoke handler.apply() from a CombatStartListener.
+         Document choice + reload-test plan.
+      3. Mass override path: confirm no MutableShipStatsAPI method. Test
+         `ship.setMass()` if exists, or define hullmod-like override.
+      4. Stats.CR_MALFUNCION_RANGE — confirm key string in 0.98a-RC8 (SiC uses it
+         at SCCRPluginImpl.java:395).
+      5. Flux listener for Fortress Shield breach suppression.
+      Output: `.karimo/prds/defense-handlers/research/internal/t0-findings.md`.
+    files: []
+    acceptance:
+      - "All 5 R-items have documented API path"
+      - "Reference mod citations included"
+
+  - id: T1
+    title: "Add applyMods blocks: Iron Bastion, Flux Fortress, Overwhelming Force, Adamantine post-discharge"
+    priority: must
+    complexity: 5
+    depends_on: []
+    description: |
+      State machines/data already exist; only DefenseCombatPlugin.applyMods()
+      wiring missing.
+      - Iron Bastion: PD damage/turn rate while isTakingActiveDamage true.
+      - Flux Fortress: shield efficiency + flux dissipation scale with current flux %.
+      - Overwhelming Force: flux dissipation mults per spec.
+      - Adamantine: on discharge, apply +25% EMP resist + +8% hull regen (timed).
+        Discharge already spawns visual (DefenseCombatPlugin:75) — extend to apply
+        stat mods + EMP AoE.
+    files:
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java
+      - src/skills_overhaul/pilot/defense/IronBastionState.java
+      - src/skills_overhaul/pilot/defense/AdamantineState.java
+    acceptance:
+      - "Each of 4 nodes produces stat changes per spec"
+      - "Adamantine discharge applies EMP AoE + buff window"
+
+  - id: T2
+    title: "Add JSON nodes: Impact Mitigation (T1), Carrier Supremacy (T4)"
+    priority: must
+    complexity: 2
+    depends_on: [T0]
+    description: |
+      pilot_defense.json: insert two missing nodes.
+      - Impact Mitigation: `SO_piloted_stat` with `hitChance:0.50, damageReduction:0.25`.
+      - Carrier Supremacy: `SO_defense_carrier_supremacy` (handler already registered
+        at EffectRegistry:93 — orphan).
+      Verify tree coords, prereqs, costs match spec.
+    files:
+      - data/config/skills_overhaul/trees/pilot_defense.json
+    acceptance:
+      - "Both nodes load without JSON validation errors"
+      - "TreeRegistry sees 22 defense nodes (was 20)"
+
+  - id: T3
+    title: "Implement Unbreakable per-cell armor floor + Fortress Shield breach suppression"
+    priority: must
+    complexity: 5
+    depends_on: [T0]
+    description: |
+      Both need damage interception (R1, T0).
+      - Unbreakable: `TakeDamageResultListener` on player flagship; on hit, check
+        armor cell, raise effective floor 20%→50%.
+      - Fortress Shield: on shield breach event, suppress hard-flux spike (cap
+        flux delta).
+    files:
+      - src/skills_overhaul/effect/handlers/defense/SODefenseUnbreakableHandler.java (new)
+      - src/skills_overhaul/effect/handlers/defense/SODefenseFortressShieldHandler.java
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java
+    acceptance:
+      - "Per-cell armor floor raises to 50% on Unbreakable nodes"
+      - "Fortress Shield no longer permits hard-flux spike on breach"
+
+  - id: T4
+    title: "Extend SOPilotedStatHandler for skipped defense keys"
+    priority: must
+    complexity: 4
+    depends_on: [T0]
+    description: |
+      Implement the 11 currently log-and-skipped keys: weaponHPBonus,
+      engineHPBonus, fighterBayHPBonus, massMult (per T0 path),
+      collisionDamageDealt, crDeclineStart, crRegenInCombat, crMalfunctionThreshold
+      (Stats.CR_MALFUNCION_RANGE per SiC), moduleRepairMult, hitChance,
+      damageReduction (frag/explosive specific). Some need plugin-side iteration
+      (per-weapon HP inflation on combat init).
+    files:
+      - src/skills_overhaul/effect/handlers/SOPilotedStatHandler.java
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java (for per-weapon HP)
+    acceptance:
+      - "All 11 keys produce stat changes when present"
+      - "No log warnings remain for these keys"
+
+  - id: T5
+    title: "Shield Mastery flux conversion + Fortify shield mult + Lead From the Front self-armor"
+    priority: must
+    complexity: 3
+    depends_on: []
+    description: |
+      Three independent partial-impl fixes:
+      - Shield Mastery: per-frame, while shielded, convert 8%/s of hard flux to
+        soft flux (handler-side or plugin block).
+      - Fortify: add `getShieldDamageTakenMult().modifyMult` mirror to existing
+        hull+armor block (DefenseCombatPlugin.java:95-96 expand).
+      - Lead From the Front: self-bonus block in LeadFromTheFrontListener.java:42
+        currently misses `getArmorDamageTakenMult` for self.
+    files:
+      - src/skills_overhaul/effect/handlers/defense/SODefenseShieldMasteryHandler.java
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java
+      - src/skills_overhaul/pilot/defense/LeadFromTheFrontListener.java
+    acceptance:
+      - "Hard flux drops 8%/s while shielded with Shield Mastery"
+      - "Fortify reduces shield damage taken"
+      - "Lead From the Front: self armor DR matches hull DR"
+
+  - id: T6
+    title: "Fix ACTIVE_NODES persistence across save/reload"
+    priority: must
+    complexity: 4
+    depends_on: [T0]
+    description: |
+      Critical bug. Static `LinkedHashSet ACTIVE_NODES` (DefenseCombatPlugin:16)
+      empties on session reload. Implementation per T0 decision:
+      Option A: Persist ids in Global.getSector().getPersistentData(); restore on
+                CombatStartListener / mod plugin onGameLoad.
+      Option B: Re-invoke handler.apply() for each owned defense node on load.
+      Apply same fix pattern to gunnery + maneuvering ACTIVE_NODES if they share
+      the bug (audit during this task).
+    files:
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java
+      - src/skills_overhaul/pilot/gunnery/GunneryCombatPlugin.java (audit)
+      - src/skills_overhaul/pilot/maneuvering/ManeuveringCombatPlugin.java (audit)
+      - src/skills_overhaul/SkillsOverhaulModPlugin.java (load hook)
+    acceptance:
+      - "After save/reload, ACTIVE_NODES contains all owned defense nodes"
+      - "Cross-lane audit complete; gunnery/maneuvering bug status documented"
+
+  - id: T7
+    title: "IronBastion ShipDestroyedListener + Targe regen refactor + Derelict d-mod fix + Redundant Bays capacity"
+    priority: must
+    complexity: 4
+    depends_on: [T1]
+    description: |
+      Polish + bug consolidation:
+      - Register ShipDestroyedListener on flagship; route to
+        IronBastionState.computeFighterKillHeal().
+      - Targe: replace per-frame setHitpoints with 0.5s tick using repair-subsystem
+        additive (R6).
+      - Derelict Fortifications: apply −20% to d-mod negative effects (iterate
+        ship's hullmods tagged "dmod", reduce stat-mod magnitudes).
+      - Redundant Bays: implement disabled-bay 75% capacity via FighterLaunchBayAPI.
+    files:
+      - src/skills_overhaul/pilot/defense/IronBastionState.java
+      - src/skills_overhaul/pilot/defense/TargeState.java
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java
+      - src/skills_overhaul/effect/handlers/defense/SODefenseDerelictFortHandler.java
+      - src/skills_overhaul/effect/handlers/defense/SODefenseRedundantBaysHandler.java
+    acceptance:
+      - "Fighter-kill heal applies on Iron Bastion"
+      - "Targe regen no longer fights vanilla repair"
+      - "Derelict node reduces d-mod negatives by 20%"
+      - "Redundant Bays disabled bays operate at 75%"
+
+  - id: T8
+    title: "Wire-up + DR-cap guard + build/load smoke test"
+    priority: must
+    complexity: 2
+    depends_on: [T1, T2, T3, T4, T5, T6, T7]
+    description: |
+      EffectRegistry: confirm all defense ids resolve to plugin marker or real
+      handler. Add DR cap guard (R3): clamp combined hullDamageTakenMult to ≥0.05
+      to prevent invulnerability. Run ./build.sh + ./build.sh test. CHANGELOG entry.
+    files:
+      - src/skills_overhaul/effect/EffectRegistry.java
+      - src/skills_overhaul/pilot/defense/DefenseCombatPlugin.java
+      - CHANGELOG.md
+    acceptance:
+      - "./build.sh exits 0"
+      - "./build.sh test exits 0"
+      - "Mod load logs zero skipped-key/NoOp warnings for defense"
+      - "DR cap guard prevents 0% damage-taken edge case"
+      - "CHANGELOG entry for spec-gap closure"
