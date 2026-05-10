@@ -217,21 +217,26 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         viewW = (winX + winW) - viewX - PAD;
         viewH = leftH - SCROLL_H - 6f;
 
-        // NOTE: post-multi-tree refactor, this panel renders only the first tree of each tab.
-        // Full per-tab multi-tree navigation lands with the Commander content rebuild.
-        // Configure builder metrics to fit the viewport for this tree.
-        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
-        PathTreeBuilder.configureForViewport(def, viewW, viewH);
+        List<TreeDef> defs = TreeRegistry.getTrees(currentTree);
+        PathTreeBuilder.configureForViewport(defs, viewW, viewH);
 
-        PathTreeBuilder.Metrics metrics = PathTreeBuilder.computeMetrics(def);
-        contentW = metrics.totalW;
+        // Combined width = sum of all tree widths + tree gaps (2*LANE_GAP_X each).
+        float combinedW = 0f;
+        float combinedH = 0f;
+        for (int di = 0; di < defs.size(); di++) {
+            PathTreeBuilder.Metrics m = PathTreeBuilder.computeMetrics(defs.get(di));
+            if (di > 0) combinedW += 2f * PathTreeBuilder.LANE_GAP_X;
+            combinedW += m.totalW;
+            combinedH = Math.max(combinedH, m.totalH);
+        }
+        contentW = combinedW;
 
         Global.getLogger(CharacterTabPanelPlugin.class).info(
                 "[SkillsOverhaul/UI] layout " + currentTree.key
                 + " view=" + (int) viewW + "x" + (int) viewH
                 + " node=" + PathTreeBuilder.NODE
                 + " laneW=" + PathTreeBuilder.LANE_W
-                + " total=" + (int) metrics.totalW + "x" + (int) metrics.totalH);
+                + " total=" + (int) combinedW + "x" + (int) combinedH);
 
         float maxScroll = Math.max(0f, contentW - viewW);
         float sx = scrollXByTree.get(currentTree);
@@ -260,10 +265,11 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         int count = 0;
         try {
-            TreeDef def = TreeRegistry.getTrees(t).get(0);
-            for (Node n : def.getNodes()) {
-                String k = SkillMemory.purchasedKey(n.getId());
-                if (mem.contains(k) && mem.getBoolean(k)) count++;
+            for (TreeDef def : TreeRegistry.getTrees(t)) {
+                for (Node n : def.getNodes()) {
+                    String k = SkillMemory.purchasedKey(n.getId());
+                    if (mem.contains(k) && mem.getBoolean(k)) count++;
+                }
             }
         } catch (Throwable ignored) {}
         return count;
@@ -919,8 +925,9 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
     int sumPendingCost(Set<String> pending) {
         int s = 0;
-        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         for (String id : pending) {
+            TreeDef def = TreeRegistry.findTreeOf(currentTree, id);
+            if (def == null) continue;
             Node n = def.getNode(id);
             if (n != null) s += n.getCost();
         }
@@ -1158,7 +1165,8 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         String purK = SkillMemory.purchasedKey(nodeId);
         if (mem.contains(purK) && mem.getBoolean(purK)) {
             // Purchased node clicked — if it's a T0, handle active-slot toggle.
-            TreeDef defForClicked = TreeRegistry.getTrees(currentTree).get(0);
+            TreeDef defForClicked = TreeRegistry.findTreeOf(currentTree, nodeId);
+            if (defForClicked == null) return;
             Node clickedPurchased = defForClicked.getNode(nodeId);
             if (clickedPurchased != null && clickedPurchased.getY() == 0) {
                 if (!skills_overhaul.basics.ActiveLaneService.canSwapLive()) {
@@ -1190,23 +1198,37 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             return;
         }
 
-        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
+        TreeDef def = TreeRegistry.findTreeOf(currentTree, nodeId);
+        if (def == null) return;
         Node clicked = def.getNode(nodeId);
         if (clicked == null) return;
 
         Map<String, Object> snap = new HashMap<String, Object>();
-        for (Node n : def.getNodes()) {
-            String k = SkillMemory.purchasedKey(n.getId());
-            if (mem.contains(k) && mem.getBoolean(k)) snap.put(k, Boolean.TRUE);
+        for (TreeDef d : TreeRegistry.getTrees(currentTree)) {
+            for (Node n : d.getNodes()) {
+                String k = SkillMemory.purchasedKey(n.getId());
+                if (mem.contains(k) && mem.getBoolean(k)) snap.put(k, Boolean.TRUE);
+            }
         }
         String pk = SkillMemory.pointsKey(currentTree);
         if (mem.contains(pk)) snap.put(pk, mem.getFloat(pk));
+        // Include all spend pools so budget check matches SpendService.spend.
+        String freeUniK = SkillMemory.freeUniKey();
+        if (mem.contains(freeUniK)) snap.put(freeUniK, mem.getFloat(freeUniK));
+        String migLockedK = SkillMemory.migUniKey(currentTree);
+        if (mem.contains(migLockedK)) snap.put(migLockedK, mem.getFloat(migLockedK));
+        String migPoolK = skills_overhaul.level.SpendService.POOL_UNALLOC;
+        if (mem.contains(migPoolK)) snap.put(migPoolK, mem.getFloat(migPoolK));
 
         if (!hasAnyInPreviousTier(clicked.getTier(), def, snap, pending)) return;
         if (!skills_overhaul.tree.PrereqValidator.canPurchaseWithPending(def, snap, pending, nodeId)) return;
 
-        int pts = SkillMemory.getPoints(snap, currentTree);
-        if (sumPendingCost(pending) + clicked.getCost() > pts) {
+        int treePts   = SkillMemory.getPoints(snap, currentTree);
+        int migLocked = (int) f(snap.get(migLockedK));
+        int migPool   = (int) f(snap.get(migPoolK));
+        int freeUni   = (int) f(snap.get(freeUniK));
+        int totalPts  = treePts + migLocked + migPool + freeUni;
+        if (sumPendingCost(pending) + clicked.getCost() > totalPts) {
             Global.getLogger(CharacterTabPanelPlugin.class).warn(
                     "[SkillsOverhaul/UI] over budget: can't pend " + nodeId);
             return;
@@ -1216,18 +1238,24 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         rebuild();
     }
 
+    private static float f(Object v) { return v == null ? 0f : ((Number) v).floatValue(); }
+
     private void commitPending() {
         Set<String> pending = pendingByTree.get(currentTree);
         if (pending.isEmpty()) return;
-        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
-        List<String> order;
-        try {
-            order = skills_overhaul.tree.PendingPurchaseTopoSort.sort(def, pending);
-        } catch (Throwable t) {
-            Global.getLogger(CharacterTabPanelPlugin.class).warn(
-                    "[SkillsOverhaul/UI] topo sort failed, clearing pending", t);
-            pending.clear();
-            return;
+        List<String> order = new ArrayList<String>();
+        for (TreeDef def : TreeRegistry.getTrees(currentTree)) {
+            Set<String> defPending = new LinkedHashSet<String>();
+            for (String id : pending) if (def.getNode(id) != null) defPending.add(id);
+            if (defPending.isEmpty()) continue;
+            try {
+                order.addAll(skills_overhaul.tree.PendingPurchaseTopoSort.sort(def, defPending));
+            } catch (Throwable t) {
+                Global.getLogger(CharacterTabPanelPlugin.class).warn(
+                        "[SkillsOverhaul/UI] topo sort failed, clearing pending", t);
+                pending.clear();
+                return;
+            }
         }
         for (String nodeId : order) {
             boolean ok = skills_overhaul.level.GameSpend.purchase(currentTree, nodeId);
@@ -1241,7 +1269,6 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     }
 
     private void removePendingWithDependents(String removed, Set<String> pending) {
-        TreeDef def = TreeRegistry.getTrees(currentTree).get(0);
         Set<String> toRemove = new HashSet<String>();
         toRemove.add(removed);
         boolean changed = true;
@@ -1249,7 +1276,8 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             changed = false;
             for (String id : new ArrayList<String>(pending)) {
                 if (toRemove.contains(id)) continue;
-                Node n = def.getNode(id);
+                TreeDef def = TreeRegistry.findTreeOf(currentTree, id);
+                Node n = def == null ? null : def.getNode(id);
                 if (n == null) continue;
                 for (String pre : n.getPrereqs()) {
                     if (toRemove.contains(pre)) {

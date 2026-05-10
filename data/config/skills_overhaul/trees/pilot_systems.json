@@ -94,7 +94,7 @@
     {
       "id": "so_systems_kill_sync",
       "name": "Kill Sync",
-      "x": 0, "y": 3, "cost": 1,
+      "x": 0, "y": 1, "cost": 1,
       "prereqs": [{ "all": ["so_systems_capacitor_banks"] }],
       "effects": [
         { "type": "SO_systems_kill_sync" }
@@ -184,7 +184,7 @@
     {
       "id": "so_systems_phase_resonance_merge",
       "name": "Phase Resonance",
-      "x": 2, "y": 3, "cost": 1,
+      "x": 2, "y": 4, "cost": 1,
       "prereqs": [{ "all": ["so_systems_reactive_systems"] }],
       "effects": [
         { "type": "SO_systems_phase_resonance_merge" }

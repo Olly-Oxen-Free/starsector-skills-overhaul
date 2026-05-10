@@ -39,7 +39,7 @@ public final class Node {
     // -------- Backward-compat accessors (kept so existing UI / GameSpend compile) --------
     public int    getTier()                { return y; }
     public int    getSlot()                { return x; }
-    public String getLane()                { return null; }
+    public String getLane()                { return "default"; }
     public boolean isCapstone()            { return y == 5; }
     public boolean isMerge()               { return false; }
     public List<String> getParentLanes()   { return Collections.emptyList(); }
@@ -68,6 +68,6 @@ public final class Node {
                 o.optInt("cost", 1),
                 Prereq.parseList(o.optJSONArray("prereqs")),
                 Collections.unmodifiableList(fx),
-                o.optString("icon", null));
+                o.optString("icon", "graphics/icons/skills/combat.png"));
     }
 }
