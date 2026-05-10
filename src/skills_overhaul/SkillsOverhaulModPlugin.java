@@ -103,6 +103,7 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         }
         skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
         skills_overhaul.console.OrphanSkillGranter.applyAllOnLoad();
+        skills_overhaul.state.NodeApplyService.reapplyAllOwned();
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
                 LOG_PREFIX + "listeners registered; newGame=" + newGame);
