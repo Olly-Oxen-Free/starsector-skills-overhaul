@@ -76,7 +76,8 @@ public final class EffectRegistry {
             handlers.put("SO_defense_adamantine",        defScript);
             handlers.put("SO_defense_iron_bastion",      defScript);
             handlers.put("SO_defense_lead_front",        defScript);
-            handlers.put("SO_defense_unbreakable",       defScript);
+            handlers.put("SO_defense_unbreakable",
+                    new skills_overhaul.effect.handlers.defense.SODefenseUnbreakableHandler());
             handlers.put("SO_defense_flux_fortress",     defScript);
             handlers.put("SO_defense_overwhelming_force",defScript);
             // Stat-applying handlers (also add to ACTIVE_NODES)

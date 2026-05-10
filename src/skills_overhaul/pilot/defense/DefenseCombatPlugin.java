@@ -27,6 +27,9 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final com.fs.starfarer.api.util.IntervalUtil targeRegenInterval =
             new com.fs.starfarer.api.util.IntervalUtil(0.5f, 0.5f);
     private float targeRegenAccumulator = 0f;
+    private UnbreakableArmorListener unbreakable;
+    private boolean prevShieldOn = false;
+    private float prevHardFlux = 0f;
 
     @Override
     public void init(CombatEngineAPI engine) {
@@ -49,7 +52,13 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
             ironBastion = new IronBastionState();
             if (ACTIVE_NODES.contains("so_defense_lead_front"))
                 flagship.addListener(new LeadFromTheFrontListener(flagship));
+            if (ACTIVE_NODES.contains("so_defense_unbreakable")) {
+                unbreakable = new UnbreakableArmorListener(flagship);
+                flagship.addListener(unbreakable);
+            }
             prevHull = flagship.getHitpoints();
+            prevShieldOn = flagship.getShield() != null && flagship.getShield().isOn();
+            prevHardFlux = flagship.getFluxTracker().getHardFlux();
             initialized = true;
         }
 
@@ -109,6 +118,23 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
                             flagship.getHitpoints() + heal));
                 }
             }
+        }
+
+        if (unbreakable != null) unbreakable.advance(dt);
+
+        // Fortress Shield breach (spec line 50): on shield ON→OFF transition,
+        // halve any hard-flux spike that frame.
+        if (ACTIVE_NODES.contains("so_defense_fortress_shield")) {
+            boolean shieldOn = flagship.getShield() != null && flagship.getShield().isOn();
+            float hardFlux = flagship.getFluxTracker().getHardFlux();
+            if (prevShieldOn && !shieldOn) {
+                float delta = hardFlux - prevHardFlux;
+                if (delta > 0f) {
+                    flagship.getFluxTracker().setHardFlux(prevHardFlux + delta * 0.5f);
+                }
+            }
+            prevShieldOn = shieldOn;
+            prevHardFlux = flagship.getFluxTracker().getHardFlux();
         }
 
         applyMods();
