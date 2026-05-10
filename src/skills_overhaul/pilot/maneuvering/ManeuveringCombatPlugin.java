@@ -232,8 +232,60 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
             }
         }
 
-        // Untouchable: raises ZFB threshold to 50% (handled in init via ZFBThresholdManager)
-        // Ghost Protocol: phase-related bonuses (future — placeholder)
+        // === Maneuvering PRD T2-T6 (2026-05-10) — 3 missing nodes + capstone ===
+
+        // Stealth Adaptation (spec line 138): timescale +0.15 at >80% top speed
+        // (normal); +0.25 while phased (phase ships).
+        if (ACTIVE_NODES.contains("so_maneuver_stealth_adapt")) {
+            float maxSpd = stats.getMaxSpeed().getModifiedValue();
+            float currSpd = flagship.getVelocity().length();
+            boolean phased = flagship.isPhased();
+            float bonus = 0f;
+            if (phased) bonus = 0.25f;
+            else if (maxSpd > 0f && currSpd / maxSpd > 0.80f) bonus = 0.15f;
+            if (bonus > 0f) {
+                stats.getTimeMult().modifyPercent("so_stealth_adapt", bonus * 100f);
+            } else {
+                stats.getTimeMult().unmodify("so_stealth_adapt");
+            }
+        }
+
+        // Phase Entry (spec line 139): phaseEntryFluxReduction handled
+        // in SOPilotedStatHandler (T4 already added). First-phase-free flag
+        // would need vanilla phase-cost intercept — deferred.
+
+        // Ghost Protocol (spec line 105-107): suppress phase flux generation
+        // while phased. Approximation: halve phase upkeep cost while phased.
+        if (ACTIVE_NODES.contains("so_maneuver_ghost_protocol")) {
+            if (flagship.isPhased()) {
+                stats.getPhaseCloakUpkeepCostBonus().modifyMult("so_ghost_protocol", 0.10f);
+            } else {
+                stats.getPhaseCloakUpkeepCostBonus().unmodify("so_ghost_protocol");
+            }
+        }
+
+        // The Untouchable (spec line 80-82): permanent ZFB while
+        // firing/accelerating + 30% projectile negation (deferred — needs
+        // DamageTakenModifier per-projectile gate). Phase ships: phase flux
+        // costs removed.
+        if (ACTIVE_NODES.contains("so_maneuver_untouchable")) {
+            boolean firing = false;
+            for (com.fs.starfarer.api.combat.WeaponAPI w : flagship.getAllWeapons()) {
+                if (w.isFiring()) { firing = true; break; }
+            }
+            boolean accelerating = flagship.getEngineController() != null
+                    && flagship.getEngineController().isAccelerating();
+            if (firing || accelerating) {
+                stats.getZeroFluxSpeedBoost().modifyFlat("so_untouchable_force_zfb", 50f);
+            } else {
+                stats.getZeroFluxSpeedBoost().unmodifyFlat("so_untouchable_force_zfb");
+            }
+            // Phase ships: zero phase flux costs.
+            if (flagship.getHullSpec().getShipSystemId().contains("phase")) {
+                stats.getPhaseCloakActivationCostBonus().modifyMult("so_untouchable_phase", 0f);
+                stats.getPhaseCloakUpkeepCostBonus().modifyMult("so_untouchable_phase", 0f);
+            }
+        }
     }
 
     public void onKill(ShipAPI killed, float playerContribution) {

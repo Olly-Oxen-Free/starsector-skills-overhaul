@@ -202,6 +202,7 @@ public final class EffectRegistry {
         {
             skills_overhaul.effect.handlers.maneuvering.SOManeuverCombatScriptHandler manScript =
                     new skills_overhaul.effect.handlers.maneuvering.SOManeuverCombatScriptHandler();
+            handlers.put("SO_maneuver_stealth_adapt",   manScript);
             handlers.put("SO_maneuver_vent_sprint",     manScript);
             handlers.put("SO_maneuver_deep_vent",       manScript);
             handlers.put("SO_maneuver_knife_fighter",   manScript);

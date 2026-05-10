@@ -34,7 +34,7 @@
       "x": 2, "y": 1, "cost": 1,
       "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
       "effects": [
-        { "type": "SO_piloted_stat", "accelBonus": 0.25 }
+        { "type": "SO_piloted_stat", "accelDecelBonus": 0.25, "maneuverBonus": 0.10, "overloadRecoveryReduction": 0.30 }
       ]
     },
     {
@@ -43,7 +43,7 @@
       "x": 3, "y": 1, "cost": 1,
       "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
       "effects": [
-        { "type": "SO_piloted_stat" }
+        { "type": "SO_maneuver_stealth_adapt" }
       ]
     },
     {
@@ -52,7 +52,7 @@
       "x": 4, "y": 1, "cost": 1,
       "prereqs": [{ "all": ["so_maneuver_drift_instinct"] }],
       "effects": [
-        { "type": "SO_piloted_stat" }
+        { "type": "SO_piloted_stat", "phaseEntryFluxReduction": 0.25 }
       ]
     },
     {
