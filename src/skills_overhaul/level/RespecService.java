@@ -30,11 +30,14 @@ public final class RespecService {
 
         int totalTL = 0, totalFU = 0, totalMig = 0;
 
+        // Caller (RespecRunner) pre-filters the snapshot map to only this
+        // tree's nodes. We process every record key present. Previous
+        // implementation filtered via Tree.nodeIdPrefix (so_p_/so_c_/so_a_)
+        // which never matched real node IDs (so_maneuver_*, commander_*,
+        // admin_*) — every respec silently refunded zero points.
         for (String key : new HashSet<String>(keysWithPrefix(mem, RECORD_PREFIX))) {
             if (!key.endsWith(".tl")) continue;
             String nodeId = key.substring(RECORD_PREFIX.length(), key.length() - 3);
-            // Only this tree's nodes (JSON ids use short prefixes: so_p_, so_c_, so_a_)
-            if (!nodeId.startsWith(tree.nodeIdPrefix())) continue;
 
             int tl = intOf(mem.remove(key));
             int fu = intOf(mem.remove(RECORD_PREFIX + nodeId + ".fu"));
