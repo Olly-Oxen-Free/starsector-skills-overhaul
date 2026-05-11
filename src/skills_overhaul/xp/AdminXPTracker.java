@@ -67,6 +67,17 @@ public class AdminXPTracker implements EconomyTickListener, ColonyInteractionLis
     @Override
     public void reportEconomyMonthEnd() {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        // A5 fix: clear streak for any market that is no longer player-owned.
+        // Otherwise a re-conquest would start at the prior streak value (≤6
+        // bounded by streakXP cap, but still allows instant-max farm).
+        for (String k : new java.util.ArrayList<String>(mem.getKeys())) {
+            if (!k.startsWith(STREAK_PREFIX)) continue;
+            String marketId = k.substring(STREAK_PREFIX.length());
+            MarketAPI m = Global.getSector().getEconomy().getMarket(marketId);
+            if (m == null || (!m.getFaction().isPlayerFaction() && !isVassal(m))) {
+                mem.unset(k);
+            }
+        }
         for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
             if (!m.getFaction().isPlayerFaction() && !isVassal(m)) continue;
 
@@ -91,6 +102,10 @@ public class AdminXPTracker implements EconomyTickListener, ColonyInteractionLis
 
     @Override public void reportEconomyTick(int iterIndex) {
         if (iterIndex != 0) return;
+        // A3 fix: poll Nex conquests BEFORE the colony-found loop. The
+        // conquest poll marks captured markets so they go down the conquest
+        // path; the founding loop only catches genuinely new colonies.
+        NexIntegration.pollForConquests(this);
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
             if (!m.getFaction().isPlayerFaction()) continue;
@@ -100,7 +115,6 @@ public class AdminXPTracker implements EconomyTickListener, ColonyInteractionLis
                 onColonyFounded(m);
             }
         }
-        NexIntegration.pollForConquests(this);
     }
 
     @Override public void reportPlayerOpenedMarket(MarketAPI m) {}
