@@ -1,0 +1,15 @@
+# Build output
+build/
+jars/classes/
+*.class
+build_output.log
+build_output.txt
+
+# Debug artifacts
+*Bytecode.txt
+.attach_pid*
+
+# Tooling
+.serena/
+.karimo/
+.claude/settings.local.json

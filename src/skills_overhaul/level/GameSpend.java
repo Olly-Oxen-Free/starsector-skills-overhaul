@@ -23,7 +23,7 @@ public final class GameSpend {
         if (n == null) return false;
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
-        Map<String,Object> m = snapshot(mem);
+        Map<String,Object> m = snapshot(mem, def);
 
         if (!PrereqValidator.canPurchase(def, m, nodeId)) return false;
 
@@ -43,7 +43,7 @@ public final class GameSpend {
         return true;
     }
 
-    private static Map<String,Object> snapshot(MemoryAPI mem) {
+    private static Map<String,Object> snapshot(MemoryAPI mem, TreeDef def) {
         Map<String,Object> m = new HashMap<String,Object>();
         for (Tree t : Tree.values()) {
             m.put(SkillMemory.pointsKey(t), (float) getFloat(mem, SkillMemory.pointsKey(t)));
@@ -54,7 +54,21 @@ public final class GameSpend {
         if (mem.contains(SpendService.POOL_LOCK_KEY)) {
             m.put(SpendService.POOL_LOCK_KEY, mem.getString(SpendService.POOL_LOCK_KEY));
         }
+        // PrereqValidator builds its owned-set from these flags; without them
+        // every node with a prereq fails validation against the snapshot.
+        for (String pk : purchasedKeys(def)) {
+            if (mem.getBoolean(pk)) m.put(pk, Boolean.TRUE);
+        }
         return m;
+    }
+
+    /** Memory keys of the purchased-flags PrereqValidator reads for this tree. */
+    static java.util.List<String> purchasedKeys(TreeDef def) {
+        java.util.List<String> keys = new java.util.ArrayList<String>();
+        for (Node n : def.getNodes()) {
+            keys.add(SkillMemory.purchasedKey(n.getId()));
+        }
+        return keys;
     }
 
     private static void writeBack(MemoryAPI mem, Map<String,Object> m, String nodeId) {

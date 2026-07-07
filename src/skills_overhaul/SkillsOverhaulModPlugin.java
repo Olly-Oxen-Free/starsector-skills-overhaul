@@ -65,7 +65,6 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientListener(new skills_overhaul.xp.CommanderXPListener());
         Global.getSector().getListenerManager().addListener(new skills_overhaul.xp.AdminXPTracker(), false);
         Global.getSector().addTransientScript(new skills_overhaul.level.LevelReconciler());
-        Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferListener());
         Global.getSector().addTransientListener(new skills_overhaul.supply.SalvageBonusListener());
         Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferRenderer());
         Global.getSector().addTransientScript(new skills_overhaul.ui.CharacterTabReplacer());
@@ -81,7 +80,6 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientListener(privLifecycle);
         Global.getSector().addTransientListener(new skills_overhaul.zealot.ZealKillListener());
         Global.getSector().addTransientScript(new skills_overhaul.zealot.ZealDailyTicker());
-        Global.getSector().addTransientListener(new skills_overhaul.zealot.CrusadeNPCStub());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.PostBattleRestoreListener());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.RaidZealListener());
         Global.getSector().addTransientScript(new skills_overhaul.zealot.DoctrinalAuthorityTicker());

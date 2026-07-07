@@ -3,9 +3,11 @@ package skills_overhaul.zealot;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.BaseEveryFrameCombatPlugin;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
+import com.fs.starfarer.api.combat.CombatFleetManagerAPI;
 import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.WeaponAPI;
+import com.fs.starfarer.api.fleet.FleetMemberAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.util.Misc;
 
@@ -27,7 +29,7 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     @Override
     public void init(CombatEngineAPI engine) {
         Steelbound.attached.clear();
-        ACTIVE_NODES.clear();
+        // ACTIVE_NODES is campaign-owned — do not clear per combat.
     }
 
     @Override
@@ -46,6 +48,31 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
             applyPerShipEffects(s, engine, zealStacks, currentOath);
             if (ACTIVE_NODES.contains("zealot_t4_death_cheat")) deathCheat.tick(s, zealStacks);
         }
+    }
+
+    /**
+     * A tracked ship that left the alive-set only counts as a real loss/kill if it
+     * was actually destroyed — retreated ships (removed from the engine but never
+     * killed) keep isAlive()==true and are also excluded via the retreated list.
+     */
+    static boolean isDestroyed(ShipAPI s, Set<String> retreatedMemberIds) {
+        boolean dead = !s.isAlive() || s.isHulk() || s.getHitpoints() <= 0f;
+        if (!dead) return false;
+        FleetMemberAPI fm = s.getFleetMember();
+        if (fm != null && retreatedMemberIds.contains(fm.getId())) return false;
+        return true;
+    }
+
+    static Set<String> retreatedMemberIds(CombatEngineAPI engine, int owner) {
+        Set<String> out = new HashSet<>();
+        CombatFleetManagerAPI mgr = engine.getFleetManager(owner);
+        if (mgr == null) return out;
+        List<FleetMemberAPI> retreated = mgr.getRetreatedCopy();
+        if (retreated == null) return out;
+        for (FleetMemberAPI fm : retreated) {
+            if (fm != null) out.add(fm.getId());
+        }
+        return out;
     }
 
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int zealStacks, Oath oath) {
@@ -119,8 +146,9 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         void tick(CombatEngineAPI engine) {
             Set<ShipAPI> alive = new HashSet<>();
             for (ShipAPI o : engine.getShips()) if (o.isAlive() && o.getOwner() == 0) alive.add(o);
+            Set<String> retreated = retreatedMemberIds(engine, 0);
             for (ShipAPI prev : lastSeen) {
-                if (!alive.contains(prev)) losses = Math.min(5, losses + 1);
+                if (!alive.contains(prev) && isDestroyed(prev, retreated)) losses = Math.min(5, losses + 1);
             }
             lastSeen = alive;
         }
@@ -230,8 +258,9 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         void tick(CombatEngineAPI engine) {
             Set<ShipAPI> alive = new HashSet<>();
             for (ShipAPI o : engine.getShips()) if (o.isAlive()) alive.add(o);
+            Set<String> retreated = retreatedMemberIds(engine, 1);
             for (ShipAPI prev : lastSeen) {
-                if (!alive.contains(prev) && prev.getOwner() == 1) {
+                if (!alive.contains(prev) && prev.getOwner() == 1 && isDestroyed(prev, retreated)) {
                     grantTribute(engine, prev);
                 }
             }

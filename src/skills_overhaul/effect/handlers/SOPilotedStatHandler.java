@@ -8,25 +8,36 @@ import skills_overhaul.effect.EffectHandler;
 
 /**
  * Generic per-ship-stat handler for pilot tree nodes.
- * Reads named params from JSON and applies them to the player flagship's MutableShipStatsAPI.
- * Applied at node purchase (campaign layer); mods persist until respec.
+ * Reads named params from JSON and applies them to a ship's MutableShipStatsAPI.
+ *
+ * MutableShipStatsAPI is rebuilt for every combat, so purchase-time application
+ * cannot stick; the real application happens per combat via
+ * SkillsOverhaulCombatPlugin.applyTo(). The EffectHandler apply/remove below is
+ * a best-effort no-op outside combat (getPlayerShip() is null in campaign).
  */
 public final class SOPilotedStatHandler implements EffectHandler {
+
+    /** Effect-object keys that are metadata, not stat params. */
+    private static final java.util.Set<String> NON_STAT_KEYS = new java.util.HashSet<String>(
+            java.util.Arrays.asList("type", "channel", "oath", "requiresActiveBasic"));
 
     @Override
     public void apply(String nodeId, JSONObject params) {
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
-        MutableShipStatsAPI s = ship.getMutableStats();
-        applyParams(s, nodeId, params, false);
+        applyParams(ship.getMutableStats(), nodeId, params, false);
     }
 
     @Override
     public void remove(String nodeId, JSONObject params) {
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
-        MutableShipStatsAPI s = ship.getMutableStats();
-        applyParams(s, nodeId, params, true);
+        applyParams(ship.getMutableStats(), nodeId, params, true);
+    }
+
+    /** Combat-time entry point: apply this node's stat params to the given ship stats. */
+    public void applyTo(MutableShipStatsAPI s, String nodeId, JSONObject params) {
+        applyParams(s, nodeId, params, false);
     }
 
     private void applyParams(MutableShipStatsAPI s, String nodeId, JSONObject p, boolean remove) {
@@ -34,6 +45,7 @@ public final class SOPilotedStatHandler implements EffectHandler {
         java.util.Iterator<String> keys = p.keys();
         while (keys.hasNext()) {
             String key = keys.next();
+            if (NON_STAT_KEYS.contains(key)) continue;
             float v = (float) p.optDouble(key, 0.0);
             if (remove) {
                 unapply(s, nodeId, key);

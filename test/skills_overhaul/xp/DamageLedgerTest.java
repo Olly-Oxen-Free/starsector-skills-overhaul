@@ -8,12 +8,10 @@ public class DamageLedgerTest {
         led.addFighter("enemy_a", 20f, false);
         led.addTotal("enemy_a", 100f);
 
-        DamageLedger.Entry e = led.getEntry("enemy_a");
-        assert Math.abs(e.directManual - 40f) < 1e-3 : "dm";
-        assert Math.abs(e.directAuto - 10f)   < 1e-3 : "da";
-        assert Math.abs(e.fighterManual - 20f)< 1e-3 : "fm";
-        assert Math.abs(e.fighterAuto - 0f)   < 1e-3 : "fa";
-        assert Math.abs(e.totalToShip - 100f) < 1e-3 : "tot";
+        // Recorded amounts verified through the public share API (mult=1 → raw sums):
+        // direct = 40 + 10 = 50/100; fighter = 20/100
+        assert Math.abs(led.effectiveDirectShare("enemy_a", 1f) - 0.50f) < 1e-3 : "raw direct";
+        assert Math.abs(led.effectiveFighterShare("enemy_a", 1f) - 0.20f) < 1e-3 : "raw fighter";
 
         // eff_direct = 0.80*10 + 1.00*40 = 48; share = 48/100 = 0.48
         assert Math.abs(led.effectiveDirectShare("enemy_a", 0.80f) - 0.48f) < 1e-3 : "edshare";

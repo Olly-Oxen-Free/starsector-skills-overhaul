@@ -19,7 +19,8 @@ public final class CrusadeAbility extends BaseDurationAbility {
         Map<String, Object> wrapper = new ZealDailyTicker.MemoryWrapMap(mem);
 
         if (!CrusadeService.isActive(wrapper)) {
-            // Declare crusade
+            // Declare crusade — defense in depth: honor the 180-day cooldown even if isUsable() was bypassed.
+            if (!CrusadeService.canDeclare(wrapper, now)) { this.deactivate(); return; }
             String rivalId = RivalryService.getCurrentRival(mem);
             if (rivalId == null) { this.deactivate(); return; }
             FactionAPI player = Global.getSector().getPlayerFaction();
@@ -35,11 +36,11 @@ public final class CrusadeAbility extends BaseDurationAbility {
                 }
             }
             CrusadeService.declare(wrapper, rivalId, now);
-            new skills_overhaul.zealot.CrusadeNPCStub().onPlayerCrusadeDeclared(rivalId);
-            mem.set("$skills.zealot.crusade.capBonusActive", true);
+            ZealService.registerCapBonus(wrapper, "crusade", CrusadeService.CAP_BONUS);
+            CrusadeNPCStub.onPlayerCrusadeDeclared(rivalId);
         } else if (CrusadeService.canManualCancel(wrapper, now)) {
             // Cancel crusade
-            mem.unset("$skills.zealot.crusade.capBonusActive");
+            ZealService.unregisterCapBonus(wrapper, "crusade");
             CrusadeService.manualCancel(wrapper, now);
         }
         this.deactivate();

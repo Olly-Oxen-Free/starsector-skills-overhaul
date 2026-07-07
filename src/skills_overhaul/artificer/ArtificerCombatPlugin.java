@@ -1,21 +1,35 @@
 package skills_overhaul.artificer;
 
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.combat.BaseEveryFrameCombatPlugin;
+import com.fs.starfarer.api.combat.BeamAPI;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
+import com.fs.starfarer.api.combat.CombatEntityAPI;
+import com.fs.starfarer.api.combat.FighterWingAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.util.Misc;
 
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     public static final Set<String> ACTIVE_NODES = new LinkedHashSet<>();
 
+    /** Enemy Officer Imprint expiry key — mirrored in OfficerImprintDevice. */
+    public static final String OFFICER_IMPRINT_EXPIRE_KEY = "$skills.artificer.forge.officer_imprint_expire";
+    private static final String BEAM_DEBUFF_ID = "artificer_t3_beam_spec_debuff";
+    private static final String OFFICER_IMPRINT_ID = "artificer_officer_imprint";
+
     private final BeamSustainedContactTracker beamTracker = new BeamSustainedContactTracker();
+    /** Targets that currently carry the beam flux-dissipation debuff (for clean unmodify). */
+    private final Set<Object> beamDebuffTargets = new HashSet<Object>();
     private boolean firstFrame = true;
 
     @Override
@@ -37,6 +51,94 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
             if (s.getOwner() != 0) continue;
             applyPerShipEffects(s, engine, amount);
         }
+
+        // Beam Specialization — sustained-contact flux dissipation debuff (fleet-wide, beam-source driven).
+        if (ACTIVE_NODES.contains("artificer_t3_beam_spec")) {
+            processBeamContact(engine, amount);
+        }
+
+        // Officer Imprint — device-driven (timed campaign flag), buffs officer-led fighter wings.
+        if (isOfficerImprintActive()) {
+            applyOfficerImprint(engine);
+        }
+    }
+
+    /** Accumulate per-target beam contact for friendly beam sources and apply the flux-dissipation debuff. */
+    private void processBeamContact(CombatEngineAPI engine, float amount) {
+        // Gather the targets each friendly beam source is damaging this frame.
+        Map<ShipAPI, Set<Object>> currentBySource = new HashMap<ShipAPI, Set<Object>>();
+        Set<Object> targetsHitThisFrame = new HashSet<Object>();
+        for (BeamAPI beam : engine.getBeams()) {
+            ShipAPI src = beam.getSource();
+            if (src == null || src.getOwner() != 0) continue;
+            CombatEntityAPI tgt = beam.getDamageTarget();
+            if (tgt == null || !beam.didDamageThisFrame()) continue;
+            Set<Object> set = currentBySource.get(src);
+            if (set == null) { set = new HashSet<Object>(); currentBySource.put(src, set); }
+            set.add(tgt);
+            targetsHitThisFrame.add(tgt);
+        }
+
+        // Advance contact time; reset targets a source lost this frame.
+        for (ShipAPI s : engine.getShips()) {
+            if (s.getOwner() != 0) continue;
+            Set<Object> current = currentBySource.get(s);
+            if (current == null) current = java.util.Collections.emptySet();
+            for (Object prev : beamTracker.getTargets(s)) {
+                if (!current.contains(prev)) beamTracker.onBeamMissed(s, prev);
+            }
+            for (Object tgt : current) {
+                beamTracker.onBeamHit(s, tgt, amount);
+            }
+        }
+
+        // Apply/unmodify the debuff based on aggregate sustained contact.
+        Set<Object> check = new HashSet<Object>(targetsHitThisFrame);
+        check.addAll(beamDebuffTargets);
+        for (Object tgt : check) {
+            if (!(tgt instanceof ShipAPI)) continue;
+            ShipAPI ship = (ShipAPI) tgt;
+            if (beamTracker.hasDebuff(tgt)) {
+                ship.getMutableStats().getFluxDissipation().modifyMult(BEAM_DEBUFF_ID, beamTracker.getDebuffMult(tgt));
+                beamDebuffTargets.add(tgt);
+            } else {
+                ship.getMutableStats().getFluxDissipation().unmodify(BEAM_DEBUFF_ID);
+                beamDebuffTargets.remove(tgt);
+            }
+        }
+    }
+
+    /** True while the Officer Imprint forge device's timed campaign flag is live. */
+    private boolean isOfficerImprintActive() {
+        try {
+            if (Global.getSector() == null) return false;
+            Object exp = Global.getSector().getMemoryWithoutUpdate().get(OFFICER_IMPRINT_EXPIRE_KEY);
+            if (!(exp instanceof Number)) return false;
+            int today = (int) (Global.getSector().getClock().getCycle() * 365
+                    + Global.getSector().getClock().getDay());
+            return today < ((Number) exp).intValue();
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
+    /** Fighter wings launched from officer-piloted carriers gain damage & speed scaled by officer level. */
+    private void applyOfficerImprint(CombatEngineAPI engine) {
+        for (ShipAPI s : engine.getShips()) {
+            if (s.getOwner() != 0 || !s.isFighter()) continue;
+            FighterWingAPI wing = s.getWing();
+            if (wing == null) continue;
+            ShipAPI carrier = wing.getSourceShip();
+            if (carrier == null) continue;
+            PersonAPI captain = carrier.getCaptain();
+            if (captain == null || captain.isDefault()) continue;
+            int level = captain.getStats().getLevel();
+            if (level <= 0) continue;
+            float mult = 1f + Math.min(0.20f, 0.02f * level);
+            s.getMutableStats().getBallisticWeaponDamageMult().modifyMult(OFFICER_IMPRINT_ID, mult);
+            s.getMutableStats().getEnergyWeaponDamageMult().modifyMult(OFFICER_IMPRINT_ID, mult);
+            s.getMutableStats().getMaxSpeed().modifyMult(OFFICER_IMPRINT_ID, mult);
+        }
     }
 
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, float amount) {
@@ -50,7 +152,7 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("artificer_t2_shield")) ShieldMastery.apply(s);
         if (ACTIVE_NODES.contains("artificer_t2_standard_systems")) StandardisedSystems.apply(s);
         // T3
-        if (ACTIVE_NODES.contains("artificer_t3_beam_spec")) BeamSpec.apply(s, amount, beamTracker);
+        if (ACTIVE_NODES.contains("artificer_t3_beam_spec")) BeamSpec.apply(s);
         if (ACTIVE_NODES.contains("artificer_t3_adv_strike")) AdvStrike.apply(s);
         if (ACTIVE_NODES.contains("artificer_t3_resilience")) TechResilience.apply(s);
         if (ACTIVE_NODES.contains("artificer_t3_power_grid")) PowerGrid.apply(s, engine);
@@ -138,25 +240,12 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     static final class BeamSpec {
-        static void apply(ShipAPI s, float amount, BeamSustainedContactTracker tracker) {
+        /** Per-ship offensive buff. Sustained-contact debuff is handled fleet-wide in processBeamContact(). */
+        static void apply(ShipAPI s) {
             s.getMutableStats().getBeamWeaponDamageMult().modifyMult("artificer_t3_beam_spec", 1.20f);
             float fluxFraction = s.getFluxLevel();
             float rofMult = fluxFraction > 0.5f ? 1.20f : 1.10f;
             s.getMutableStats().getEnergyRoFMult().modifyMult("artificer_t3_beam_spec", rofMult);
-
-            // Beam tracker: per-ship approximation — firing beams accumulate contact time vs a sentinel target.
-            boolean anyBeamFiring = false;
-            for (com.fs.starfarer.api.combat.WeaponAPI w : s.getAllWeapons()) {
-                if (w.getType() != com.fs.starfarer.api.combat.WeaponAPI.WeaponType.MISSILE && w.isFiring()) {
-                    anyBeamFiring = true;
-                    break;
-                }
-            }
-            if (anyBeamFiring) {
-                tracker.onBeamHit(s, s, amount);
-            } else {
-                tracker.onBeamMissed(s, s);
-            }
         }
     }
 

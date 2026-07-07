@@ -5,9 +5,6 @@ import org.json.JSONObject;
 public final class Config {
     public final int   pointsPerLevel;
     public final int   bonusPointsEvery5;
-    public final int   capstoneCost;
-    public final int   mergeCost;
-    public final int   nodeCost;
     public final float migrationMult;
     public final int   migrationCap;
     public final float autopilotXpMult;
@@ -26,9 +23,9 @@ public final class Config {
     private Config(JSONObject j) {
         this.pointsPerLevel              = j.optInt("points_per_level", 1);
         this.bonusPointsEvery5           = j.optInt("bonus_points_every_5", 0);
-        this.capstoneCost                = j.optInt("capstone_cost", 2);
-        this.mergeCost                   = j.optInt("merge_cost", 1);
-        this.nodeCost                    = j.optInt("node_cost", 1);
+        // Note: per-node costs come from each node's "cost" in the tree JSON,
+        // not from global config — capstone_cost/merge_cost/node_cost were
+        // parsed but never read and have been removed.
         this.migrationMult               = (float) j.optDouble("migration_mult", 1.5);
         this.migrationCap                = j.optInt("migration_cap", 15);
         this.autopilotXpMult             = (float) j.optDouble("autopilot_xp_mult", 0.80);

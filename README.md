@@ -54,8 +54,18 @@ This is a **v0.1 alpha**. Infrastructure is in; content is first-pass drafts fla
 
 ## Uninstall
 
-1. Disable in launcher, or
-2. From a running save: `VanillaSuppressor.restoreAll()` replays stashed vanilla skill levels (no current UI trigger).
+**Do not just disable the mod** — vanilla skills are suppressed to level 0 while
+the mod is active, and a save loaded without the mod keeps them at 0 permanently.
+
+With [Console Commands](https://fractalsoftworks.com/forum/index.php?topic=4106.0) installed:
+
+1. Load your save and run:
+   `runcode skills_overhaul.console.UninstallHelper.prepareUninstall();`
+   This restores your stashed vanilla skill levels and disables suppression.
+2. Save the game.
+3. Exit and disable Skills Overhaul in the launcher.
+
+Changed your mind? `runcode skills_overhaul.console.UninstallHelper.reenableSuppression();`
 
 ---
 

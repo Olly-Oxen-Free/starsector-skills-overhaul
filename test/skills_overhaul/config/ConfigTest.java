@@ -14,7 +14,6 @@ public class ConfigTest {
         assert Math.abs(cfg.migrationMult - 1.5) < 1e-6 : "migrationMult";
         assert cfg.goodStandingThreshold == 5 : "threshold";
         // default fallback
-        assert cfg.capstoneCost == 2 : "capstoneCost default";
         assert Math.abs(cfg.autopilotXpMult - 0.80) < 1e-6 : "autopilot default";
 
         System.out.println("ALL PASSED");

@@ -23,12 +23,10 @@ import java.util.List;
  * Registered via data/config/settings.json "plugins" key. init() fires once per combat,
  * before first advance(). Player ship may be null in init() so defer to first advance tick.
  *
- * Design: handlers classes (PilotedManeuverabilityHandler etc.) still fire on purchase for
- * campaign-side logging. This plugin is the real combat-time application: walk purchased
- * nodes, match effect types, modifyMult on player ship stats.
- *
- * Only piloted_maneuverability is wired to real stats in v1 — rest log STUB and will be
- * filled per effect type post-playtest.
+ * MutableShipStatsAPI is rebuilt per combat, so static ship-stat passives
+ * (SO_piloted_stat) must be re-applied here each battle; purchase-time
+ * application cannot stick. Non-stat effect types are handled by their own
+ * combat plugins via ACTIVE_NODES.
  */
 public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
     private static final Logger log = Global.getLogger(SkillsOverhaulCombatPlugin.class);
@@ -50,6 +48,9 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
         applied = true;
     }
 
+    private final skills_overhaul.effect.handlers.SOPilotedStatHandler pilotedStat =
+            new skills_overhaul.effect.handlers.SOPilotedStatHandler();
+
     private void applyPilotSkillsTo(ShipAPI ship) {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         MutableShipStatsAPI stats = ship.getMutableStats();
@@ -60,6 +61,7 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (!mem.contains(SkillMemory.purchasedKey(n.getId()))) continue;
                 if (!mem.getBoolean(SkillMemory.purchasedKey(n.getId()))) continue;
                 for (JSONObject fx : n.getEffects()) {
+                    if (!NodeEffectApplier.isEffectActive(n, fx)) continue;
                     if (applyShipStatEffect(stats, n.getId(), fx)) applied++;
                 }
             }
@@ -69,14 +71,13 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     private boolean applyShipStatEffect(MutableShipStatsAPI s, String nodeId, JSONObject fx) {
         String type = fx.optString("type");
-        float amt = (float) fx.optDouble("amount", 0);
-        if (type.equals("piloted_maneuverability")) {
-            s.getMaxTurnRate().modifyMult(nodeId, 1f + amt);
-            s.getTurnAcceleration().modifyMult(nodeId, 1f + amt);
-            s.getAcceleration().modifyMult(nodeId, 1f + amt);
+        if (type.equals("SO_piloted_stat")) {
+            // MutableShipStatsAPI is rebuilt per combat, so static passives must
+            // be re-applied here — purchase-time application cannot stick.
+            pilotedStat.applyTo(s, nodeId, fx);
             return true;
         }
-        // Unhandled types fall through — purchase-time handler already logged STUB.
+        // Other types are handled by their own combat plugins via ACTIVE_NODES.
         return false;
     }
 }

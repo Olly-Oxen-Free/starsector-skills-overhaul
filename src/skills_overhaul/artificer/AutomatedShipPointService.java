@@ -21,7 +21,10 @@ public final class AutomatedShipPointService {
         return Math.max(0, deployed - cap);
     }
 
-    public static void clearForTest() { BONUSES.clear(); }
+    /** Load-time reset — statics survive across save loads in the same JVM. */
+    public static void reset() { BONUSES.clear(); }
+
+    public static void clearForTest() { reset(); }
 
     private AutomatedShipPointService() {}
 }

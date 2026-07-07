@@ -6,7 +6,18 @@ import com.fs.starfarer.api.campaign.CargoStackAPI;
 import com.fs.starfarer.api.campaign.SpecialItemData;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 public final class ForgeBattleHook extends BaseCampaignEventListener {
+
+    /**
+     * Ordered queue of battle-device recipe ids deployed for the upcoming engagement.
+     * Deploy order is preserved (duplicates included) so ForgeBattlePlugin fires one
+     * effect per deploy and assigns the free-deploy quota / penalties deterministically.
+     */
+    public static final String DEPLOY_ORDER_KEY = "$skills.artificer.forge.deploy_order";
 
     public ForgeBattleHook() { super(false); }
 
@@ -26,10 +37,25 @@ public final class ForgeBattleHook extends BaseCampaignEventListener {
                 break;
             }
         }
-        MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
-        mem.set("$skills.artificer.forge.battle_pending." + recipeId, true);
-        Object countObj = mem.get("$skills.artificer.forge.deploys_this_engagement");
-        int count = countObj instanceof Number ? ((Number) countObj).intValue() : 0;
-        mem.set("$skills.artificer.forge.deploys_this_engagement", count + 1);
+        recordDeploy(Global.getSector().getMemoryWithoutUpdate(), recipeId);
+    }
+
+    /** Append a deployed battle-device recipe id to the ordered deploy queue (runtime). */
+    public static void recordDeploy(MemoryAPI mem, String recipeId) {
+        List<String> order = readOrder(mem.get(DEPLOY_ORDER_KEY));
+        order.add(recipeId);
+        mem.set(DEPLOY_ORDER_KEY, order);
+    }
+
+    /** Append a deployed battle-device recipe id to the ordered deploy queue (pure, testable). */
+    public static void recordDeploy(Map<String,Object> mem, String recipeId) {
+        List<String> order = readOrder(mem.get(DEPLOY_ORDER_KEY));
+        order.add(recipeId);
+        mem.put(DEPLOY_ORDER_KEY, order);
+    }
+
+    @SuppressWarnings("unchecked")
+    static List<String> readOrder(Object listObj) {
+        return (listObj instanceof List) ? (List<String>) listObj : new ArrayList<String>();
     }
 }

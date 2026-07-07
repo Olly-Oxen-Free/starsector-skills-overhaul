@@ -67,6 +67,13 @@ public class SupplyBufferServiceTest {
         SupplyBufferService.unregisterCapMultiplier("scrapheap");
         assert SupplyBufferService.computeCap(memCap, 0f) == 20f : "cap restored after unregister";
 
+        // --- isUnlocked: gated on commander progression ---
+        Map<String,Object> memGate = new HashMap<>();
+        SkillMemory.setLevel(memGate, Tree.COMMANDER, 0);
+        assert !SupplyBufferService.isUnlocked(memGate) : "locked at commander L0";
+        SkillMemory.setLevel(memGate, Tree.COMMANDER, 1);
+        assert SupplyBufferService.isUnlocked(memGate) : "unlocked at commander L1";
+
         System.out.println("ALL PASSED");
     }
 }

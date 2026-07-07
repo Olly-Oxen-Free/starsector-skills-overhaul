@@ -12,8 +12,8 @@ import skills_overhaul.supply.SupplyBufferService;
 
 public final class CraftFuelAbility extends BaseDurationAbility {
     public static final String ABILITY_ID = "skills_overhaul_craft_fuel";
-    public static final float COST = 20f;
-    public static final float OUTPUT = 1f;
+    public static final float COST = 10f;
+    public static final float OUTPUT = 30f;
     public static final float COOLDOWN_DAYS = 2f;
     public static final String K_CD_END = "$skills.commandant.craft_fuel_cd_end";
 

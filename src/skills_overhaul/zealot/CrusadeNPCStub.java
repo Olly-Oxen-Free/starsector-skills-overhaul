@@ -1,24 +1,26 @@
 package skills_overhaul.zealot;
 
 import com.fs.starfarer.api.Global;
-import com.fs.starfarer.api.campaign.BaseCampaignEventListener;
 import com.fs.starfarer.api.campaign.FactionAPI;
 
 /**
- * Stub for NPC faction reactions to the player declaring a Crusade.
+ * Stateless helper for NPC faction reactions to the player declaring a Crusade.
  * Full implementation requires Nexerelin DiplomacyManager review.
  * When Nex is present, this logs the intended declaration and no-ops pending the Nex impl.
+ *
+ * <p>Not a campaign listener — it overrides no events; {@link CrusadeAbility} calls it directly
+ * on declaration, so it needs no registration in the mod plugin.
  */
-public final class CrusadeNPCStub extends BaseCampaignEventListener {
+public final class CrusadeNPCStub {
 
-    public CrusadeNPCStub() { super(false); }
+    private CrusadeNPCStub() {}
 
-    public boolean isNexLoaded() {
+    public static boolean isNexLoaded() {
         return Global.getSettings().getModManager().isModEnabled("nexerelin");
     }
 
     /** Call after the player declares a Crusade to trigger NPC sympathizer reactions. */
-    public void onPlayerCrusadeDeclared(String playerRivalFactionId) {
+    public static void onPlayerCrusadeDeclared(String playerRivalFactionId) {
         if (!isNexLoaded()) return;
         for (String npcFactionId : new String[]{"hegemony", "luddic_church"}) {
             FactionAPI npc = Global.getSector().getFaction(npcFactionId);
@@ -29,7 +31,7 @@ public final class CrusadeNPCStub extends BaseCampaignEventListener {
         }
     }
 
-    private void tryNexWarDeclaration(String aggressorFaction, String targetFaction) {
+    private static void tryNexWarDeclaration(String aggressorFaction, String targetFaction) {
         try {
             Class<?> dm = Class.forName("exerelin.campaign.DiplomacyManager");
             com.fs.starfarer.api.campaign.FactionAPI faction1 =

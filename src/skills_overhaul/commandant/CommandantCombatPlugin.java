@@ -23,6 +23,14 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final IronDoctrineState ironDoctrine = new IronDoctrineState();
 
     @Override
+    public void init(CombatEngineAPI engine) {
+        // Iron Doctrine registers these into the static CommandFieldService.PARAMS every
+        // frame and nothing removes them at battle end — clear leftovers at battle start.
+        CommandFieldService.unregisterParam("iron_doctrine_entrench");
+        CommandFieldService.unregisterParam("iron_doctrine_total");
+    }
+
+    @Override
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
@@ -35,25 +43,32 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
         ironDoctrine.tickConsecutiveAllHeld(amount, allHeld);
         ironDoctrine.tickMarchingGrace(amount, playerHeld > enemyHeld);
 
-        if (ACTIVE_NODES.contains("commandant_t5")) applyIronDoctrine(playerHeld);
+        // Iron Doctrine capstone state, read by applyIronDoctrine + per-ship Marching Advance.
+        boolean marching = ironDoctrine.marchingActive(playerHeld, enemyHeld, ironDoctrine.isInMarchingGrace());
+        boolean totalControl = ironDoctrine.totalControlActive();
+
+        if (ACTIVE_NODES.contains("commandant_t5")) applyIronDoctrine(playerHeld, totalControl);
 
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0) continue;
-            applyPerShipEffects(s, engine, playerHeld);
+            applyPerShipEffects(s, engine, playerHeld, marching, totalControl);
         }
     }
 
-    private void applyIronDoctrine(int objectivesHeld) {
-        float entrenchedScalingBonus = 0.50f * (Math.min(5, objectivesHeld) / 5f);
-        CommandFieldService.registerParam("iron_doctrine_entrench", "perLevelScalingMult", 1f + entrenchedScalingBonus);
-        if (ironDoctrine.totalControlActive()) {
+    private void applyIronDoctrine(int objectivesHeld, boolean totalControl) {
+        // Entrenched: Command Aura per-level scaling amplified +5% per held objective (max +25%).
+        CommandFieldService.registerParam("iron_doctrine_entrench", "perLevelScalingMult",
+                ironDoctrine.entrenchedMult(objectivesHeld));
+        // Total Control: fleet aura cap +0.08 after holding every objective for 10 consecutive seconds.
+        if (totalControl) {
             CommandFieldService.registerParam("iron_doctrine_total", "fleetCapBonus", 0.08f);
         } else {
             CommandFieldService.unregisterParam("iron_doctrine_total");
         }
     }
 
-    private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int playerHeld) {
+    private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int playerHeld,
+                                     boolean marching, boolean totalControl) {
         if (ACTIVE_NODES.contains("commandant_t1_officer_training")) OfficerTraining.apply(s);
         if (ACTIVE_NODES.contains("commandant_t1_standing_orders")) StandingOrders.apply(s);
         if (ACTIVE_NODES.contains("commandant_t2_authority")) Authority.apply(s, playerHeld);
@@ -61,6 +76,28 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("commandant_t2_reserve")) ReserveCommitment.apply(s, combatTime);
         if (ACTIVE_NODES.contains("commandant_t3_line_anchor")) LineAndAnchor.apply(s, engine);
         if (ACTIVE_NODES.contains("commandant_t3_vanguard")) VanguardScreen.apply(s, engine);
+        if (ACTIVE_NODES.contains("commandant_t5")) MarchingAdvance.apply(s, marching, totalControl);
+    }
+
+    /**
+     * Iron Doctrine — Marching Advance: while the fleet holds objective majority (or within the
+     * post-majority grace window), player ships gain +12% weapon damage and +10% movement speed,
+     * doubled to +24%/+20% while Total Control is active.
+     */
+    static final class MarchingAdvance {
+        static void apply(ShipAPI s, boolean marching, boolean totalControl) {
+            if (!marching) {
+                s.getMutableStats().getBallisticWeaponDamageMult().unmodify("commandant_t5_marching");
+                s.getMutableStats().getEnergyWeaponDamageMult().unmodify("commandant_t5_marching");
+                s.getMutableStats().getMaxSpeed().unmodify("commandant_t5_marching");
+                return;
+            }
+            float dmg = totalControl ? 0.24f : 0.12f;
+            float spd = totalControl ? 0.20f : 0.10f;
+            s.getMutableStats().getBallisticWeaponDamageMult().modifyMult("commandant_t5_marching", 1f + dmg);
+            s.getMutableStats().getEnergyWeaponDamageMult().modifyMult("commandant_t5_marching", 1f + dmg);
+            s.getMutableStats().getMaxSpeed().modifyMult("commandant_t5_marching", 1f + spd);
+        }
     }
 
     static final class OfficerTraining {

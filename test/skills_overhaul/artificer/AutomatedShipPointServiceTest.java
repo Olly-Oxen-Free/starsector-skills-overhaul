@@ -20,6 +20,22 @@ public class AutomatedShipPointServiceTest {
         assert AutomatedShipPointService.computeOverCap(140, 120) == 20;
         assert AutomatedShipPointService.computeOverCap(100, 120) == 0;
 
+        // Effective per-ship contribution multiplier that makes the fixed vanilla
+        // threshold behave like the raised cap (VANILLA_BASE / raisedCap).
+        AutomatedShipPointService.clearForTest();
+        assert Math.abs(AutomatedShipCapApplier.getEffectiveMult() - 1.0f) < 1e-6
+                : "no bonus → mult 1.0";
+
+        AutomatedShipPointService.registerBonus("auto_deploy", 40); // cap 160
+        assert Math.abs(AutomatedShipCapApplier.getEffectiveMult() - (120f / 160f)) < 1e-6
+                : "cap 160 → mult 0.75";
+
+        AutomatedShipPointService.registerBonus("limit_breaker", 40); // cap 200
+        assert Math.abs(AutomatedShipCapApplier.getEffectiveMult() - (120f / 200f)) < 1e-6
+                : "cap 200 → mult 0.60";
+
+        AutomatedShipPointService.clearForTest();
+
         System.out.println("ALL PASSED");
     }
 }

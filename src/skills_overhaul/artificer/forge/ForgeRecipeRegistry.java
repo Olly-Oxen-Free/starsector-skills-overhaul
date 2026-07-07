@@ -36,6 +36,11 @@ public final class ForgeRecipeRegistry {
         UNLOCKED.clear();
     }
 
+    /** Load-time reset: unlocks are per-save; recipe definitions (ALL) are not. */
+    public static void resetUnlocks() {
+        UNLOCKED.clear();
+    }
+
     /** Register all 19 spec'd recipes. Called once at mod load. */
     public static void registerAll() {
         register(new ForgeDeviceRecipe("drone_wakes", "Drone Wakes", ForgeDeviceType.BATTLE,
@@ -43,13 +48,13 @@ public final class ForgeRecipeRegistry {
                 "Flagship spawns PD drones at battle start"));
         register(new ForgeDeviceRecipe("sensor_beacon", "Sensor Beacon", ForgeDeviceType.CAMPAIGN,
                 3f, 1, null, "sensor_beacon",
-                "Drops a stationary sensor beacon"));
+                "Stationary beacon: +50% fleet sensor range while nearby (7 days)"));
         register(new ForgeDeviceRecipe("ecm_wave", "ECM Wave Generator", ForgeDeviceType.BATTLE,
                 4f, 0, "ecm_wave_penalty", "ecm_wave",
                 "Battle-start ECM amplification + weapon-disable pulse"));
         register(new ForgeDeviceRecipe("comm_jammer", "Comm Jammer", ForgeDeviceType.CAMPAIGN,
                 5f, 2, null, "comm_jammer",
-                "Disrupts a faction's comms for 14 days"));
+                "Stationary jammer: -25% fleet sensor profile while nearby (30 days)"));
         register(new ForgeDeviceRecipe("self_replicating_minefield", "Self-Replicating Minefield",
                 ForgeDeviceType.BATTLE, 8f, 0, "minefield_penalty", "self_replicating_minefield",
                 "Spawns mines that respawn on death"));
@@ -67,7 +72,7 @@ public final class ForgeRecipeRegistry {
                 "Refunds system charges + activation damage buff"));
         register(new ForgeDeviceRecipe("officer_imprint", "Officer Imprint", ForgeDeviceType.CAMPAIGN,
                 12f, 7, null, "officer_imprint",
-                "Copies officer skills to fighter wing"));
+                "Imprints officers onto their carrier's fighter wings: +damage & speed by officer level (7 days)"));
         register(new ForgeDeviceRecipe("scrap_beacon", "Scrap Beacon", ForgeDeviceType.CAMPAIGN,
                 5f, 3, null, "scrap_beacon",
                 "Periodic supply income"));

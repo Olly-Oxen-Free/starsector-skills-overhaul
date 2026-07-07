@@ -26,6 +26,18 @@ public class IronDoctrineStateTest {
         s.tickConsecutiveAllHeld(1f, true);
         assert s.totalControlActive();
 
+        // Marching grace is measured in combat seconds (MARCHING_GRACE_SECONDS), not days.
+        IronDoctrineState g = new IronDoctrineState();
+        assert !g.isInMarchingGrace();
+        g.tickMarchingGrace(1f, true);                       // holding majority tops grace to full 10s
+        assert g.isInMarchingGrace();
+        g.tickMarchingGrace(5f, false);                      // lost majority: 10 - 5 = 5s remaining
+        assert g.isInMarchingGrace() : "within grace window";
+        assert g.marchingActive(0, 2, g.isInMarchingGrace()) : "grace keeps marching active after majority lost";
+        g.tickMarchingGrace(5f, false);                      // 5 - 5 = 0 → grace expires
+        assert !g.isInMarchingGrace();
+        assert !g.marchingActive(0, 2, g.isInMarchingGrace()) : "marching drops once grace expires";
+
         System.out.println("ALL PASSED");
     }
 }

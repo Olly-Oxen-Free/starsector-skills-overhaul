@@ -13,10 +13,17 @@ public class NexIntegration {
         if (!isLoaded()) return;
         for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
             if (!m.getFaction().isPlayerFaction()) continue;
-            String seenKey = "$skills.admin.conquest_seen." + m.getId();
-            if (m.getMemoryWithoutUpdate().getBoolean(seenKey)) continue;
-            if (!m.getMemoryWithoutUpdate().getBoolean("$skills.admin.colony_seen." + m.getId())) {
-                m.getMemoryWithoutUpdate().set(seenKey, true);
+            String conquestSeenKey = "$skills.admin.conquest_seen." + m.getId();
+            String colonySeenKey   = "$skills.admin.colony_seen."   + m.getId();
+            if (m.getMemoryWithoutUpdate().getBoolean(conquestSeenKey)) continue;
+            // A market we haven't yet credited that wears Nex's captured-by
+            // flag is a conquest, not a founding.
+            boolean nexMarkedCapture = m.getMemoryWithoutUpdate().contains("$nex_marketCapturedBy");
+            if (nexMarkedCapture && !Global.getSector().getMemoryWithoutUpdate().getBoolean(colonySeenKey)) {
+                m.getMemoryWithoutUpdate().set(conquestSeenKey, true);
+                // Also mark colony_seen so the founding loop in
+                // AdminXPTracker.reportEconomyTick skips it (avoids dual award).
+                Global.getSector().getMemoryWithoutUpdate().set(colonySeenKey, true);
                 tracker.onMarketConquered(m);
             }
         }

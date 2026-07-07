@@ -41,6 +41,14 @@ public class FieldCommandsServiceTest {
         assert FieldCommandsService.bufferDurationFor("LIGHT_ESCORT") == 20f;
         assert FieldCommandsService.bufferDurationFor("UNKNOWN_TYPE") == 0f;
 
+        // resetForBattle also strips field_command:* params from the shared registry
+        // (applyBuffEnd only unregisters buffs that expire cleanly, not on teardown).
+        CommandFieldService.unregisterParam("field_command");
+        CommandFieldService.registerParam("field_command:STRIKE:99:m1", "rangeBumpFlat", 500f);
+        assert Math.abs(CommandFieldService.sumParam("rangeBumpFlat") - 500f) < 1e-4f;
+        FieldCommandsService.resetForBattle();
+        assert CommandFieldService.sumParam("rangeBumpFlat") == 0f;
+
         System.out.println("ALL PASSED");
     }
 }

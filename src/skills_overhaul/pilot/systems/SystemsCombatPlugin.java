@@ -22,8 +22,12 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     private TargetPainterState targetPainter;
 
     private String lastTargetId = null;
-    private float prevShieldFlux = 0f;
+    private float prevOwnShieldFlux = 0f;
+    private float prevTargetShieldFlux = 0f;
     private float gameTime = 0f;
+
+    // Strike Coordination: allied bombers within this radius get the buff (spec unspecified).
+    private static final float STRIKE_COORD_RANGE = 2000f;
 
     private final Set<String> prevAliveEnemyIds = new HashSet<String>();
     private boolean initialized = false;
@@ -32,6 +36,10 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     private boolean shieldWasRaised = false;
     private float shieldLoweredTimer = 0f;
 
+    // Precision Strike (T4): armor-penetration DamageDealtModifier is attached
+    // once per battle to the flagship while the node is active.
+    private boolean precisionStrikeAttached = false;
+
     // Secondary system (Experimental Overrides capstone)
     private SecondarySystemHullmod activeSecondary = null;
     private static final int SECONDARY_KEY = Keyboard.KEY_R;
@@ -39,7 +47,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     @Override
     public void init(CombatEngineAPI engine) {
         initialized = false;
-        ACTIVE_NODES.clear();
+        // ACTIVE_NODES is campaign-owned — do not clear per combat.
         prevAliveEnemyIds.clear();
         gameTime = 0f;
     }
@@ -83,10 +91,10 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
                 reactiveSystems.advancePhase(dt);
             } else {
                 float shieldFlux = flagship.getFluxTracker().getCurrFlux();
-                float shieldDmg = Math.max(0f, shieldFlux - prevShieldFlux);
+                float shieldDmg = Math.max(0f, shieldFlux - prevOwnShieldFlux);
                 if (flagship.getShield() != null && flagship.getShield().isOn() && shieldDmg > 0f)
                     reactiveSystems.onShieldDamage(shieldDmg);
-                prevShieldFlux = shieldFlux;
+                prevOwnShieldFlux = shieldFlux;
             }
             float drained = reactiveSystems.drainCooldownReduction(dt);
             if (drained > 0f && flagship.getSystem() != null)
@@ -160,16 +168,20 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         // Target Painter: track target switches + apply shield debuff on target
         if (ACTIVE_NODES.contains("so_systems_target_painter")) {
             String targetId = flagship.getShipTarget() != null ? flagship.getShipTarget().getId() : null;
-            if (targetId != null && !targetId.equals(lastTargetId)) targetPainter.onTargetSwitch();
+            if (targetId != null && !targetId.equals(lastTargetId)) {
+                targetPainter.onTargetSwitch();
+                // New target → reset its flux baseline so the first delta isn't garbage.
+                prevTargetShieldFlux = 0f;
+            }
             lastTargetId = targetId;
 
             ShipAPI target = flagship.getShipTarget();
             if (target != null) {
                 // T1 bug fix: pass real flux delta as damage, not 0.
                 float currFlux = target.getFluxTracker().getCurrFlux();
-                float fluxDelta = Math.max(0f, currFlux - prevShieldFlux);
+                float fluxDelta = Math.max(0f, currFlux - prevTargetShieldFlux);
                 if (fluxDelta > 0f) targetPainter.onShieldDamage(fluxDelta, gameTime);
-                prevShieldFlux = currFlux;
+                prevTargetShieldFlux = currFlux;
 
                 if (targetPainter.getStacks() > 0) {
                     float debuff = targetPainter.getShieldEfficiencyDebuff();
@@ -179,7 +191,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
                 }
             } else {
                 lastTargetId = null;
-                prevShieldFlux = 0f;
+                prevTargetShieldFlux = 0f;
             }
         }
 
@@ -207,17 +219,28 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (s.getHullSize() != ShipAPI.HullSize.FIGHTER) continue;
                 if (!s.isFighter()) continue;
                 MutableShipStatsAPI ss = s.getMutableStats();
-                ss.getBallisticWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
-                ss.getEnergyWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
-                ss.getMissileWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
-                ss.getHullBonus().modifyPercent("so_strike_coord", 20f);
+                // Honour the "within range" comment: only allied bombers inside the
+                // coordination radius get the buff; strip it once they fall out.
+                boolean inRange = com.fs.starfarer.api.util.Misc.getDistance(
+                        flagship.getLocation(), s.getLocation()) <= STRIKE_COORD_RANGE;
+                if (inRange) {
+                    ss.getBallisticWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
+                    ss.getEnergyWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
+                    ss.getMissileWeaponDamageMult().modifyMult("so_strike_coord", 1.25f);
+                    ss.getHullBonus().modifyPercent("so_strike_coord", 20f);
+                } else {
+                    ss.getBallisticWeaponDamageMult().unmodify("so_strike_coord");
+                    ss.getEnergyWeaponDamageMult().unmodify("so_strike_coord");
+                    ss.getMissileWeaponDamageMult().unmodify("so_strike_coord");
+                    ss.getHullBonus().unmodifyPercent("so_strike_coord");
+                }
             }
         }
 
         // Phase Mastery (spec line 194): phase ships only — remove flux-speed
         // penalty while phased; phase-exit burst applied on phase exit below.
         if (ACTIVE_NODES.contains("so_systems_phase_mastery") && isPhased
-                && flagship.getHullSpec().getShipSystemId().contains("phase")) {
+                && isPhaseShip(flagship)) {
             // Counter the vanilla phase speed penalty.
             flagship.getMutableStats().getMaxSpeed().modifyMult("so_phase_mastery", 1.50f);
         } else {
@@ -244,6 +267,19 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         } else {
             flagship.getMutableStats().getFighterRefitTimeMult().unmodify("so_carrier_command");
         }
+
+        // Precision Strike (spec line 196): range-scaled armor penetration on
+        // energy weapons. Implemented as a DamageDealtModifier (see
+        // PrecisionStrikeListener) attached once per battle to the flagship.
+        if (ACTIVE_NODES.contains("so_systems_precision_strike") && !precisionStrikeAttached) {
+            flagship.addListener(new PrecisionStrikeListener(flagship));
+            precisionStrikeAttached = true;
+        }
+
+        // Phase Resonance merge (spec line 202): intentional no-op stub in v1.
+        // The node registers "so_systems_phase_resonance_merge" and displays a
+        // "Coming Soon" tooltip; no combat effect is defined by the spec, so
+        // there is deliberately nothing to apply here.
     }
 
     private void applyVoidStrikeMods() {
@@ -307,9 +343,16 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
     }
 
-    private boolean isPhaseShip(ShipAPI ship) {
-        ShipSystemAPI sys = ship.getSystem();
-        return sys != null && (sys.getId().contains("phase") || sys.getId().contains("phasecloak"));
+    /**
+     * Unified phase-ship detection (hull-spec based, matching ManeuveringCombatPlugin
+     * and the Phase Mastery site below). getSystem() reflects the equipped system,
+     * which can be a swapped secondary; the hull spec's ship-system id is stable.
+     */
+    private static boolean isPhaseShip(ShipAPI ship) {
+        return ship != null
+                && ship.getHullSpec() != null
+                && ship.getHullSpec().getShipSystemId() != null
+                && ship.getHullSpec().getShipSystemId().contains("phase");
     }
 
     private int hullClassIndex(ShipAPI ship) {
@@ -334,6 +377,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         targetPainter  = new TargetPainterState();
         wasPhased      = flagship.isPhased();
         shieldWasRaised = flagship.getShield() != null && flagship.getShield().isOn();
+        precisionStrikeAttached = false;
 
         activeSecondary = detectSecondaryHullmod(flagship);
 

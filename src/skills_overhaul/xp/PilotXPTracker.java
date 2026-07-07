@@ -13,8 +13,10 @@ import skills_overhaul.state.SkillMemory;
 import skills_overhaul.state.Tree;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     private CombatEngineAPI engine;
@@ -29,6 +31,8 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     private float manualSeconds = 0f;
     private float totalKilledXP = 0f;
     private boolean bonusPaid = false;
+    /** P1 fix: track which enemy ship ids have had ShipDamageHook attached. */
+    private final Set<String> hookedEnemyIds = new HashSet<String>();
 
     @Override
     public void init(CombatEngineAPI engine) {
@@ -41,19 +45,32 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
             flagshipDP = dpOf(pf);
         }
 
+        scanForNewEnemies();
+    }
+
+    /** Discovers enemy ships (incl. mid-battle reinforcements) and attaches
+     *  ShipDamageHook + records DP/XP value. Idempotent via hookedEnemyIds. */
+    private void scanForNewEnemies() {
+        if (engine == null) return;
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 1) continue;
+            String id = s.getId();
+            if (hookedEnemyIds.contains(id)) continue;
             float dp = dpOf(s);
-            enemyDP.put(s.getId(), dp);
-            enemyXPValue.put(s.getId(), dp * 10f);
+            enemyDP.put(id, dp);
+            enemyXPValue.put(id, dp * 10f);
             enemyDPEngaged += dp;
-            s.addListener(new ShipDamageHook(this, s.getId()));
+            s.addListener(new ShipDamageHook(this, id));
+            hookedEnemyIds.add(id);
         }
     }
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
         if (engine == null || engine.isPaused() || !engine.isInCampaign()) return;
+
+        // P1 fix: pick up reinforcements as they spawn.
+        scanForNewEnemies();
 
         if (engine.isUIAutopilotOn()) autoSeconds += amount;
         else manualSeconds += amount;
@@ -72,7 +89,9 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     }
 
     private boolean isCombatEnding() {
-        // Simple v1 heuristic: all enemy ships hulked or gone
+        // V1 heuristic: all enemy ships hulked or gone (victory)
+        // OR the engine reports combat over (covers player retreat).
+        if (engine.isCombatOver()) return true;
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() == 1 && s.isAlive()) return false;
         }
@@ -98,7 +117,7 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
         ledger.addTotal(enemyShipId, amount);
     }
 
-    public void onEnemyKilled(String enemyShipId) {
+    public void onEnemyKilled(String enemyShipId, ShipAPI killed) {
         Float xp = enemyXPValue.get(enemyShipId);
         if (xp == null) return;
         Float dp = enemyDP.get(enemyShipId);
@@ -113,6 +132,14 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
             totalKilledXP += xp;
         }
         enemyXPValue.remove(enemyShipId); // prevent double-pay
+
+        // Notify kill-triggered pilot skills (Killing Machine, Bounty Hunter,
+        // Threat Acquisition, The Ace). Contribution = player's raw damage
+        // share regardless of autopilot, since these are combat triggers, not XP.
+        float contribution = ledger.effectiveDirectShare(enemyShipId, 1f)
+                           + ledger.effectiveFighterShare(enemyShipId, 1f);
+        skills_overhaul.pilot.gunnery.GunneryCombatPlugin.notifyKill(killed, contribution);
+        skills_overhaul.pilot.maneuvering.ManeuveringCombatPlugin.notifyKill(killed, contribution);
     }
 
     private float dpOf(ShipAPI s) {
@@ -144,7 +171,7 @@ class ShipDamageHook implements DamageListener {
         float total = r.getDamageToHull() + r.getTotalDamageToArmor() + r.getDamageToShields();
         if (total <= 0f) {
             // still check for death even on zero-damage flag events
-            if (!targetShip.isAlive()) tracker.onEnemyKilled(shipId);
+            if (!targetShip.isAlive()) tracker.onEnemyKilled(shipId, targetShip);
             return;
         }
 
@@ -162,6 +189,6 @@ class ShipDamageHook implements DamageListener {
             tracker.recordDamage(shipId, total, fromPlayerFighter, autoOn);
         }
 
-        if (!targetShip.isAlive()) tracker.onEnemyKilled(shipId);
+        if (!targetShip.isAlive()) tracker.onEnemyKilled(shipId, targetShip);
     }
 }

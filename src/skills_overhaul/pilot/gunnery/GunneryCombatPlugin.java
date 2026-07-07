@@ -26,11 +26,23 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final IntervalUtil wolfpackInterval = new IntervalUtil(0.5f, 0.5f);
     private boolean initialized = false;
     private ShipAPI prevSurgicalTarget;
+    private ShipAPI prevTwistKnifeTarget;
+
+    /** Per-combat instance, so PilotXPTracker's kill detection can reach us. */
+    private static GunneryCombatPlugin instance;
+
+    public static void notifyKill(ShipAPI killed, float playerContribution) {
+        if (instance != null && instance.initialized) {
+            instance.onKill(killed, playerContribution);
+        }
+    }
 
     @Override
     public void init(CombatEngineAPI engine) {
         initialized = false;
-        ACTIVE_NODES.clear();
+        instance = this;
+        // ACTIVE_NODES is campaign-owned (populated at purchase / game load);
+        // clearing here would wipe every gated skill for the whole battle.
     }
 
     @Override
@@ -196,25 +208,39 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
 
         // Twist the Knife (spec line 52): target <60% hull OR retreating →
         // attacker +25% dmg, target −15% speed, target ZFB removed.
-        if (ACTIVE_NODES.contains("so_gunnery_twist_knife") && surgicalTarget != null) {
-            float hullFrac = surgicalTarget.getHullLevel();
-            boolean retreating = surgicalTarget.isRetreating();
-            boolean active = hullFrac < 0.60f || retreating;
-            if (active) {
-                stats.getBallisticWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
-                stats.getEnergyWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
-                stats.getMissileWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+        if (ACTIVE_NODES.contains("so_gunnery_twist_knife")) {
+            // Clean the previous target's stats when the player switches targets
+            // so the -15% speed / ZFB removal doesn't stick on the old ship.
+            if (prevTwistKnifeTarget != null && prevTwistKnifeTarget != surgicalTarget) {
+                MutableShipStatsAPI old = prevTwistKnifeTarget.getMutableStats();
+                old.getMaxSpeed().unmodify("so_twist_knife_target");
+                old.getZeroFluxSpeedBoost().unmodify("so_twist_knife_target");
+            }
+            if (surgicalTarget != null) {
+                float hullFrac = surgicalTarget.getHullLevel();
+                boolean retreating = surgicalTarget.isRetreating();
+                boolean active = hullFrac < 0.60f || retreating;
                 MutableShipStatsAPI ts = surgicalTarget.getMutableStats();
-                ts.getMaxSpeed().modifyMult("so_twist_knife_target", 0.85f);
-                ts.getZeroFluxSpeedBoost().modifyMult("so_twist_knife_target", 0f);
+                if (active) {
+                    stats.getBallisticWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+                    stats.getEnergyWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+                    stats.getMissileWeaponDamageMult().modifyMult("so_twist_knife", 1.25f);
+                    ts.getMaxSpeed().modifyMult("so_twist_knife_target", 0.85f);
+                    ts.getZeroFluxSpeedBoost().modifyMult("so_twist_knife_target", 0f);
+                } else {
+                    stats.getBallisticWeaponDamageMult().unmodify("so_twist_knife");
+                    stats.getEnergyWeaponDamageMult().unmodify("so_twist_knife");
+                    stats.getMissileWeaponDamageMult().unmodify("so_twist_knife");
+                    ts.getMaxSpeed().unmodify("so_twist_knife_target");
+                    ts.getZeroFluxSpeedBoost().unmodify("so_twist_knife_target");
+                }
             } else {
+                // No target: drop the attacker-side damage buff too.
                 stats.getBallisticWeaponDamageMult().unmodify("so_twist_knife");
                 stats.getEnergyWeaponDamageMult().unmodify("so_twist_knife");
                 stats.getMissileWeaponDamageMult().unmodify("so_twist_knife");
-                MutableShipStatsAPI ts = surgicalTarget.getMutableStats();
-                ts.getMaxSpeed().unmodify("so_twist_knife_target");
-                ts.getZeroFluxSpeedBoost().unmodify("so_twist_knife_target");
             }
+            prevTwistKnifeTarget = surgicalTarget;
         }
 
         // Dead Eye (spec line 142): static range + accuracy parts done in

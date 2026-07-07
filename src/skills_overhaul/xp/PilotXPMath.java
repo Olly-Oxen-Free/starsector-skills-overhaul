@@ -65,7 +65,4 @@ public final class PilotXPMath {
         return c.survivalBase * sumShipXPKilled * timeFrac * difficulty;
     }
 
-    public static float effectiveByMode(float auto, float manual, float autopilotMult) {
-        return autopilotMult * auto + 1.0f * manual;
-    }
 }
