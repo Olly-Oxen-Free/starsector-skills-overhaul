@@ -90,12 +90,8 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
 
     private boolean isCombatEnding() {
         // V1 heuristic: all enemy ships hulked or gone (victory)
-        // OR player ship retreated (player flagship null + game-end flag).
-        // P4 fix: detect retreat via engine.isCombatOver() if available.
-        boolean enginEnded = false;
-        try { enginEnded = engine.isCombatOver(); }
-        catch (Throwable ignored) {}
-        if (enginEnded) return true;
+        // OR the engine reports combat over (covers player retreat).
+        if (engine.isCombatOver()) return true;
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() == 1 && s.isAlive()) return false;
         }

@@ -5,13 +5,19 @@ import com.fs.starfarer.api.Global;
 
 public final class InfamyDailyTicker implements EveryFrameScript {
 
+    private int lastCheckedDay = Integer.MIN_VALUE;
+
     @Override public boolean isDone() { return false; }
     @Override public boolean runWhilePaused() { return false; }
 
     @Override
     public void advance(float amount) {
+        // Rotation is daily — no need to hit memory every frame.
+        int day = monotonicDay();
+        if (day == lastCheckedDay) return;
+        lastCheckedDay = day;
         // getInfamy() side-effects rollTo; result discarded.
-        InfamyService.getInfamy(Global.getSector().getMemoryWithoutUpdate(), monotonicDay());
+        InfamyService.getInfamy(Global.getSector().getMemoryWithoutUpdate(), day);
     }
 
     /** Monotonic int day count (cycle*365 + day). */

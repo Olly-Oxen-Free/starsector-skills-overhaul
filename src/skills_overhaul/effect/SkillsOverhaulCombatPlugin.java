@@ -23,12 +23,10 @@ import java.util.List;
  * Registered via data/config/settings.json "plugins" key. init() fires once per combat,
  * before first advance(). Player ship may be null in init() so defer to first advance tick.
  *
- * Design: handlers classes (PilotedManeuverabilityHandler etc.) still fire on purchase for
- * campaign-side logging. This plugin is the real combat-time application: walk purchased
- * nodes, match effect types, modifyMult on player ship stats.
- *
- * Only piloted_maneuverability is wired to real stats in v1 — rest log STUB and will be
- * filled per effect type post-playtest.
+ * MutableShipStatsAPI is rebuilt per combat, so static ship-stat passives
+ * (SO_piloted_stat) must be re-applied here each battle; purchase-time
+ * application cannot stick. Non-stat effect types are handled by their own
+ * combat plugins via ACTIVE_NODES.
  */
 public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
     private static final Logger log = Global.getLogger(SkillsOverhaulCombatPlugin.class);
@@ -77,13 +75,6 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
             // MutableShipStatsAPI is rebuilt per combat, so static passives must
             // be re-applied here — purchase-time application cannot stick.
             pilotedStat.applyTo(s, nodeId, fx);
-            return true;
-        }
-        if (type.equals("piloted_maneuverability")) {
-            float amt = (float) fx.optDouble("amount", 0);
-            s.getMaxTurnRate().modifyMult(nodeId, 1f + amt);
-            s.getTurnAcceleration().modifyMult(nodeId, 1f + amt);
-            s.getAcceleration().modifyMult(nodeId, 1f + amt);
             return true;
         }
         // Other types are handled by their own combat plugins via ACTIVE_NODES.

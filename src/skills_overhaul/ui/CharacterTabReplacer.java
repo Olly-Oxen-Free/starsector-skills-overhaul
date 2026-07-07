@@ -27,11 +27,16 @@ public final class CharacterTabReplacer implements EveryFrameScript {
     private static final String LOG_PREFIX = "[SkillsOverhaul/UI] ";
 
     private boolean installed = false;
+    /** Set instead of installed's panel fields when we defer to SiC's menu. */
+    private boolean deferredToSiC = false;
     private UIPanelAPI vanillaParent;    // parent of the vanilla skill panel (for restore)
     private UIPanelAPI vanillaPanel;
     private UIPanelAPI mountParent;      // where OUR panel was added (core UI)
     private CustomPanelAPI ourPanel;
     private boolean reflectionWarned = false;
+
+    // Screen size at install; a resolution change while open requires a remount.
+    private float installedScreenW, installedScreenH;
 
     // Original vanilla panel state for restore
     private float vanillaOrigX, vanillaOrigY, vanillaOrigW, vanillaOrigH;
@@ -48,13 +53,24 @@ public final class CharacterTabReplacer implements EveryFrameScript {
             maybeUninstall();
             return;
         }
-        if (installed) return;
+        if (installed) {
+            // Resolution/fullscreen change while the tab is open: remount.
+            if (!deferredToSiC
+                    && (Global.getSettings().getScreenWidth() != installedScreenW
+                     || Global.getSettings().getScreenHeight() != installedScreenH)) {
+                maybeUninstall();
+            } else {
+                return;
+            }
+        }
         try {
             install();
         } catch (Throwable t) {
             if (!reflectionWarned) {
                 Global.getLogger(CharacterTabReplacer.class).warn(LOG_PREFIX
-                        + "reflection failed, leaving vanilla char tab intact", t);
+                        + "reflection failed on game version "
+                        + Global.getSettings().getVersionString()
+                        + ", leaving vanilla char tab intact", t);
                 reflectionWarned = true;
             }
         }
@@ -68,13 +84,12 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         }
         CampaignState state = (CampaignState) rawState;
 
-        // DEBUG: Log state discovery process
-        Global.getLogger(CharacterTabReplacer.class).info(LOG_PREFIX + "install: starting panel discovery");
+        Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX + "install: starting panel discovery");
 
         UIPanelAPI core = null;
         Object dialog = ReflectionUtils.invoke("getEncounterDialog", state);
         if (dialog != null) {
-            Global.getLogger(CharacterTabReplacer.class).info(LOG_PREFIX + "install: found encounterDialog=" + dialog.getClass().getName());
+            Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX + "install: found encounterDialog=" + dialog.getClass().getName());
             Object c = ReflectionUtils.invoke("getCoreUI", dialog);
             if (c instanceof UIPanelAPI) core = (UIPanelAPI) c;
         }
@@ -82,7 +97,7 @@ public final class CharacterTabReplacer implements EveryFrameScript {
             Object c = ReflectionUtils.invoke("getCore", state);
             if (c instanceof UIPanelAPI) {
                 core = (UIPanelAPI) c;
-                Global.getLogger(CharacterTabReplacer.class).info(LOG_PREFIX + "install: found core from state");
+                Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX + "install: found core from state");
             }
         }
         if (core == null) {
@@ -103,12 +118,24 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         UIPanelAPI p = ReflectionUtils.getParent(target);
         if (p == null) return;
 
-        // SiC coexistence check
-        for (Object sib : ReflectionUtils.getChildrenCopy(p)) {
-            if (sib.getClass().getSimpleName().contains("SCSkillMenu")) {
-                installed = true;
-                return;
+        // Second-in-Command coexistence: mod-id check first (robust across SiC
+        // versions), class-name scan as fallback.
+        boolean sicPresent = false;
+        try {
+            sicPresent = Global.getSettings().getModManager().isModEnabled("second_in_command");
+        } catch (Throwable ignored) {}
+        if (!sicPresent) {
+            for (Object sib : ReflectionUtils.getChildrenCopy(p)) {
+                if (sib.getClass().getSimpleName().contains("SCSkillMenu")) {
+                    sicPresent = true;
+                    break;
+                }
             }
+        }
+        if (sicPresent) {
+            installed = true;
+            deferredToSiC = true;
+            return;
         }
 
         // Save original position and size for restore
@@ -123,11 +150,11 @@ public final class CharacterTabReplacer implements EveryFrameScript {
 
         // Remove the vanilla skill panel from its immediate parent so it
         // doesn't keep drawing behind us. If removal fails, push it off-screen.
-        Global.getLogger(CharacterTabReplacer.class).info(LOG_PREFIX + "install: target class="
+        Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX + "install: target class="
                 + target.getClass().getName() + " size=" + tPos.getWidth() + "x" + tPos.getHeight());
         try {
             p.removeComponent(target);
-            Global.getLogger(CharacterTabReplacer.class).info(LOG_PREFIX + "install: removeComponent succeeded");
+            Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX + "install: removeComponent succeeded");
         } catch (Throwable t) {
             Global.getLogger(CharacterTabReplacer.class).warn(LOG_PREFIX + "install: removeComponent FAILED, hiding instead", t);
             try {
@@ -177,13 +204,16 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         }
         plugin.attach(ourPanel);
 
-        Global.getLogger(CharacterTabReplacer.class).info(LOG_PREFIX
+        Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX
                 + "install: mounted " + CharacterTabPanelPlugin.UI_VERSION
                 + " at core=" + mountParent.getClass().getSimpleName()
                 + " panel=" + panelW + "x" + panelH
                 + " screen=" + screenW + "x" + screenH
                 + " contentMax=" + maxGridW + "x" + maxGridH);
+        installedScreenW = screenW;
+        installedScreenH = screenH;
         installed = true;
+        deferredToSiC = false;
     }
 
     private final java.util.Map<UIPanelAPI, float[]> hiddenSiblingState = new java.util.HashMap<UIPanelAPI, float[]>();
@@ -284,6 +314,7 @@ public final class CharacterTabReplacer implements EveryFrameScript {
             Global.getLogger(CharacterTabReplacer.class).warn(LOG_PREFIX + "uninstall failed", t);
         }
         installed = false;
+        deferredToSiC = false;
         vanillaParent = null;
         vanillaPanel = null;
         mountParent = null;

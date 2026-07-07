@@ -31,9 +31,6 @@ public class DamageLedger {
         e.totalToShip += amount;
     }
 
-    public Entry getEntry(String shipId) { return byShip.get(shipId); }
-    public java.util.Set<Map.Entry<String,Entry>> entries() { return byShip.entrySet(); }
-
     public float effectiveDirectShare(String shipId, float autopilotMult) {
         Entry e = byShip.get(shipId);
         if (e == null || e.totalToShip <= 0f) return 0f;

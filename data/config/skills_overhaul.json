@@ -1,9 +1,6 @@
 {
     "points_per_level":              1,
     "bonus_points_every_5":          0,
-    "capstone_cost":                 2,
-    "merge_cost":                    1,
-    "node_cost":                     1,
     "migration_mult":                1.5,
     "migration_cap":                 15,
     "autopilot_xp_mult":             0.80,

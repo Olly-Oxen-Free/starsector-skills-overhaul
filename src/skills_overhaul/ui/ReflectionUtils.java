@@ -154,9 +154,21 @@ public final class ReflectionUtils {
 
     /* ── helpers ────────────────────────────────────────────────────────── */
 
+    /** Resolved-Method cache — the UI-tree crawl calls findMethod for the same
+     *  (class, name) pairs on every char-tab open. NULL_METHOD marks misses so
+     *  they aren't re-crawled either. */
+    private static final Object NULL_METHOD = new Object();
+    private static final HashMap<String, Object> methodCache = new HashMap<>();
+
     /** Find a zero-arg method by name on cls or superclasses.
      *  Returns the raw Method object as Object. */
     private static Object findMethod(Class<?> cls, String name, int arity) {
+        String key = cls.getName() + '#' + name + '/' + arity;
+        Object cached = methodCache.get(key);
+        if (cached != null) return cached == NULL_METHOD ? null : cached;
+
+        Object found = null;
+        outer:
         for (Class<?> c = cls; c != null; c = c.getSuperclass()) {
             try {
                 Object raw = c.getDeclaredMethods();
@@ -168,10 +180,13 @@ public final class ReflectionUtils {
                         int count = (int) METHOD_GET_PARAM_COUNT.invoke(methods[i]);
                         if (count != arity) continue;
                     }
-                    return methods[i];
+                    found = methods[i];
+                    try { METHOD_SET_ACCESSIBLE.invoke(found, true); } catch (Throwable ignored) {}
+                    break outer;
                 }
             } catch (Throwable ignored) {}
         }
-        return null;
+        methodCache.put(key, found == null ? NULL_METHOD : found);
+        return found;
     }
 }
