@@ -27,10 +27,21 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
     private boolean initialized = false;
     private ShipAPI prevSurgicalTarget;
 
+    /** Per-combat instance, so PilotXPTracker's kill detection can reach us. */
+    private static GunneryCombatPlugin instance;
+
+    public static void notifyKill(ShipAPI killed, float playerContribution) {
+        if (instance != null && instance.initialized) {
+            instance.onKill(killed, playerContribution);
+        }
+    }
+
     @Override
     public void init(CombatEngineAPI engine) {
         initialized = false;
-        ACTIVE_NODES.clear();
+        instance = this;
+        // ACTIVE_NODES is campaign-owned (populated at purchase / game load);
+        // clearing here would wipe every gated skill for the whole battle.
     }
 
     @Override

@@ -28,10 +28,20 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
     private boolean tacticalBreakArmed = false;
     private boolean initialized = false;
 
+    /** Per-combat instance, so PilotXPTracker's kill detection can reach us. */
+    private static ManeuveringCombatPlugin instance;
+
+    public static void notifyKill(ShipAPI killed, float playerContribution) {
+        if (instance != null && instance.initialized) {
+            instance.onKill(killed, playerContribution);
+        }
+    }
+
     @Override
     public void init(CombatEngineAPI engine) {
         initialized = false;
-        ACTIVE_NODES.clear();
+        instance = this;
+        // ACTIVE_NODES is campaign-owned — do not clear per combat.
     }
 
     @Override

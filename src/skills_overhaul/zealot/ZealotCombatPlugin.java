@@ -27,7 +27,7 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     @Override
     public void init(CombatEngineAPI engine) {
         Steelbound.attached.clear();
-        ACTIVE_NODES.clear();
+        // ACTIVE_NODES is campaign-owned — do not clear per combat.
     }
 
     @Override

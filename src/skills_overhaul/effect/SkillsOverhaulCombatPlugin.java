@@ -50,6 +50,9 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
         applied = true;
     }
 
+    private final skills_overhaul.effect.handlers.SOPilotedStatHandler pilotedStat =
+            new skills_overhaul.effect.handlers.SOPilotedStatHandler();
+
     private void applyPilotSkillsTo(ShipAPI ship) {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         MutableShipStatsAPI stats = ship.getMutableStats();
@@ -60,6 +63,7 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (!mem.contains(SkillMemory.purchasedKey(n.getId()))) continue;
                 if (!mem.getBoolean(SkillMemory.purchasedKey(n.getId()))) continue;
                 for (JSONObject fx : n.getEffects()) {
+                    if (!NodeEffectApplier.isEffectActive(n, fx)) continue;
                     if (applyShipStatEffect(stats, n.getId(), fx)) applied++;
                 }
             }
@@ -69,14 +73,20 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     private boolean applyShipStatEffect(MutableShipStatsAPI s, String nodeId, JSONObject fx) {
         String type = fx.optString("type");
-        float amt = (float) fx.optDouble("amount", 0);
+        if (type.equals("SO_piloted_stat")) {
+            // MutableShipStatsAPI is rebuilt per combat, so static passives must
+            // be re-applied here — purchase-time application cannot stick.
+            pilotedStat.applyTo(s, nodeId, fx);
+            return true;
+        }
         if (type.equals("piloted_maneuverability")) {
+            float amt = (float) fx.optDouble("amount", 0);
             s.getMaxTurnRate().modifyMult(nodeId, 1f + amt);
             s.getTurnAcceleration().modifyMult(nodeId, 1f + amt);
             s.getAcceleration().modifyMult(nodeId, 1f + amt);
             return true;
         }
-        // Unhandled types fall through — purchase-time handler already logged STUB.
+        // Other types are handled by their own combat plugins via ACTIVE_NODES.
         return false;
     }
 }

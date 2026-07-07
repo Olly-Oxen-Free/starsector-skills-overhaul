@@ -99,4 +99,20 @@ public final class OrphanSkillGranter {
     }
 
     private OrphanSkillGranter() {}
+
+    // === Admin XP crisis trigger (A4) ===
+    // Spec §5.3(e) — colony crises are internal API; no public ColonyCrisis
+    // event surface. Players or future mod integrations can fire crisis-
+    // resolved events manually via console:
+    //   runcode skills_overhaul.console.OrphanSkillGranter.fireCrisis("luddic_path_cell", marketId);
+    public static void fireCrisis(String crisisType, String marketId) {
+        com.fs.starfarer.api.campaign.econ.MarketAPI m =
+                com.fs.starfarer.api.Global.getSector().getEconomy().getMarket(marketId);
+        if (m == null) {
+            System.out.println("Unknown market id: " + marketId);
+            return;
+        }
+        new skills_overhaul.xp.AdminXPTracker().onCrisisResolved(crisisType, m);
+        System.out.println("Crisis fired: " + crisisType + " on " + marketId);
+    }
 }

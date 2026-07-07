@@ -13,6 +13,7 @@
         "skills_overhaul_collective_combat":"skills_overhaul.collective.CollectiveCombatPlugin",
         "skills_overhaul_pilot_gunnery_combat":"skills_overhaul.pilot.gunnery.GunneryCombatPlugin",
         "skills_overhaul_pilot_maneuvering_combat":"skills_overhaul.pilot.maneuvering.ManeuveringCombatPlugin",
-        "skills_overhaul_pilot_systems_combat":"skills_overhaul.pilot.systems.SystemsCombatPlugin"
+        "skills_overhaul_pilot_systems_combat":"skills_overhaul.pilot.systems.SystemsCombatPlugin",
+        "skills_overhaul_pilot_defense_combat":"skills_overhaul.pilot.defense.DefenseCombatPlugin"
     }
 }

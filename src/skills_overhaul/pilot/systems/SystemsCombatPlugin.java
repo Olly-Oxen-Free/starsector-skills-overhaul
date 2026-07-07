@@ -39,7 +39,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     @Override
     public void init(CombatEngineAPI engine) {
         initialized = false;
-        ACTIVE_NODES.clear();
+        // ACTIVE_NODES is campaign-owned — do not clear per combat.
         prevAliveEnemyIds.clear();
         gameTime = 0f;
     }

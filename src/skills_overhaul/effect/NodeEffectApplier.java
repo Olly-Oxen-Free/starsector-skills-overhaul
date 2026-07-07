@@ -43,6 +43,14 @@ public final class NodeEffectApplier {
         }
     }
 
+    /** Public gating check for combat-time appliers (T0 lane, oath, requiresActiveBasic). */
+    public static boolean isEffectActive(Node n, JSONObject fx) {
+        MemoryAPI mem = mem();
+        boolean isT0 = (n.getY() == 0);
+        boolean t0Active = isT0 && ActiveLaneService.isActive(mem, n.getId());
+        return shouldApply(fx, isT0, t0Active, mem);
+    }
+
     private static boolean shouldApply(JSONObject fx, boolean isT0, boolean t0Active, MemoryAPI mem) {
         // Oath filter — skip effect if it requires an oath that isn't currently active
         String requiredOath = fx.optString("oath", null);
