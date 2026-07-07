@@ -20,10 +20,13 @@ import java.util.List;
  */
 public final class VanillaSuppressor {
     private static final String SUPPRESS_TAG = "$so_suppressed_";
+    /** Set by UninstallHelper.prepareUninstall(); skips suppression on load. */
+    public static final String K_SUPPRESSION_DISABLED = "$so_suppression_disabled";
 
     public static void applyOnEveryLoad() {
         MutableCharacterStatsAPI s = Global.getSector().getPlayerPerson().getStats();
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        if (mem.getBoolean(K_SUPPRESSION_DISABLED)) return;
 
         for (MutableCharacterStatsAPI.SkillLevelAPI sl : s.getSkillsCopy()) {
             String id = sl.getSkill().getId();
@@ -32,7 +35,10 @@ public final class VanillaSuppressor {
             float prev = sl.getLevel();
             if (prev > 0f) {
                 String key = SUPPRESS_TAG + id;
-                if (!mem.contains(key)) {
+                // Re-stash when the observed level rises (level-up auto-grants,
+                // other mods) so a later restore doesn't revert to a stale value.
+                float stored = mem.contains(key) ? mem.getFloat(key) : 0f;
+                if (prev > stored) {
                     mem.set(key, prev);
                 }
                 unapplyAllEffects(s, sl.getSkill());
