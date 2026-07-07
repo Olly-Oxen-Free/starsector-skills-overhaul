@@ -7,17 +7,21 @@ import skills_overhaul.state.Tree;
 import java.util.Map;
 
 /**
- * Supply Buffer: a free supplies pool that scales with commander level and fleet cargo.
- * Fill: from supply income (with +10% bonus); overflow returned to the caller for normal cargo routing.
+ * Scrap buffer: a virtual ability-resource pool (SiC "scrap" replacement),
+ * fed by a fraction of post-battle salvage — never skimmed from fleet cargo.
+ * Cap scales with commander level and fleet cargo capacity.
  * Drain modes:
- *   ABILITY — buffer first, then fleet.
+ *   ABILITY — buffer first, then fleet supplies when the buffer runs dry.
  *   UPKEEP  — fleet only; buffer untouched.
  *
+ * Gated on commander progression (isUnlocked): no commander levels, no pool.
  * Service is pure logic over the memory Map. Listener / renderer integrate it with the game.
  */
 public final class SupplyBufferService {
 
     public static final float INCOME_BONUS_MULTIPLIER = 1.10f;
+    /** Fraction of salvaged supplies mirrored into the buffer as scrap (loot itself untouched). */
+    public static final float SALVAGE_TO_BUFFER_RATIO = 0.25f;
     public static final float BASE_CAP = 20f;
     public static final float CAP_PER_LEVEL = 5f;
     public static final float FLEET_CARGO_RATIO = 0.10f;
@@ -31,6 +35,15 @@ public final class SupplyBufferService {
         public float fromFleet;
         /** Amount the caller still owes if fleet didn't have enough; the caller decides what to do. */
         public float shortfall;
+    }
+
+    /** The pool exists only once the commander tree has progressed. */
+    public static boolean isUnlocked(Map<String,Object> mem) {
+        return SkillMemory.getLevel(mem, Tree.COMMANDER) > 0;
+    }
+
+    public static boolean isUnlocked(MemoryAPI mem) {
+        return SkillMemory.getLevel(mem, Tree.COMMANDER) > 0;
     }
 
     /** cap = BASE_CAP + CAP_PER_LEVEL * commanderLevel + floor(FLEET_CARGO_RATIO * fleetCargoCapacity), multiplied by cap multipliers. */

@@ -5,7 +5,6 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignFleetAPI;
 import com.fs.starfarer.api.campaign.CargoAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
-import skills_overhaul.state.SkillMemory;
 import skills_overhaul.supply.SupplyBufferService;
 
 public final class AlphaStormCampaignTicker implements EveryFrameScript {
@@ -39,18 +38,19 @@ public final class AlphaStormCampaignTicker implements EveryFrameScript {
         if (last == null) {
             mem.set(K_LAST_BILLED_DAY, today);
         } else if (today > last) {
-            int days = today - last;
-            for (int i = 0; i < days; i++) {
-                int dailyCost = AlphaStormState.dailyCost(intensity);
+            // Bill each skipped day at that day's own intensity — a skip that crosses a
+            // MILD→SEVERE boundary must not charge every day at today's (highest) rate.
+            for (int day = last + 1; day <= today; day++) {
+                AlphaStormState.Intensity dayIntensity = AlphaStormState.intensity(mem, day);
+                if (dayIntensity == null) continue;
+                int dailyCost = AlphaStormState.dailyCost(dayIntensity);
                 SupplyBufferService.DrainResult dr = SupplyBufferService.tryConsume(
                         mem, dailyCost, SupplyBufferService.DrainMode.UPKEEP);
                 CampaignFleetAPI fleet = Global.getSector().getPlayerFleet();
                 CargoAPI cargo = fleet.getCargo();
                 float fleetSupplies = cargo.getCommodityQuantity("supplies");
                 if (dr.fromFleet > fleetSupplies) {
-                    // Out of supplies — auto-deactivate
-                    float curBuf = SkillMemory.getSupplyBuffer(mem);
-                    SkillMemory.setSupplyBuffer(mem, curBuf + dr.fromBuffer);
+                    // Out of supplies — auto-deactivate (UPKEEP mode never touches the buffer).
                     AlphaStormState.stop(mem);
                     skills_overhaul.artificer.forge.FreeDeployQuotaTracker.unregisterBonus(
                             AlphaStormAbility.QUOTA_BONUS_KEY);

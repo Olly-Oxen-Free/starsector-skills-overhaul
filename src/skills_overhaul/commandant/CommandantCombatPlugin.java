@@ -23,6 +23,14 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final IronDoctrineState ironDoctrine = new IronDoctrineState();
 
     @Override
+    public void init(CombatEngineAPI engine) {
+        // Iron Doctrine registers these into the static CommandFieldService.PARAMS every
+        // frame and nothing removes them at battle end — clear leftovers at battle start.
+        CommandFieldService.unregisterParam("iron_doctrine_entrench");
+        CommandFieldService.unregisterParam("iron_doctrine_total");
+    }
+
+    @Override
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;

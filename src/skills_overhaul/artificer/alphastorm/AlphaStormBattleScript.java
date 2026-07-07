@@ -31,15 +31,28 @@ public final class AlphaStormBattleScript extends BaseEveryFrameCombatPlugin {
         if (intensity == null) return;
 
         if (firstFrame) {
-            shield = new StormShieldObjective(new Vector2f(0f, 0f));
             firstFrame = false;
+            // The shelter exists only around a player-deployed Alpha Storm Emitter. If no
+            // emitter was deployed this battle (flag set by ForgeBattlePlugin), there is no
+            // shelter and every ship is subject to storm penalties.
+            boolean emitterDeployed = Boolean.TRUE.equals(
+                    Global.getSector().getMemoryWithoutUpdate().get(
+                            skills_overhaul.artificer.forge.ForgeBattlePlugin.SHELTER_ACTIVE_KEY));
+            if (emitterDeployed) {
+                Vector2f anchor = new Vector2f(0f, 0f);
+                ShipAPI flagship = engine.getPlayerShip();
+                if (flagship != null && flagship.getLocation() != null) {
+                    anchor = new Vector2f(flagship.getLocation());
+                }
+                shield = new StormShieldObjective(anchor);
+            }
         }
-        shield.tick(engine);
+        if (shield != null) shield.tick(engine);
 
         // Apply per-ship terrain mods
         for (ShipAPI s : engine.getShips()) {
             if (!s.isAlive()) continue;
-            if (shield.isSheltered(s)) {
+            if (shield != null && shield.isSheltered(s)) {
                 s.getMutableStats().getMaxSpeed().unmodify(STAT_KEY);
                 s.getMutableStats().getBallisticWeaponRangeBonus().unmodify(STAT_KEY);
                 s.getMutableStats().getEnergyWeaponRangeBonus().unmodify(STAT_KEY);

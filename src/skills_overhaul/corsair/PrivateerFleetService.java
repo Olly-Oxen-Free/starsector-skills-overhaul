@@ -3,6 +3,7 @@ package skills_overhaul.corsair;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.CampaignFleetAPI;
 import com.fs.starfarer.api.campaign.FactionAPI;
+import com.fs.starfarer.api.campaign.LocationAPI;
 import com.fs.starfarer.api.campaign.SectorEntityToken;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.impl.campaign.fleets.FleetFactoryV3;
@@ -16,20 +17,50 @@ public final class PrivateerFleetService {
     public static final int    MIN_SCRAP   = 50;
     public static final float  FP_PER_SCRAP = 0.5f;
     public static final float  INCOME_SHARE = 0.30f;
+    /** Credits awarded per fleet point of enemy strength destroyed by the privateer. */
+    public static final float  CREDITS_PER_FP = 200f;
+    /** Hard cap on the privateer's per-battle payout to the player. */
+    public static final float  MAX_BATTLE_PAYOUT = 20000f;
 
     public static float computeFleetFP(int scrap) { return scrap * FP_PER_SCRAP; }
     public static boolean isCommissionAllowed(int scrap) { return scrap >= MIN_SCRAP; }
     public static float computeIncomeShare(float salvageValue) { return salvageValue * INCOME_SHARE; }
 
+    /**
+     * Per-battle payout to the player: the {@link #INCOME_SHARE} cut of the credit
+     * value of the enemy fleet strength (in fleet points) the privateer destroyed,
+     * capped at {@link #MAX_BATTLE_PAYOUT}.
+     */
+    public static float computePrivateerPayout(float destroyedFleetPoints) {
+        if (destroyedFleetPoints <= 0f) return 0f;
+        float raw = destroyedFleetPoints * CREDITS_PER_FP * INCOME_SHARE;
+        return Math.min(raw, MAX_BATTLE_PAYOUT);
+    }
+
     public static boolean isCommissioned(MemoryAPI mem) {
         Object id = mem.get(K_FLEET_ID);
         if (id == null) return false;
-        SectorEntityToken playerLocation = Global.getSector().getPlayerFleet();
-        if (playerLocation == null || playerLocation.getContainingLocation() == null) return false;
-        for (CampaignFleetAPI f : playerLocation.getContainingLocation().getFleets()) {
-            if (id.equals(f.getId())) return f.isAlive();
+        CampaignFleetAPI privateer = findPrivateerFleet((String) id);
+        return privateer != null && privateer.isAlive();
+    }
+
+    /**
+     * Resolves the commissioned privateer fleet by its stored id across the whole
+     * sector, not just the player's current location. Prefer a direct entity
+     * lookup; fall back to scanning every location so a fleet that has drifted
+     * out of the player's system is still found (otherwise the player could
+     * commission a duplicate and orphan the old one).
+     */
+    static CampaignFleetAPI findPrivateerFleet(String id) {
+        if (id == null) return null;
+        SectorEntityToken entity = Global.getSector().getEntityById(id);
+        if (entity instanceof CampaignFleetAPI) return (CampaignFleetAPI) entity;
+        for (LocationAPI loc : Global.getSector().getAllLocations()) {
+            for (CampaignFleetAPI f : loc.getFleets()) {
+                if (id.equals(f.getId())) return f;
+            }
         }
-        return false;
+        return null;
     }
 
     public static CampaignFleetAPI commission(int scrapSpent) {
@@ -76,14 +107,9 @@ public final class PrivateerFleetService {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         Object id = mem.get(K_FLEET_ID);
         if (id != null) {
-            SectorEntityToken playerLocation = Global.getSector().getPlayerFleet();
-            if (playerLocation != null && playerLocation.getContainingLocation() != null) {
-                for (CampaignFleetAPI f : playerLocation.getContainingLocation().getFleets()) {
-                    if (id.equals(f.getId())) {
-                        f.getContainingLocation().removeEntity(f);
-                        break;
-                    }
-                }
+            CampaignFleetAPI privateer = findPrivateerFleet((String) id);
+            if (privateer != null && privateer.getContainingLocation() != null) {
+                privateer.getContainingLocation().removeEntity(privateer);
             }
         }
         mem.unset(K_FLEET_ID);

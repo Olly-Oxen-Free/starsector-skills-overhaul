@@ -161,6 +161,9 @@ public final class FieldCommandsService {
         lastSnapshot.clear();
         activeBuffs.clear();
         retreatUsedThisBattle.clear();
+        // Also drop any field_command:* params we registered into the shared registry;
+        // applyBuffEnd only fires for buffs that expire cleanly, not on battle teardown.
+        CommandFieldService.unregisterParam("field_command");
     }
 
     private FieldCommandsService() {}

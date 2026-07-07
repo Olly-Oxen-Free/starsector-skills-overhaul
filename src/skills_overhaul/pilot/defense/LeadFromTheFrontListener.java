@@ -7,12 +7,17 @@ import com.fs.starfarer.api.util.IntervalUtil;
 import com.fs.starfarer.api.util.Misc;
 import com.fs.starfarer.api.Global;
 
+import java.util.HashSet;
+import java.util.Set;
+
 public final class LeadFromTheFrontListener implements AdvanceableListener {
     private static final float RANGE = 1500f;
     private static final String KEY = "lead_from_front";
 
     private final ShipAPI flagship;
     private final IntervalUtil interval = new IntervalUtil(0.5f, 0.5f);
+    /** Allies currently carrying the buff, so we can strip it when they leave range/die. */
+    private final Set<ShipAPI> buffed = new HashSet<ShipAPI>();
 
     public LeadFromTheFrontListener(ShipAPI flagship) { this.flagship = flagship; }
 
@@ -21,11 +26,14 @@ public final class LeadFromTheFrontListener implements AdvanceableListener {
         interval.advance(dt);
         if (!interval.intervalElapsed()) return;
 
+        Set<ShipAPI> nowBuffed = new HashSet<ShipAPI>();
         int alliesInRange = 0;
         for (ShipAPI s : Global.getCombatEngine().getShips()) {
             if (s == flagship || s.getOwner() != flagship.getOwner()) continue;
+            if (!s.isAlive()) continue;
             if (Misc.getDistance(flagship.getLocation(), s.getLocation()) > RANGE) continue;
             alliesInRange++;
+            nowBuffed.add(s);
             boolean isFighter = s.getHullSize() == ShipAPI.HullSize.FIGHTER;
             float dr  = isFighter ? 0.03f : 0.05f;
             float dmg = isFighter ? 0.02f : 0.03f;
@@ -36,6 +44,19 @@ public final class LeadFromTheFrontListener implements AdvanceableListener {
             stats.getEnergyWeaponDamageMult().modifyMult(KEY, 1f + dmg);
             stats.getMissileWeaponDamageMult().modifyMult(KEY, 1f + dmg);
         }
+
+        // Strip the buff from allies that left range or died since last tick.
+        for (ShipAPI s : buffed) {
+            if (nowBuffed.contains(s)) continue;
+            MutableShipStatsAPI stats = s.getMutableStats();
+            stats.getHullDamageTakenMult().unmodify(KEY);
+            stats.getArmorDamageTakenMult().unmodify(KEY);
+            stats.getBallisticWeaponDamageMult().unmodify(KEY);
+            stats.getEnergyWeaponDamageMult().unmodify(KEY);
+            stats.getMissileWeaponDamageMult().unmodify(KEY);
+        }
+        buffed.clear();
+        buffed.addAll(nowBuffed);
 
         float selfBonus = Math.min(0.10f, alliesInRange * 0.01f);
         MutableShipStatsAPI self = flagship.getMutableStats();

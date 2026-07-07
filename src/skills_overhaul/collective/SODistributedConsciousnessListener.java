@@ -67,7 +67,8 @@ public final class SODistributedConsciousnessListener {
 
     private static float coreBonusPct(ShipAPI ship) {
         if (ship.getCaptain() == null) return 2f;
-        String coreId = ship.getCaptain().getId();
+        String coreId = ship.getCaptain().getAICoreId();
+        if (coreId == null) return 2f;
         if (ALPHA_CORE_ID.equals(coreId)) return 6f;
         if (BETA_CORE_ID.equals(coreId))  return 4f;
         return 2f;

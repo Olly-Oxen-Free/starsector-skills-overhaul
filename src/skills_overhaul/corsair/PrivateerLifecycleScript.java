@@ -5,8 +5,8 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.BaseCampaignEventListener;
 import com.fs.starfarer.api.campaign.BattleAPI;
 import com.fs.starfarer.api.campaign.CampaignFleetAPI;
-import com.fs.starfarer.api.campaign.CargoStackAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
+import com.fs.starfarer.api.fleet.FleetMemberAPI;
 
 public final class PrivateerLifecycleScript extends BaseCampaignEventListener
         implements EveryFrameScript {
@@ -44,17 +44,26 @@ public final class PrivateerLifecycleScript extends BaseCampaignEventListener
         }
         if (!privateerWon) return;
 
-        float loot = 0f;
-        java.util.List<CampaignFleetAPI> losers = battle.getNonPlayerSide();
+        // Pay the player a share of the enemy fleet strength the privateer actually
+        // destroyed on the LOSING side (the side opposite the primary winner), based
+        // on fleet points rather than looted cargo value, and capped per battle.
+        float destroyedFP = 0f;
+        java.util.List<CampaignFleetAPI> losers = battle.getOtherSideSnapshotFor(primaryWinner);
         if (losers != null) {
             for (CampaignFleetAPI loser : losers) {
-                if (loser == null || loser.getCargo() == null) continue;
-                for (CargoStackAPI st : loser.getCargo().getStacksCopy()) {
-                    loot += st.getSize() * st.getBaseValuePerUnit();
+                if (loser == null || loser.getFleetData() == null) continue;
+                java.util.List<FleetMemberAPI> before = loser.getFleetData().getSnapshot();
+                if (before == null) continue;
+                java.util.List<FleetMemberAPI> after = loser.getFleetData().getMembersListCopy();
+                for (FleetMemberAPI m : before) {
+                    if (m == null) continue;
+                    if (after == null || !after.contains(m)) {
+                        destroyedFP += m.getDeploymentPointsCost();
+                    }
                 }
             }
         }
-        float share = PrivateerFleetService.computeIncomeShare(loot);
+        float share = PrivateerFleetService.computePrivateerPayout(destroyedFP);
         if (share > 0f) {
             Global.getSector().getPlayerFleet().getCargo().getCredits().add(share);
         }

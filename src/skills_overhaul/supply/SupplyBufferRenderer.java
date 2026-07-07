@@ -19,7 +19,9 @@ public final class SupplyBufferRenderer implements EveryFrameScript, CampaignUIR
     @Override
     public void advance(float amount) {
         if (!listenerRegistered) {
-            Global.getSector().getListenerManager().addListener(this, true);
+            // Transient (false): this script is re-added on every game load, so a
+            // persistent registration would stack one render listener per load.
+            Global.getSector().getListenerManager().addListener(this, false);
             listenerRegistered = true;
         }
     }
@@ -36,6 +38,7 @@ public final class SupplyBufferRenderer implements EveryFrameScript, CampaignUIR
     public void renderInUICoordsAboveUIAndTooltips(ViewportAPI viewport) {}
 
     private void drawBar(ViewportAPI viewport) {
+        if (!SupplyBufferService.isUnlocked(mem())) return;
         float value = currentValue();
         float cap = currentCap();
         if (cap <= 0f) return;

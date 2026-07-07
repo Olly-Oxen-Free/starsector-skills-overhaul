@@ -16,6 +16,17 @@ public class PrivateerFleetServiceTest {
         assert PrivateerFleetService.computeIncomeShare(1000f) == 300f;
         assert PrivateerFleetService.computeIncomeShare(0f) == 0f;
 
+        // Per-battle payout: 30% of destroyed FP * 200 cr/FP, capped at 20k.
+        // 100 FP -> 100 * 200 * 0.30 = 6000
+        assert PrivateerFleetService.computePrivateerPayout(100f) == 6000f;
+        // No destruction -> no payout
+        assert PrivateerFleetService.computePrivateerPayout(0f) == 0f;
+        assert PrivateerFleetService.computePrivateerPayout(-5f) == 0f;
+        // Cap: 1000 FP would be 60000, clamped to 20000
+        assert PrivateerFleetService.computePrivateerPayout(1000f) == 20000f;
+        // Just below cap boundary: 333 FP -> 19980
+        assert PrivateerFleetService.computePrivateerPayout(333f) == 19980f;
+
         System.out.println("ALL PASSED");
     }
 }

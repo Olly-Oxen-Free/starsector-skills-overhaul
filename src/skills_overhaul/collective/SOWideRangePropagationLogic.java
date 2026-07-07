@@ -27,8 +27,10 @@ public final class SOWideRangePropagationLogic {
             if (source == null) continue;
             if (!isAICored(source)) continue;
 
-            if (!tracker.markIfNew(ship.getId())) continue;
-
+            // Re-apply every frame. modifyPercent keyed by the fixed SRC id is
+            // idempotent, so this is a no-op for already-buffed fighters while
+            // respawned fighters (which reuse slot ids) still get re-buffed —
+            // the old permanent seen-set gate starved them.
             MutableShipStatsAPI stats = ship.getMutableStats();
             stats.getMaxSpeed().modifyPercent(SRC, 10f);
             stats.getBallisticWeaponDamageMult().modifyPercent(SRC, 5f);
