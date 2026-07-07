@@ -3,7 +3,8 @@ package skills_overhaul.commandant;
 public final class IronDoctrineState {
 
     public static final float TOTAL_CONTROL_THRESHOLD = 10f;
-    public static final float MARCHING_GRACE_DAYS = 10f;
+    /** Combat seconds that Marching Advance persists after the fleet loses objective majority. */
+    public static final float MARCHING_GRACE_SECONDS = 10f;
 
     private float consecutiveAllHeldSeconds = 0f;
     private float marchingGraceRemaining = 0f;
@@ -31,7 +32,7 @@ public final class IronDoctrineState {
 
     public void tickMarchingGrace(float dt, boolean majorityHeld) {
         if (majorityHeld) {
-            marchingGraceRemaining = MARCHING_GRACE_DAYS;
+            marchingGraceRemaining = MARCHING_GRACE_SECONDS;
         } else {
             marchingGraceRemaining = Math.max(0f, marchingGraceRemaining - dt);
         }

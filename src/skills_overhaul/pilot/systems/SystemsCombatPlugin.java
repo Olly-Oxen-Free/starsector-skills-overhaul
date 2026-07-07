@@ -36,6 +36,10 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     private boolean shieldWasRaised = false;
     private float shieldLoweredTimer = 0f;
 
+    // Precision Strike (T4): armor-penetration DamageDealtModifier is attached
+    // once per battle to the flagship while the node is active.
+    private boolean precisionStrikeAttached = false;
+
     // Secondary system (Experimental Overrides capstone)
     private SecondarySystemHullmod activeSecondary = null;
     private static final int SECONDARY_KEY = Keyboard.KEY_R;
@@ -263,6 +267,19 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         } else {
             flagship.getMutableStats().getFighterRefitTimeMult().unmodify("so_carrier_command");
         }
+
+        // Precision Strike (spec line 196): range-scaled armor penetration on
+        // energy weapons. Implemented as a DamageDealtModifier (see
+        // PrecisionStrikeListener) attached once per battle to the flagship.
+        if (ACTIVE_NODES.contains("so_systems_precision_strike") && !precisionStrikeAttached) {
+            flagship.addListener(new PrecisionStrikeListener(flagship));
+            precisionStrikeAttached = true;
+        }
+
+        // Phase Resonance merge (spec line 202): intentional no-op stub in v1.
+        // The node registers "so_systems_phase_resonance_merge" and displays a
+        // "Coming Soon" tooltip; no combat effect is defined by the spec, so
+        // there is deliberately nothing to apply here.
     }
 
     private void applyVoidStrikeMods() {
@@ -360,6 +377,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         targetPainter  = new TargetPainterState();
         wasPhased      = flagship.isPhased();
         shieldWasRaised = flagship.getShield() != null && flagship.getShield().isOn();
+        precisionStrikeAttached = false;
 
         activeSecondary = detectSecondaryHullmod(flagship);
 

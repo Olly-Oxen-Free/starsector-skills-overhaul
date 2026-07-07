@@ -261,6 +261,10 @@
       ],
       "effects": [
         {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "pulsar_array"
+        },
+        {
           "type": "SO_artificer_combat_script",
           "node": "artificer_t3_beam_spec"
         }
@@ -436,6 +440,10 @@
         }
       ],
       "effects": [
+        {
+          "type": "SO_forge_recipe_unlock",
+          "recipeId": "magnetic_field_emitter"
+        },
         {
           "type": "SO_tech_cascade_stub"
         }

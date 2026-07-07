@@ -2,6 +2,7 @@ package skills_overhaul.zealot;
 
 import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.Global;
+import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 
 import java.util.AbstractMap;
@@ -10,6 +11,8 @@ import java.util.Map;
 import java.util.Set;
 
 public final class ZealDailyTicker implements EveryFrameScript {
+
+    private int lastRivalCheckDay = -1;
 
     @Override public boolean isDone() { return false; }
     @Override public boolean runWhilePaused() { return false; }
@@ -20,6 +23,27 @@ public final class ZealDailyTicker implements EveryFrameScript {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         Map<String, Object> wrapper = new MemoryWrapMap(mem);
         ZealService.advanceDay(wrapper, today, 0f);
+
+        // Once per day: end an active Crusade whose Rival faction has been wiped off the map.
+        if (today != lastRivalCheckDay) {
+            lastRivalCheckDay = today;
+            if (CrusadeService.isActive(wrapper)) {
+                String rivalId = CrusadeService.getCrusadeRival(wrapper);
+                if (rivalId != null && !factionHasMarkets(rivalId)) {
+                    CrusadeService.rivalDestroyed(wrapper);
+                    ZealService.unregisterCapBonus(wrapper, "crusade");
+                }
+            }
+        }
+    }
+
+    private static boolean factionHasMarkets(String factionId) {
+        for (MarketAPI market : Global.getSector().getEconomy().getMarketsCopy()) {
+            if (market.getFaction() != null && factionId.equals(market.getFaction().getId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static int monotonicDay() {

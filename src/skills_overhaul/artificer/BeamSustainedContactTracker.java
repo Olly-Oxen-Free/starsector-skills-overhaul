@@ -1,7 +1,10 @@
 package skills_overhaul.artificer;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 public final class BeamSustainedContactTracker {
 
@@ -37,6 +40,13 @@ public final class BeamSustainedContactTracker {
 
     public float getDebuffMult(Object target) {
         return hasDebuff(target) ? DISSIPATION_DEBUFF_MULT : 1f;
+    }
+
+    /** Snapshot of targets currently tracked for the given attacker (used to reconcile lost contact). */
+    public Set<Object> getTargets(Object attacker) {
+        Map<Object, Float> perAttacker = CONTACT.get(attacker);
+        if (perAttacker == null) return Collections.emptySet();
+        return new HashSet<Object>(perAttacker.keySet());
     }
 
     public void clear() { CONTACT.clear(); }

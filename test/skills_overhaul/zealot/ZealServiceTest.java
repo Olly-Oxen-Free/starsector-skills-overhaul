@@ -19,6 +19,14 @@ public class ZealServiceTest {
         ZealService.addStacks(mem, 25, 0);
         assert ZealService.getStacks(mem) == 120 : "raised cap allows more";
 
+        // Crusade cap bonus stacks with other registered bonuses, and unregister removes it.
+        ZealService.registerCapBonus(mem, "crusade", 50);
+        assert ZealService.getCap(mem) == 170 : "cap bonuses sum (base + avenge + crusade)";
+        ZealService.unregisterCapBonus(mem, "crusade");
+        assert ZealService.getCap(mem) == 120 : "unregister removes crusade bonus";
+        ZealService.unregisterCapBonus(mem, "avenge");
+        assert ZealService.getCap(mem) == ZealService.BASE_CAP : "unregister all → base cap";
+
         // Pause condition: gained-in-last-24h
         Map<String,Object> mem2 = new HashMap<>();
         ZealService.addStacks(mem2, 50, 0);

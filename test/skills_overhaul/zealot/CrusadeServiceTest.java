@@ -25,6 +25,16 @@ public class CrusadeServiceTest {
         long oneYearLater = sixMonthsLater + 180L * 86400L * 1000L;
         assert CrusadeService.canDeclare(mem, oneYearLater);
 
+        // rivalDestroyed ends the crusade naturally: no cooldown, rival cleared.
+        Map<String,Object> mem2 = new HashMap<>();
+        CrusadeService.declare(mem2, "hegemony", now);
+        assert CrusadeService.isActive(mem2);
+        CrusadeService.rivalDestroyed(mem2);
+        assert !CrusadeService.isActive(mem2);
+        assert CrusadeService.getCrusadeRival(mem2) == null;
+        assert CrusadeService.canDeclare(mem2, now) : "no cooldown after natural end";
+        assert CrusadeService.CAP_BONUS == 50 : "crusade Zeal-cap bonus is +50";
+
         System.out.println("ALL PASSED");
     }
 }

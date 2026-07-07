@@ -13,7 +13,9 @@ import java.util.List;
 
 /**
  * Magnetic Field Emitter — spawns a 1500u magnetic-field zone at map center.
- * Per-frame: ships within zone — missile accuracy x0.50, beam damage x0.85, energy damage x0.90.
+ * Per-frame, ships within the zone have their missiles' guidance/tracking scrambled
+ * (missile guidance x0.50 — i.e. missile accuracy halved), beam damage x0.85, and
+ * energy damage x0.90.
  * Penalty: zone affects player ships too (no friend-foe filter).
  *
  * TODO: adapt MCTE magnetic-field pattern for full visual terrain effect.
@@ -35,7 +37,7 @@ public final class MagneticFieldEmitterDevice implements ForgeDeviceEffect {
                 if (remaining <= 0f) {
                     for (ShipAPI s : engine.getShips()) {
                         try {
-                            s.getMutableStats().getMissileWeaponRangeBonus().unmodify(KEY);
+                            s.getMutableStats().getMissileGuidance().unmodify(KEY);
                             s.getMutableStats().getBeamWeaponDamageMult().unmodify(KEY);
                             s.getMutableStats().getEnergyWeaponDamageMult().unmodify(KEY);
                         } catch (Throwable t) {}
@@ -48,11 +50,11 @@ public final class MagneticFieldEmitterDevice implements ForgeDeviceEffect {
                     boolean inZone = Misc.getDistance(center, s.getLocation()) <= ZONE_RADIUS;
                     try {
                         if (inZone) {
-                            s.getMutableStats().getMissileWeaponRangeBonus().modifyMult(KEY, 0.50f);
+                            s.getMutableStats().getMissileGuidance().modifyMult(KEY, 0.50f);
                             s.getMutableStats().getBeamWeaponDamageMult().modifyMult(KEY, 0.85f);
                             s.getMutableStats().getEnergyWeaponDamageMult().modifyMult(KEY, 0.90f);
                         } else {
-                            s.getMutableStats().getMissileWeaponRangeBonus().unmodify(KEY);
+                            s.getMutableStats().getMissileGuidance().unmodify(KEY);
                             s.getMutableStats().getBeamWeaponDamageMult().unmodify(KEY);
                             s.getMutableStats().getEnergyWeaponDamageMult().unmodify(KEY);
                         }
