@@ -2,10 +2,6 @@ package skills_overhaul.state;
 
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
-import org.json.JSONException;
-import org.json.JSONObject;
-import skills_overhaul.effect.EffectHandler;
-import skills_overhaul.effect.EffectRegistry;
 import skills_overhaul.tree.Node;
 import skills_overhaul.tree.TreeDef;
 import skills_overhaul.tree.TreeRegistry;
@@ -31,6 +27,11 @@ import java.util.List;
 public final class NodeApplyService {
 
     public static void reapplyAllOwned() {
+        // Statics survive across save loads in the same JVM. Without this
+        // reset, loading save B after save A carries A's active nodes,
+        // recipe unlocks, cap multipliers and command-field params into B.
+        resetTransientStatics();
+
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         int count = 0;
         for (Tree tab : Tree.values()) {
@@ -41,24 +42,39 @@ public final class NodeApplyService {
             for (TreeDef def : trees) {
                 for (Node node : def.getNodes()) {
                     if (!Boolean.TRUE.equals(mem.get(SkillMemory.purchasedKey(node.getId())))) continue;
-                    for (JSONObject effect : node.getEffects()) {
-                        String type;
-                        try { type = effect.getString("type"); }
-                        catch (JSONException e) { continue; }
-                        EffectHandler h = EffectRegistry.get(type);
-                        if (h == null) continue;
-                        try { h.apply(node.getId(), effect); count++; }
-                        catch (RuntimeException ex) {
-                            Global.getLogger(NodeApplyService.class).warn(
-                                    "reapply failed for node=" + node.getId()
-                                            + " type=" + type + ": " + ex);
-                        }
+                    // Route through NodeEffectApplier so T0-lane/oath gating
+                    // is honored — applying every effect unconditionally would
+                    // grant inactive-lane and off-oath bonuses on load.
+                    try {
+                        skills_overhaul.effect.NodeEffectApplier.apply(node);
+                        count++;
+                    } catch (RuntimeException ex) {
+                        Global.getLogger(NodeApplyService.class).warn(
+                                "reapply failed for node=" + node.getId() + ": " + ex);
                     }
                 }
             }
         }
         Global.getLogger(NodeApplyService.class).info(
-                "[skills_overhaul] re-applied " + count + " owned-node effects on load");
+                "[skills_overhaul] re-applied " + count + " owned nodes on load");
+    }
+
+    /** Clear every JVM-static registry that purchase-time handlers populate. */
+    private static void resetTransientStatics() {
+        skills_overhaul.pilot.gunnery.GunneryCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.pilot.maneuvering.ManeuveringCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.pilot.systems.SystemsCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.pilot.defense.DefenseCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.zealot.ZealotCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.commandant.CommandantCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.effect.handlers.corsair.CorsairCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.artificer.ArtificerCombatPlugin.ACTIVE_NODES.clear();
+        skills_overhaul.collective.CollectiveActiveNodes.ACTIVE.clear();
+        skills_overhaul.commandant.CommandFieldService.clearAllParams();
+        skills_overhaul.supply.SupplyBufferService.clearCapMultipliers();
+        skills_overhaul.artificer.forge.ForgeRecipeRegistry.resetUnlocks();
+        skills_overhaul.artificer.forge.FreeDeployQuotaTracker.reset();
+        skills_overhaul.artificer.AutomatedShipPointService.reset();
     }
 
     private NodeApplyService() {}

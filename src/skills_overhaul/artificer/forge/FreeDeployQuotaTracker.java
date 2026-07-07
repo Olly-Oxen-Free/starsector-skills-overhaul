@@ -16,7 +16,10 @@ public final class FreeDeployQuotaTracker {
     public static void registerBonus(String key, int bonus) { BONUSES.put(key, bonus); }
     public static void unregisterBonus(String key) { BONUSES.remove(key); }
 
-    public static void clearForTest() { BONUSES.clear(); }
+    /** Load-time reset — statics survive across save loads in the same JVM. */
+    public static void reset() { BONUSES.clear(); }
+
+    public static void clearForTest() { reset(); }
 
     private FreeDeployQuotaTracker() {}
 }

@@ -35,6 +35,11 @@ public final class CommandFieldService {
         }
     }
 
+    /** Load-time reset — statics survive across save loads in the same JVM. */
+    public static void clearAllParams() {
+        PARAMS.clear();
+    }
+
     public static float sumParam(String param) {
         float total = 0f;
         for (Map.Entry<String, Float> e : PARAMS.entrySet()) {

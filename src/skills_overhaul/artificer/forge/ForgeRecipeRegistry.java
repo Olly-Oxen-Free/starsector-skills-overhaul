@@ -36,6 +36,11 @@ public final class ForgeRecipeRegistry {
         UNLOCKED.clear();
     }
 
+    /** Load-time reset: unlocks are per-save; recipe definitions (ALL) are not. */
+    public static void resetUnlocks() {
+        UNLOCKED.clear();
+    }
+
     /** Register all 19 spec'd recipes. Called once at mod load. */
     public static void registerAll() {
         register(new ForgeDeviceRecipe("drone_wakes", "Drone Wakes", ForgeDeviceType.BATTLE,

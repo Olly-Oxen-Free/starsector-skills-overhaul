@@ -86,6 +86,11 @@ public final class SupplyBufferService {
         CAP_MULTIPLIERS.remove(key);
     }
 
+    /** Load-time reset — statics survive across save loads in the same JVM. */
+    public static void clearCapMultipliers() {
+        CAP_MULTIPLIERS.clear();
+    }
+
     private static float capMultiplierProduct() {
         float p = 1f;
         for (Float m : CAP_MULTIPLIERS.values()) p *= m;
