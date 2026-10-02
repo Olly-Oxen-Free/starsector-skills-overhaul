@@ -32,6 +32,8 @@ public final class AutomatedShipCapApplier {
 
     /** Captain memory key the vanilla point-summing logic multiplies per member. */
     static final String AUTO_POINTS_MULT_KEY = "$autoPointsMult";
+    /** Pre-existing (vanilla) $autoPointsMult stashed before we scale it; 0 = was absent. */
+    static final String AUTO_POINTS_MULT_BASE_KEY = "$so_autoPointsMultBase";
 
     /**
      * Effective per-ship contribution multiplier that makes the fixed vanilla
@@ -62,10 +64,23 @@ public final class AutomatedShipCapApplier {
             if (captain == null) continue;
             MemoryAPI mem = captain.getMemoryWithoutUpdate();
             if (mem == null) continue;
+            // AI-core captains already carry a vanilla $autoPointsMult (gamma 2, beta 3,
+            // alpha 4 — AICoreOfficerPluginImpl). Stash it once and scale it, never
+            // overwrite it, and restore it on removal.
             if (active) {
-                mem.set(AUTO_POINTS_MULT_KEY, mult);
-            } else {
-                mem.unset(AUTO_POINTS_MULT_KEY);
+                float base;
+                if (mem.contains(AUTO_POINTS_MULT_BASE_KEY)) {
+                    base = mem.getFloat(AUTO_POINTS_MULT_BASE_KEY);
+                } else {
+                    base = mem.contains(AUTO_POINTS_MULT_KEY) ? mem.getFloat(AUTO_POINTS_MULT_KEY) : 0f;
+                    mem.set(AUTO_POINTS_MULT_BASE_KEY, base);
+                }
+                mem.set(AUTO_POINTS_MULT_KEY, (base == 0f ? 1f : base) * mult);
+            } else if (mem.contains(AUTO_POINTS_MULT_BASE_KEY)) {
+                float base = mem.getFloat(AUTO_POINTS_MULT_BASE_KEY);
+                if (base == 0f) mem.unset(AUTO_POINTS_MULT_KEY);
+                else mem.set(AUTO_POINTS_MULT_KEY, base);
+                mem.unset(AUTO_POINTS_MULT_BASE_KEY);
             }
         }
     }

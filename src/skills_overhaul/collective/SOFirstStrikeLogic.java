@@ -76,6 +76,8 @@ public final class SOFirstStrikeLogic {
     }
 
     private static boolean isAutomated(ShipAPI ship) {
-        return isAICored(ship) || ship.getCaptain() == null || ship.isDrone();
+        // Coreless automated hulls have a default (non-null) captain — check the hull itself.
+        return isAICored(ship) || ship.getCaptain() == null || ship.isDrone()
+                || com.fs.starfarer.api.util.Misc.isAutomated(ship);
     }
 }

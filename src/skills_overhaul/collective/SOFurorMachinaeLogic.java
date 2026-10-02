@@ -19,9 +19,12 @@ public final class SOFurorMachinaeLogic implements DamageDealtModifier {
     public String modifyDamageDealt(Object param, CombatEntityAPI target, DamageAPI damage,
                                     Vector2f point, boolean shieldHit) {
         if (!CollectiveActiveNodes.isActive("so_collective_furor_machinae")) return null;
-        if (!(param instanceof WeaponAPI)) return null;
-
-        WeaponAPI weapon = (WeaponAPI) param;
+        // param is the damaging object (projectile/beam/arc), never a WeaponAPI — see the
+        // DamageDealtModifier javadoc. Missiles are projectiles too, so exclude them first.
+        if (param instanceof com.fs.starfarer.api.combat.MissileAPI) return null;
+        if (!(param instanceof com.fs.starfarer.api.combat.DamagingProjectileAPI)) return null;
+        WeaponAPI weapon = ((com.fs.starfarer.api.combat.DamagingProjectileAPI) param).getWeapon();
+        if (weapon == null) return null;
         ShipAPI source = weapon.getShip();
         if (source == null || !isAICored(source)) return null;
 

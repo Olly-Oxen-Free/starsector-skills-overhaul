@@ -11,6 +11,9 @@ public final class VoltaicArcEmitter {
     private static final float ARC_RANGE       = 400f;  // [TUNE]
     private static final float ARC_EMP_PER_SEC = 25f;   // [TUNE]
     private static final float ARC_ENERGY_FRAC = 0.2f;
+    // Explicit arc colours/thickness: null colours and 0 thickness gave an invisible (or unsafe) arc.
+    private static final java.awt.Color ARC_FRINGE = new java.awt.Color(120, 180, 255);
+    private static final java.awt.Color ARC_CORE   = java.awt.Color.WHITE;
 
     /**
      * Emits PD-priority EMP arcs from source to nearest enemy within range.
@@ -49,14 +52,14 @@ public final class VoltaicArcEmitter {
         float energyDmg = empDmg * ARC_ENERGY_FRAC;
         engine.spawnEmpArc(source, source.getLocation(), source, arcTarget,
                 DamageType.ENERGY, energyDmg, empDmg,
-                ARC_RANGE, null, 0f, null, null);
+                ARC_RANGE, null, 5f, ARC_FRINGE, ARC_CORE);
     }
 
     /** Single chain arc for Voltaic Chain (T4). */
     public static void emitChainArc(CombatEngineAPI engine, ShipAPI source,
                                     CombatEntityAPI target, float empDmg, float energyDmg) {
         engine.spawnEmpArcPierceShields(source, source.getLocation(), source, target,
-                DamageType.ENERGY, energyDmg, empDmg, 600f, null, 0f, null, null);
+                DamageType.ENERGY, energyDmg, empDmg, 600f, null, 10f, ARC_FRINGE, ARC_CORE);
     }
 
     private VoltaicArcEmitter() {}

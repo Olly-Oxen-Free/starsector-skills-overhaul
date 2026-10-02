@@ -20,9 +20,12 @@ public final class SOVoltaicChainLogic implements DamageDealtModifier {
     public String modifyDamageDealt(Object param, CombatEntityAPI target, DamageAPI damage,
                                     Vector2f point, boolean shieldHit) {
         if (!CollectiveActiveNodes.isActive("so_collective_voltaic_chain")) return null;
-        if (!(param instanceof WeaponAPI)) return null;
-
-        WeaponAPI weapon = (WeaponAPI) param;
+        // param is the damaging object (projectile/beam/arc), never a WeaponAPI — see the
+        // DamageDealtModifier javadoc. Missiles are projectiles too, so exclude them first.
+        if (param instanceof com.fs.starfarer.api.combat.MissileAPI) return null;
+        if (!(param instanceof com.fs.starfarer.api.combat.DamagingProjectileAPI)) return null;
+        WeaponAPI weapon = ((com.fs.starfarer.api.combat.DamagingProjectileAPI) param).getWeapon();
+        if (weapon == null) return null;
         if (weapon.isBeam()) return null;
         if (weapon.getType() == WeaponAPI.WeaponType.MISSILE) return null;
 

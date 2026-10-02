@@ -28,6 +28,9 @@ public final class ForgeBattlePlugin extends BaseEveryFrameCombatPlugin {
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
+        // Missions/title-screen battles have no campaign state; the refit simulator must not
+        // consume (and fire) the devices queued for the real engagement.
+        if (!engine.isInCampaign() || engine.isSimulation()) return;
         if (!firstFrame) return;
         firstFrame = false;
 

@@ -12,10 +12,12 @@ import java.util.Random;
 public final class ForgeDeviceItemPlugin implements SpecialItemPlugin {
 
     private String id;
+    private com.fs.starfarer.api.campaign.SpecialItemSpecAPI spec;
 
     @Override
     public void setId(String id) {
         this.id = id;
+        this.spec = com.fs.starfarer.api.Global.getSettings().getSpecialItemSpec(id);
     }
 
     @Override
@@ -106,6 +108,6 @@ public final class ForgeDeviceItemPlugin implements SpecialItemPlugin {
 
     @Override
     public com.fs.starfarer.api.campaign.SpecialItemSpecAPI getSpec() {
-        return null;
+        return spec;
     }
 }

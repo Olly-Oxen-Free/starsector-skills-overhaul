@@ -21,6 +21,7 @@ public final class AlphaStormBattleScript extends BaseEveryFrameCombatPlugin {
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
+        if (!engine.isInCampaign() || engine.isSimulation()) return;
 
         // Only run if Alpha Storm campaign ability is active
         if (!AlphaStormState.isActive(Global.getSector().getMemoryWithoutUpdate())) return;
