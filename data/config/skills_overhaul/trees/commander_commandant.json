@@ -35,7 +35,7 @@
     },
     { "id": "commandant_t1_standing_orders", "name": "Standing Orders",
       "x": 4, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
-      "effects": [ { "type": "SO_combat_script", "node": "commandant_t1_standing_orders" } ]
+      "effects": [ { "type": "SO_standing_orders" } ]
     },
 
     { "id": "commandant_t2_authority", "name": "Authority",

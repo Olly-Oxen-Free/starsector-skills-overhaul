@@ -36,8 +36,13 @@ public final class PostBattleRestoreListener extends BaseCampaignEventListener {
             CampaignFleetAPI loser = result.getLoserResult() == null ? null : result.getLoserResult().getFleet();
             if (rival != null && loser != null && loser.getFaction() != null
                     && rival.equals(loser.getFaction().getId())) {
-                hullRestore += 0.05f;
-                crRestore   += 0.05f;
+                // Crusade capstone: +15% hull restored after combat vs Rival (spec 6.2).
+                hullRestore += 0.15f;
+                // Mobile Arsenal during Crusade vs Rival: additional +5% CR/hull (spec, Mobile Arsenal).
+                if (Boolean.TRUE.equals(mem.get(SOMobileArsenalHandler.K_PURCHASED))) {
+                    hullRestore += 0.05f;
+                    crRestore   += 0.05f;
+                }
             }
         }
 

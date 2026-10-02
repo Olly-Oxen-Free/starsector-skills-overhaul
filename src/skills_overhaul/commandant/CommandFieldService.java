@@ -22,6 +22,8 @@ public final class CommandFieldService {
     public static final float DEFAULT_AI_CORE_FACTOR = 0.75f;
 
     private static final Map<String, Float> PARAMS = new LinkedHashMap<>();
+    /** Param name prefix for a range bump on one source ship's aura: "rangeBumpShip:<fleetMemberId>". */
+    public static final String SHIP_RANGE_BUMP_PREFIX = "rangeBumpShip:";
 
     public static void registerParam(String key, String param, float value) {
         PARAMS.put(key + ":" + param, value);
@@ -64,6 +66,16 @@ public final class CommandFieldService {
             if (e.getKey().endsWith(":rangeBumpMultByClass:" + className)) classMult *= e.getValue();
         }
         return range * classMult;
+    }
+
+    /** Extra aura range projected by one source ship (Field Commands order executors). */
+    public static float shipRangeBump(String fleetMemberId) {
+        float total = 0f;
+        String suffix = ":" + SHIP_RANGE_BUMP_PREFIX + fleetMemberId;
+        for (Map.Entry<String, Float> e : PARAMS.entrySet()) {
+            if (e.getKey().endsWith(suffix)) total += e.getValue();
+        }
+        return total;
     }
 
     private static String hullSizeName(int ordinal) {
@@ -113,7 +125,7 @@ public final class CommandFieldService {
             int lvl = captain.getStats().getLevel();
             if (lvl < 1) continue;
             float dist = Misc.getDistance(ship.getLocation(), o.getLocation());
-            if (dist > effRange) continue;
+            if (dist > effRange + shipRangeBump(fm.getId())) continue;
             levels.add(lvl);
             aiCores.add(captain.isAICore());
         }

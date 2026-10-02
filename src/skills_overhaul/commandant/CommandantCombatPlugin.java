@@ -70,7 +70,6 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int playerHeld,
                                      boolean marching, boolean totalControl) {
         if (ACTIVE_NODES.contains("commandant_t1_officer_training")) OfficerTraining.apply(s);
-        if (ACTIVE_NODES.contains("commandant_t1_standing_orders")) StandingOrders.apply(s);
         if (ACTIVE_NODES.contains("commandant_t2_authority")) Authority.apply(s, playerHeld);
         if (ACTIVE_NODES.contains("commandant_t2_cohesion")) TacticalCohesion.apply(s, engine);
         if (ACTIVE_NODES.contains("commandant_t2_reserve")) ReserveCommitment.apply(s, combatTime);
@@ -105,13 +104,6 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
             if (s.getCaptain() == null || s.getCaptain().isDefault()) return;
             s.getMutableStats().getPeakCRDuration().modifyMult("commandant_t1_officer_training", 1.20f);
             s.getMutableStats().getMaxTurnRate().modifyMult("commandant_t1_officer_training", 1.10f);
-        }
-    }
-
-    static final class StandingOrders {
-        static void apply(ShipAPI s) {
-            float per = (s.getCaptain() != null && !s.getCaptain().isDefault()) ? 4.5f : 3f;
-            s.getMutableStats().getCRPerDeploymentPercent().modifyFlat("commandant_t1_standing_orders", per);
         }
     }
 

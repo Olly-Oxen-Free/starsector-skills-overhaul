@@ -45,10 +45,42 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         int zealStacks = ZealService.getStacks(Global.getSector().getMemoryWithoutUpdate());
         Oath currentOath = OathService.getCurrentOath(Global.getSector().getMemoryWithoutUpdate());
 
+        boolean crusadeVsRival = isCrusadeVsRival(engine);
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0) continue;
             applyPerShipEffects(s, engine, zealStacks, currentOath);
+            CrusadeRivalDR.apply(s, crusadeVsRival);
             if (ACTIVE_NODES.contains("zealot_t4_death_cheat")) deathCheat.tick(s, zealStacks);
+        }
+    }
+
+    /**
+     * Crusade is active and this battle's opposing fleet belongs to the Crusade Rival.
+     * Battle-level check: allied fleets joining the Rival's side share the bonus.
+     */
+    static boolean isCrusadeVsRival(CombatEngineAPI engine) {
+        com.fs.starfarer.api.campaign.rules.MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        if (!CrusadeService.isActive(mem)) return false;
+        String rival = CrusadeService.getCrusadeRival(mem);
+        if (rival == null || engine.getContext() == null) return false;
+        com.fs.starfarer.api.campaign.CampaignFleetAPI other = engine.getContext().getOtherFleet();
+        return other != null && other.getFaction() != null && rival.equals(other.getFaction().getId());
+    }
+
+    /** Crusade capstone: −10% damage taken from Rival ships (multiplicative, spec 6.2). */
+    static final class CrusadeRivalDR {
+        static final String ID = "zealot_crusade_rival_dr";
+        static void apply(ShipAPI s, boolean active) {
+            com.fs.starfarer.api.combat.MutableShipStatsAPI st = s.getMutableStats();
+            if (active) {
+                st.getHullDamageTakenMult().modifyMult(ID, 0.90f);
+                st.getArmorDamageTakenMult().modifyMult(ID, 0.90f);
+                st.getShieldDamageTakenMult().modifyMult(ID, 0.90f);
+            } else {
+                st.getHullDamageTakenMult().unmodify(ID);
+                st.getArmorDamageTakenMult().unmodify(ID);
+                st.getShieldDamageTakenMult().unmodify(ID);
+            }
         }
     }
 
