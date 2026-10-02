@@ -15,8 +15,11 @@ public final class CorsairT0Handler implements EffectHandler {
         String channel = params.optString("channel", "base");
         if ("base".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().set(K_PURCHASED, true);
-            Global.getSector().getPlayerFleet().getStats().getDetectedRangeMod()
-                    .modifyMult(nodeId + ":base", 0.90f);
+            // Null-guarded like the other fleet handlers (no player fleet yet on early load).
+            if (Global.getSector().getPlayerFleet() != null) {
+                Global.getSector().getPlayerFleet().getStats().getDetectedRangeMod()
+                        .modifyMult(nodeId + ":base", 0.90f);
+            }
             Global.getSector().getMemoryWithoutUpdate().set(K_BM_DISCOUNT, 0.05f);
         } else if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().set(K_CORE_ACTIVE, true);
@@ -28,7 +31,9 @@ public final class CorsairT0Handler implements EffectHandler {
         String channel = params.optString("channel", "base");
         if ("base".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().unset(K_PURCHASED);
-            Global.getSector().getPlayerFleet().getStats().getDetectedRangeMod().unmodify(nodeId + ":base");
+            if (Global.getSector().getPlayerFleet() != null) {
+                Global.getSector().getPlayerFleet().getStats().getDetectedRangeMod().unmodify(nodeId + ":base");
+            }
             Global.getSector().getMemoryWithoutUpdate().unset(K_BM_DISCOUNT);
         } else if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().unset(K_CORE_ACTIVE);

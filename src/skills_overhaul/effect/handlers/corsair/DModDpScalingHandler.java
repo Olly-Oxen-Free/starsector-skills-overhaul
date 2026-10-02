@@ -46,10 +46,7 @@ public final class DModDpScalingHandler implements EffectHandler {
     }
 
     private int countDMods(FleetMemberAPI m) {
-        int c = 0;
-        for (String h : m.getVariant().getHullMods()) {
-            if (h.endsWith("_dmod") || h.contains("_d_") || h.contains("_d ")) c++;
-        }
-        return c;
+        // Vanilla "dmod" hullmod tag; the old id heuristic matched no vanilla d-mod id.
+        return com.fs.starfarer.api.impl.campaign.DModManager.getNumDMods(m.getVariant());
     }
 }

@@ -23,6 +23,9 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
     public static final Set<String> ACTIVE_NODES = new LinkedHashSet<>();
 
     private float combatTime = 0f;
+    /** Ships carrying the Trapped Prey debuff last frame / this frame. */
+    private final Set<ShipAPI> trappedPrey = new HashSet<>();
+    private final Set<ShipAPI> trappedPreyNow = new HashSet<>();
 
     @Override
     public void init(CombatEngineAPI engine) {
@@ -34,11 +37,20 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
+        // ACTIVE_NODES is campaign state; keep it out of title-screen/mission battles.
+        if (!engine.isInCampaign() && !engine.isInCampaignSim()) return;
         combatTime += amount;
+        trappedPreyNow.clear();
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0) continue;
             applyPerShipEffects(s, engine);
         }
+        // Strip Trapped Prey from ships no longer targeted, or the debuff sticks.
+        for (ShipAPI prey : trappedPrey) {
+            if (!trappedPreyNow.contains(prey)) TrappedPrey.remove(prey);
+        }
+        trappedPrey.clear();
+        trappedPrey.addAll(trappedPreyNow);
         // Blood-in-the-Water tick is global, not per-ship.
         if (ACTIVE_NODES.contains("corsair_t4_blood_in_water")) {
             BloodInTheWater.tickGlobal(engine);
@@ -49,9 +61,13 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("corsair_t1_scrappy"))       ScrappyMaintenance.apply(s);
         if (ACTIVE_NODES.contains("corsair_t1_all_out"))       AllOut.apply(s);
         if (ACTIVE_NODES.contains("corsair_t2_wolfpack"))      Wolfpack.apply(s);
-        if (ACTIVE_NODES.contains("corsair_t2_jumpstart") && combatTime <= 30f) Jumpstart.apply(s);
+        if (ACTIVE_NODES.contains("corsair_t2_jumpstart")) {
+            // First 30s only — the bonus was never removed afterwards.
+            if (combatTime <= 30f) Jumpstart.apply(s);
+            else s.getMutableStats().getMaxSpeed().unmodify("corsair_t2_jumpstart");
+        }
         if (ACTIVE_NODES.contains("corsair_t3_pack_hunter"))   PackHunter.apply(s, engine);
-        if (ACTIVE_NODES.contains("corsair_t3_trapped_prey"))  TrappedPrey.apply(s);
+        if (ACTIVE_NODES.contains("corsair_t3_trapped_prey"))  TrappedPrey.apply(s, trappedPreyNow);
         if (ACTIVE_NODES.contains("corsair_t4_quick_wind"))    QuickAsTheWind.apply(s);
         if (ACTIVE_NODES.contains("corsair_t4_shifting_tides")) ShiftingTides.apply(s, engine);
         if (ACTIVE_NODES.contains("corsair_t4_blood_in_water")) BloodInTheWater.applyShip(s, engine);
@@ -129,20 +145,27 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     /** Player ship's current target: −15% maneuver speed/turn, +5% hull damage taken. */
     static final class TrappedPrey {
-        static void apply(ShipAPI s) {
+        static void apply(ShipAPI s, Set<ShipAPI> marked) {
             ShipAPI tgt = s.getShipTarget();
             if (tgt == null || tgt.getOwner() == s.getOwner()) return;
             tgt.getMutableStats().getMaxSpeed().modifyMult("corsair_t3_trapped_prey", 0.85f);
             // getMaxTurnRate confirmed present in API jar
             tgt.getMutableStats().getMaxTurnRate().modifyMult("corsair_t3_trapped_prey", 0.85f);
             tgt.getMutableStats().getHullDamageTakenMult().modifyMult("corsair_t3_trapped_prey", 1.05f);
+            marked.add(tgt);
+        }
+
+        static void remove(ShipAPI tgt) {
+            tgt.getMutableStats().getMaxSpeed().unmodify("corsair_t3_trapped_prey");
+            tgt.getMutableStats().getMaxTurnRate().unmodify("corsair_t3_trapped_prey");
+            tgt.getMutableStats().getHullDamageTakenMult().unmodify("corsair_t3_trapped_prey");
         }
     }
 
     /**
      * System cooldown reduction by hull size.
-     * Uses getSystemRegenBonus (confirmed present). Regen bonus = 1 / (1 - reduction) to achieve
-     * the equivalent cooldown reduction.
+     * Uses getSystemCooldownBonus (vanilla SystemsExpertise pattern). getSystemRegenBonus
+     * only speeds charge regeneration, so it did nothing for cooldown-based systems.
      */
     static final class QuickAsTheWind {
         static void apply(ShipAPI s) {
@@ -155,9 +178,8 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
                 default:           reduction = 0f;
             }
             if (reduction > 0f) {
-                // getSystemRegenBonus confirmed in API; additive bonus, so pass the fraction directly.
-                s.getMutableStats().getSystemRegenBonus()
-                        .modifyPercent("corsair_t4_quick_wind", reduction * 100f);
+                s.getMutableStats().getSystemCooldownBonus()
+                        .modifyMult("corsair_t4_quick_wind", 1f - reduction);
             }
         }
     }
@@ -215,8 +237,10 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (o.isAlive()) alive.add(o);
             }
             for (ShipAPI prev : lastSeen) {
-                if (!alive.contains(prev) && prev.getOwner() == 1) {
-                    // This ship was alive last tick and is now gone — count as enemy kill.
+                // Destroyed ships become hulks with owner 100, so test the original owner;
+                // !isAlive() excludes retreated ships, which also leave getShips().
+                if (!alive.contains(prev) && !prev.isAlive() && prev.getOriginalOwner() == 1) {
+                    // This ship was alive last tick and is now destroyed — count as enemy kill.
                     for (ShipAPI ally : engine.getShips()) {
                         if (ally.getOwner() != 0 || ally.getHullSize() != ShipAPI.HullSize.FRIGATE) continue;
                         if (com.fs.starfarer.api.util.Misc.getDistance(ally.getLocation(), prev.getLocation()) <= 2000f) {
@@ -246,16 +270,11 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
     // ---------- Helpers ----------
 
     /**
-     * Counts d-mods on the ship's variant. D-mods in Starsector are hull mods whose IDs are
-     * registered as d-mods (e.g. "hull_breach", "degraded_shields", etc.). We use a suffix/
-     * prefix heuristic here since there is no public API method to query d-mod status.
+     * Counts d-mods on the ship's variant via the vanilla "dmod" hullmod tag. The old id
+     * heuristic ("_dmod"/"_d_"/"dmods_") matched no vanilla d-mod id, so it always returned 0.
      * Cap at 5.
      */
     private static int countDMods(ShipAPI s) {
-        int c = 0;
-        for (String m : s.getVariant().getHullMods()) {
-            if (m.endsWith("_dmod") || m.contains("_d_") || m.startsWith("dmods_")) c++;
-        }
-        return Math.min(5, c);
+        return Math.min(5, com.fs.starfarer.api.impl.campaign.DModManager.getNumDMods(s.getVariant()));
     }
 }

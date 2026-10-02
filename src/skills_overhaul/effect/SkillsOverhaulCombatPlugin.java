@@ -3,7 +3,6 @@ package skills_overhaul.effect;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.BaseEveryFrameCombatPlugin;
 import com.fs.starfarer.api.combat.CombatEngineAPI;
-import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
@@ -21,7 +20,8 @@ import java.util.List;
  * Applies ship-stat effects from purchased skill nodes to the piloted ship at combat start.
  *
  * Registered via data/config/settings.json "plugins" key. init() fires once per combat,
- * before first advance(). Player ship may be null in init() so defer to first advance tick.
+ * before first advance(). Player ship may be null in init() so defer to advance(), which
+ * also moves the passives if the player transfers command to another ship.
  *
  * MutableShipStatsAPI is rebuilt per combat, so static ship-stat passives
  * (SO_piloted_stat) must be re-applied here each battle; purchase-time
@@ -30,30 +30,30 @@ import java.util.List;
  */
 public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
     private static final Logger log = Global.getLogger(SkillsOverhaulCombatPlugin.class);
-    private boolean applied = false;
+    /** Ship currently carrying the pilot passives; follows the player on ship change. */
+    private ShipAPI appliedTo = null;
 
     @Override
     public void init(CombatEngineAPI engine) {
-        applied = false;
+        appliedTo = null;
     }
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
-        if (applied) return;
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null) return;
+        // Pilot skills come from the campaign character; skip title-screen/mission battles.
+        if (!engine.isInCampaign() && !engine.isInCampaignSim()) return;
         ShipAPI player = engine.getPlayerShip();
-        if (player == null) return;
-        applyPilotSkillsTo(player);
-        applied = true;
+        if (player == null || player == appliedTo || player.isShuttlePod()) return;
+        // Player changed ship (transfer command): move the passives with them.
+        if (appliedTo != null) applyPilotSkills(appliedTo, false);
+        applyPilotSkills(player, true);
+        appliedTo = player;
     }
 
-    private final skills_overhaul.effect.handlers.SOPilotedStatHandler pilotedStat =
-            new skills_overhaul.effect.handlers.SOPilotedStatHandler();
-
-    private void applyPilotSkillsTo(ShipAPI ship) {
+    private void applyPilotSkills(ShipAPI ship, boolean apply) {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
-        MutableShipStatsAPI stats = ship.getMutableStats();
 
         int applied = 0;
         for (TreeDef def : TreeRegistry.getTrees(Tree.PILOT)) {
@@ -61,23 +61,21 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (!mem.contains(SkillMemory.purchasedKey(n.getId()))) continue;
                 if (!mem.getBoolean(SkillMemory.purchasedKey(n.getId()))) continue;
                 for (JSONObject fx : n.getEffects()) {
+                    // MutableShipStatsAPI is rebuilt per combat, so static passives must
+                    // be re-applied here — purchase-time application cannot stick.
+                    // Other types are handled by their own combat plugins via ACTIVE_NODES.
+                    EffectHandler h = EffectRegistry.get(fx.optString("type"));
+                    if (!(h instanceof PilotShipStatEffect)) continue;
+                    if (!apply) {
+                        ((PilotShipStatEffect) h).removeFrom(ship, n.getId(), fx);
+                        continue;
+                    }
                     if (!NodeEffectApplier.isEffectActive(n, fx)) continue;
-                    if (applyShipStatEffect(stats, n.getId(), fx)) applied++;
+                    ((PilotShipStatEffect) h).applyTo(ship, n.getId(), fx);
+                    applied++;
                 }
             }
         }
-        log.info("[SkillsOverhaul] combat init: applied " + applied + " ship-stat effects to " + ship.getHullSpec().getHullId());
-    }
-
-    private boolean applyShipStatEffect(MutableShipStatsAPI s, String nodeId, JSONObject fx) {
-        String type = fx.optString("type");
-        if (type.equals("SO_piloted_stat")) {
-            // MutableShipStatsAPI is rebuilt per combat, so static passives must
-            // be re-applied here — purchase-time application cannot stick.
-            pilotedStat.applyTo(s, nodeId, fx);
-            return true;
-        }
-        // Other types are handled by their own combat plugins via ACTIVE_NODES.
-        return false;
+        if (apply) log.info("[SkillsOverhaul] combat init: applied " + applied + " ship-stat effects to " + ship.getHullSpec().getHullId());
     }
 }

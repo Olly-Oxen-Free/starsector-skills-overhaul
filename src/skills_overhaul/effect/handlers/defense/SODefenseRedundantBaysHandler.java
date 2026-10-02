@@ -4,15 +4,16 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.ShipAPI;
 import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
+import skills_overhaul.effect.PilotShipStatEffect;
 import skills_overhaul.pilot.defense.DefenseCombatPlugin;
 
-public final class SODefenseRedundantBaysHandler implements EffectHandler {
+public final class SODefenseRedundantBaysHandler implements EffectHandler, PilotShipStatEffect {
     @Override
     public void apply(String nodeId, JSONObject params) {
         DefenseCombatPlugin.ACTIVE_NODES.add(nodeId);
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
-        ship.getMutableStats().getFighterRefitTimeMult().modifyMult(nodeId, 0.85f);
+        applyTo(ship, nodeId, params);
     }
 
     @Override
@@ -20,6 +21,16 @@ public final class SODefenseRedundantBaysHandler implements EffectHandler {
         DefenseCombatPlugin.ACTIVE_NODES.remove(nodeId);
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
+        removeFrom(ship, nodeId, params);
+    }
+
+    @Override
+    public void applyTo(ShipAPI ship, String nodeId, JSONObject params) {
+        ship.getMutableStats().getFighterRefitTimeMult().modifyMult(nodeId, 0.85f);
+    }
+
+    @Override
+    public void removeFrom(ShipAPI ship, String nodeId, JSONObject params) {
         ship.getMutableStats().getFighterRefitTimeMult().unmodify(nodeId);
     }
 

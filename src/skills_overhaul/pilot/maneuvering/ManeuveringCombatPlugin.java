@@ -48,6 +48,8 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
     public void advance(float dt, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
+        // ACTIVE_NODES is campaign state; keep it out of title-screen/mission battles.
+        if (!engine.isInCampaign() && !engine.isInCampaignSim()) return;
         if (!initialized) initState(engine);
         if (flagship == null || !flagship.isAlive()) return;
 
@@ -105,8 +107,10 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Knife Fighter: +15% turn rate, +5% ballistic/energy ROF within 300u
-        if (ACTIVE_NODES.contains("so_maneuver_knife_fighter") && flagship.getShipTarget() != null) {
-            float dist = Misc.getDistance(flagship.getLocation(), flagship.getShipTarget().getLocation());
+        // Target null must fall through to the unmodify branch, or the bonus sticks.
+        if (ACTIVE_NODES.contains("so_maneuver_knife_fighter")) {
+            float dist = flagship.getShipTarget() == null ? Float.MAX_VALUE
+                    : Misc.getDistance(flagship.getLocation(), flagship.getShipTarget().getLocation());
             if (dist <= 300f) {
                 stats.getMaxTurnRate().modifyMult("so_knife_fighter", 1.15f);
                 stats.getBallisticRoFMult().modifyMult("so_knife_fighter", 1.05f);
@@ -200,9 +204,9 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Flanking Mastery: +25% damage when attacking from the side or rear
-        if (ACTIVE_NODES.contains("so_maneuver_flanking") && flagship.getShipTarget() != null) {
-            float angle = angleBetween(flagship, flagship.getShipTarget());
-            if (isFlankingAngle(angle)) {
+        if (ACTIVE_NODES.contains("so_maneuver_flanking")) {
+            if (flagship.getShipTarget() != null
+                    && isFlankingAngle(angleBetween(flagship, flagship.getShipTarget()))) {
                 stats.getBallisticWeaponDamageMult().modifyMult("so_flanking", 1.25f);
                 stats.getEnergyWeaponDamageMult().modifyMult("so_flanking", 1.25f);
                 stats.getMissileWeaponDamageMult().modifyMult("so_flanking", 1.25f);
@@ -291,7 +295,8 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
                 stats.getZeroFluxSpeedBoost().unmodifyFlat("so_untouchable_force_zfb");
             }
             // Phase ships: zero phase flux costs.
-            if (flagship.getHullSpec().getShipSystemId().contains("phase")) {
+            // Phase cloak is the ship's defense, not its system id (which can be null).
+            if (flagship.getHullSpec().isPhase()) {
                 stats.getPhaseCloakActivationCostBonus().modifyMult("so_untouchable_phase", 0f);
                 stats.getPhaseCloakUpkeepCostBonus().modifyMult("so_untouchable_phase", 0f);
             }
