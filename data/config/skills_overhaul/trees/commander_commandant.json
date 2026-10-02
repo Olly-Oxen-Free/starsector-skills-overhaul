@@ -88,7 +88,7 @@
     },
     { "id": "commandant_t3_in_good_hands", "name": "In Good Hands",
       "x": 2, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_cnc"] }],
-      "effects": []
+      "effects": [ { "type": "SO_in_good_hands" } ]
     },
     { "id": "commandant_t3_vanguard", "name": "Vanguard Screen",
       "x": 3, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_reserve"] }],

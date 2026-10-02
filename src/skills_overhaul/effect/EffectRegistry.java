@@ -34,6 +34,7 @@ public final class EffectRegistry {
         handlers.put("SO_refitting", new skills_overhaul.effect.handlers.SORefittingHandler());
         handlers.put("SO_standing_orders", new skills_overhaul.effect.handlers.SOStandingOrdersHandler());
         handlers.put("SO_command_and_conquer", new skills_overhaul.effect.handlers.SOCommandAndConquerHandler());
+        handlers.put("SO_in_good_hands", new skills_overhaul.effect.handlers.SOInGoodHandsHandler());
         handlers.put("SO_objective_capture_buff", new skills_overhaul.effect.handlers.SOObjectiveCaptureBuffHandler());
         handlers.put("SO_doctrine_hierarchy", new skills_overhaul.effect.handlers.SODoctrineHierarchyHandler());
         handlers.put("SO_officer_inspiration", new skills_overhaul.effect.handlers.SOOfficerInspirationHandler());
