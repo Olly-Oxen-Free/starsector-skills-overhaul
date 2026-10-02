@@ -167,17 +167,29 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
         static void apply(ShipAPI s, CombatEngineAPI engine) {
             if (s.getHullSize() == ShipAPI.HullSize.CAPITAL_SHIP) {
                 s.getMutableStats().getMaxTurnRate().modifyMult("commandant_t3_line_anchor", 1.10f);
-                for (ShipAPI o : engine.getShips()) {
-                    if (o == s || o.getOwner() != s.getOwner()) continue;
-                    if (o.getHullSize() == ShipAPI.HullSize.CAPITAL_SHIP) continue;
-                    if (Misc.getDistance(s.getLocation(), o.getLocation()) > 1500f) continue;
-                    o.getMutableStats().getBallisticWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor:" + s.getId(), 20f);
-                    o.getMutableStats().getEnergyWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor:" + s.getId(), 20f);
-                }
+                return;
             } else if (s.getHullSize() == ShipAPI.HullSize.CRUISER) {
                 s.getMutableStats().getArmorBonus().modifyMult("commandant_t3_line_anchor", 1.10f);
                 s.getMutableStats().getFluxCapacity().modifyMult("commandant_t3_line_anchor", 1.20f);
                 s.getMutableStats().getPeakCRDuration().modifyMult("commandant_t3_line_anchor", 1.25f);
+            }
+            // Receiver side: a non-capital within 1500u of a live friendly capital gets +20% range.
+            // Previously applied per-source by each capital and never removed (out of range or after
+            // the capital died), and stacked +20% per nearby capital.
+            boolean anchored = false;
+            for (ShipAPI o : engine.getShips()) {
+                if (o == s || o.getOwner() != s.getOwner() || !o.isAlive()) continue;
+                if (o.getHullSize() != ShipAPI.HullSize.CAPITAL_SHIP) continue;
+                if (Misc.getDistance(s.getLocation(), o.getLocation()) > 1500f) continue;
+                anchored = true;
+                break;
+            }
+            if (anchored) {
+                s.getMutableStats().getBallisticWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor_range", 20f);
+                s.getMutableStats().getEnergyWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor_range", 20f);
+            } else {
+                s.getMutableStats().getBallisticWeaponRangeBonus().unmodify("commandant_t3_line_anchor_range");
+                s.getMutableStats().getEnergyWeaponRangeBonus().unmodify("commandant_t3_line_anchor_range");
             }
         }
     }
