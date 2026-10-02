@@ -102,6 +102,16 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         if (!BarEventManager.getInstance().hasEventCreator(SeasonedCrewBarEvent.class)) {
             BarEventManager.getInstance().addEventCreator(new SeasonedCrewBarEvent());
         }
+        // Saves from those versions hold one creator per past load; keep the first.
+        // getCreators() returns BarEventManager's live list.
+        boolean keptSeasonedCrew = false;
+        java.util.Iterator<BarEventManager.GenericBarEventCreator> creators =
+                BarEventManager.getInstance().getCreators().iterator();
+        while (creators.hasNext()) {
+            if (!(creators.next() instanceof SeasonedCrewBarEvent)) continue;
+            if (keptSeasonedCrew) creators.remove();
+            keptSeasonedCrew = true;
+        }
         // Migration must read vanilla skill levels BEFORE suppression zeroes
         // them, or every existing save migrates with spent=0.
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
