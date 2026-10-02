@@ -3,7 +3,7 @@ package skills_overhaul.effect.handlers.corsair;
 import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
 
-/** Params: { "type": "corsair_salvage_mult", "value": 0.20 } */
+/** Params: { "type": "SO_corsair_salvage_mult", "value": 0.20 } */
 public final class SalvageMultiplierHandler implements EffectHandler {
 
     @Override

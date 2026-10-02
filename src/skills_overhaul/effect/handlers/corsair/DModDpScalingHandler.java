@@ -8,7 +8,7 @@ import skills_overhaul.effect.EffectHandler;
 
 /**
  * Per-ship d-mod-scaled stat tweaks. Params:
- *   { "type": "corsair_dmod_dp",
+ *   { "type": "SO_corsair_dmod_dp",
  *     "dpPerDMod":   -0.06,    // per-ship DP cost mult; not applicable — API lacks the stat
  *     "armorPerDMod": 0.03,    // armor bonus per d-mod
  *     "hullPerDMod":  0.03,    // hull bonus per d-mod

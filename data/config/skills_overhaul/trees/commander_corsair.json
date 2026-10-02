@@ -4,86 +4,86 @@
     { "id": "corsair_t0", "name": "Underground Intel & Infamy",
       "x": 2, "y": 0, "cost": 1, "prereqs": [],
       "effects": [
-        { "type": "corsair_t0", "channel": "base" },
-        { "type": "corsair_stat_bonus", "channel": "base", "scope": "fleet",
+        { "type": "SO_corsair_t0", "channel": "base" },
+        { "type": "SO_corsair_stat_bonus", "channel": "base", "scope": "fleet",
           "stats": [ { "key": "sensorProfileMod", "value": -0.10 } ] },
-        { "type": "corsair_t0", "channel": "core" }
+        { "type": "SO_corsair_t0", "channel": "core" }
       ]
     },
 
     { "id": "corsair_t1_low_profile", "name": "Low Profile",
       "x": 0, "y": 1, "cost": 1, "prereqs": [{ "all": ["corsair_t0"] }],
       "effects": [
-        { "type": "corsair_stat_bonus", "scope": "fleet",
+        { "type": "SO_corsair_stat_bonus", "scope": "fleet",
           "stats": [ { "key": "sensorProfileMod", "value": -0.15 } ] }
       ]
     },
     { "id": "corsair_t1_scrappy", "name": "Scrappy Maintenance",
       "x": 1, "y": 1, "cost": 1, "prereqs": [{ "all": ["corsair_t0"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t1_scrappy" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t1_scrappy" } ]
     },
     { "id": "corsair_t1_all_out", "name": "All-Out",
       "x": 2, "y": 1, "cost": 1, "prereqs": [{ "all": ["corsair_t0"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t1_all_out" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t1_all_out" } ]
     },
     { "id": "corsair_t1_outmaneuvered", "name": "Outmaneuvered",
       "x": 3, "y": 1, "cost": 1, "prereqs": [{ "all": ["corsair_t0"] }],
       "effects": [
-        { "type": "corsair_stat_bonus", "scope": "fleet",
+        { "type": "SO_corsair_stat_bonus", "scope": "fleet",
           "stats": [ { "key": "fleetManeuverabilityMod", "value": 1 } ] }
       ]
     },
     { "id": "corsair_t1_makeshift", "name": "Makeshift Operations",
       "x": 4, "y": 1, "cost": 1, "prereqs": [{ "all": ["corsair_t0"] }],
       "effects": [
-        { "type": "corsair_dmod_dp", "dpPerDMod": 0.0, "crPenaltyMod": -0.50, "cap": 5 }
+        { "type": "SO_corsair_dmod_dp", "dpPerDMod": 0.0, "crPenaltyMod": -0.50, "cap": 5 }
       ]
     },
 
     { "id": "corsair_t2_ambush", "name": "Ambush",
       "x": 0, "y": 2, "cost": 1, "prereqs": [{ "all": ["corsair_t1_low_profile"] }],
       "effects": [
-        { "type": "corsair_stat_bonus", "scope": "fleet",
+        { "type": "SO_corsair_stat_bonus", "scope": "fleet",
           "stats": [ { "key": "sensorProfileMod", "value": -0.10 } ] }
       ]
     },
     { "id": "corsair_t2_wolfpack", "name": "Wolfpack Tactics",
       "x": 1, "y": 2, "cost": 1, "prereqs": [{ "all": ["corsair_t1_scrappy"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t2_wolfpack" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t2_wolfpack" } ]
     },
     { "id": "corsair_t2_derelict_ops", "name": "Derelict Operations",
       "x": 2, "y": 2, "cost": 1, "prereqs": [{ "all": ["corsair_t1_all_out"] }],
       "effects": [
-        { "type": "corsair_dmod_dp", "dpPerDMod": -0.06, "cap": 5 },
-        { "type": "corsair_salvage_mult", "value": 0.20 }
+        { "type": "SO_corsair_dmod_dp", "dpPerDMod": -0.06, "cap": 5 },
+        { "type": "SO_corsair_salvage_mult", "value": 0.20 }
       ]
     },
     { "id": "corsair_t2_bounty_board", "name": "Bounty Board",
       "x": 3, "y": 2, "cost": 1, "prereqs": [{ "all": ["corsair_t1_outmaneuvered"] }],
-      "effects": [ { "type": "corsair_bounty_board", "weaponDropMult": 0.15 } ]
+      "effects": [ { "type": "SO_corsair_bounty_board", "weaponDropMult": 0.15 } ]
     },
     { "id": "corsair_t2_jumpstart", "name": "Jumpstart",
       "x": 4, "y": 2, "cost": 1, "prereqs": [{ "all": ["corsair_t1_makeshift"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t2_jumpstart" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t2_jumpstart" } ]
     },
 
     { "id": "corsair_t3_pack_hunter", "name": "Pack Hunter",
       "x": 0, "y": 3, "cost": 1, "prereqs": [{ "all": ["corsair_t2_ambush"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t3_pack_hunter" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t3_pack_hunter" } ]
     },
     { "id": "corsair_t3_trapped_prey", "name": "Trapped Prey",
       "x": 1, "y": 3, "cost": 1, "prereqs": [{ "all": ["corsair_t2_wolfpack"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t3_trapped_prey" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t3_trapped_prey" } ]
     },
     { "id": "corsair_t3_pinpointing", "name": "Pinpointing",
       "x": 2, "y": 3, "cost": 1, "prereqs": [{ "all": ["corsair_t2_derelict_ops"] }],
       "effects": [
-        { "type": "corsair_salvage_mult", "value": 0.30 }
+        { "type": "SO_corsair_salvage_mult", "value": 0.30 }
       ]
     },
     { "id": "corsair_t3_scrapheap", "name": "Scrapheap",
       "x": 3, "y": 3, "cost": 1, "prereqs": [{ "all": ["corsair_t2_bounty_board"] }],
-      "effects": [ { "type": "corsair_cap_mult", "value": 1.5 } ]
+      "effects": [ { "type": "SO_corsair_cap_mult", "value": 1.5 } ]
     },
     { "id": "corsair_t3_hunting_grounds", "name": "Hunting Grounds",
       "x": 4, "y": 3, "cost": 1, "prereqs": [{ "all": ["corsair_t2_jumpstart"] }],
@@ -93,21 +93,21 @@
     { "id": "corsair_t4_derelict_fortifications", "name": "Derelict Fortifications",
       "x": 0, "y": 4, "cost": 2, "prereqs": [{ "all": ["corsair_t3_pack_hunter"] }],
       "effects": [
-        { "type": "corsair_dmod_dp", "armorPerDMod": 0.03, "hullPerDMod": 0.03, "cap": 5 },
-        { "type": "corsair_salvage_mult", "value": 0.30 }
+        { "type": "SO_corsair_dmod_dp", "armorPerDMod": 0.03, "hullPerDMod": 0.03, "cap": 5 },
+        { "type": "SO_corsair_salvage_mult", "value": 0.30 }
       ]
     },
     { "id": "corsair_t4_blood_in_water", "name": "Blood in the Water",
       "x": 1, "y": 4, "cost": 2, "prereqs": [{ "all": ["corsair_t3_trapped_prey"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t4_blood_in_water" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t4_blood_in_water" } ]
     },
     { "id": "corsair_t4_quick_wind", "name": "Quick as the Wind",
       "x": 2, "y": 4, "cost": 2, "prereqs": [{ "all": ["corsair_t3_pinpointing"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t4_quick_wind" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t4_quick_wind" } ]
     },
     { "id": "corsair_t4_shifting_tides", "name": "Shifting Tides",
       "x": 3, "y": 4, "cost": 2, "prereqs": [{ "all": ["corsair_t3_scrapheap"] }],
-      "effects": [ { "type": "corsair_combat_script", "node": "corsair_t4_shifting_tides" } ]
+      "effects": [ { "type": "SO_corsair_combat_script", "node": "corsair_t4_shifting_tides" } ]
     },
 
     { "id": "corsair_t5", "name": "Letter of Marque",
@@ -122,8 +122,8 @@
         ]
       }],
       "effects": [
-        { "type": "corsair_letter_of_marque", "channel": "base" },
-        { "type": "corsair_letter_of_marque", "channel": "core" }
+        { "type": "SO_corsair_letter_of_marque", "channel": "base" },
+        { "type": "SO_corsair_letter_of_marque", "channel": "core" }
       ]
     }
   ]
