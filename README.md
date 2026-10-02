@@ -41,15 +41,20 @@ This is a **v0.1 alpha**. Infrastructure is in; content is first-pass drafts fla
 
 1. **Skill panel entry point does not fire.** See above. Not a regression — just not wired to any player-reachable hook.
 2. **Re-entrant dialog risk.** `SkillPanel.show()` re-opens itself after each button press to redraw; advisor flagged potential recursion / leak. Monitor in playtest; may need rewrite to mutate the existing panel in place.
-3. **Vanilla skill suppression** calls `setSkillLevel(id, 0f)` for every non-`so_` skill. Vanilla may cache stat bonuses elsewhere; teardown path has a `FIXME(playtest)` in `VanillaSuppressor.java`.
+3. **Vanilla skill suppression** calls `setSkillLevel(id, 0f)` for every vanilla skill (ids from vanilla `skill_data.csv`). Vanilla may cache stat bonuses elsewhere; teardown path has a `FIXME(playtest)` in `VanillaSuppressor.java`.
 4. **Migration pool lock** prevents mixing migration points across trees by locking the first-spent tree. Intended, documented in `SpendService`, but un-mocked in tests against real save data.
+
+## Deliberate deviations from spec
+
+- **Craft Fuel** converts 10 supplies → 30 fuel, not the spec's 20 → 1 (a strict loss); changed in the 2026-07-07 audit.
+- **Drilled and Ready** drops the spec's "crew/marine XP +30%": the API has no crew or marine XP stat.
 
 ---
 
 ## Installation
 
 1. Drop the `Skills Overhaul` folder in `<Starsector>/mods`.
-2. Enable in launcher. Requires LazyLib + MagicLib; optional: LunaLib, Nexerelin.
+2. Enable in launcher. No required dependencies; optional: LunaLib, Nexerelin.
 3. **Existing save compatibility**: yes, via `MigrationPlugin` running once on first load. Vanilla skill points convert to the universal migration pool.
 
 ## Uninstall
