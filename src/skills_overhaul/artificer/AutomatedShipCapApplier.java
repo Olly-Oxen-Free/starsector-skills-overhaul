@@ -5,6 +5,8 @@ import com.fs.starfarer.api.campaign.CampaignFleetAPI;
 import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.characters.PersonAPI;
 import com.fs.starfarer.api.fleet.FleetMemberAPI;
+import com.fs.starfarer.api.impl.campaign.AICoreOfficerPluginImpl;
+import com.fs.starfarer.api.impl.campaign.ids.Commodities;
 import com.fs.starfarer.api.util.Misc;
 
 /**
@@ -66,22 +68,43 @@ public final class AutomatedShipCapApplier {
             if (mem == null) continue;
             // AI-core captains already carry a vanilla $autoPointsMult (gamma 2, beta 3,
             // alpha 4 — AICoreOfficerPluginImpl). Stash it once and scale it, never
-            // overwrite it, and restore it on removal.
+            // overwrite it, and restore it on removal. For known cores the base is
+            // re-derived from getAICoreId(), which also heals saves where an older
+            // version overwrote or unset the vanilla value.
+            Float coreBase = vanillaCoreMult(captain);
             if (active) {
                 float base;
-                if (mem.contains(AUTO_POINTS_MULT_BASE_KEY)) {
+                if (coreBase != null) {
+                    base = coreBase;
+                } else if (mem.contains(AUTO_POINTS_MULT_BASE_KEY)) {
                     base = mem.getFloat(AUTO_POINTS_MULT_BASE_KEY);
                 } else {
                     base = mem.contains(AUTO_POINTS_MULT_KEY) ? mem.getFloat(AUTO_POINTS_MULT_KEY) : 0f;
                     mem.set(AUTO_POINTS_MULT_BASE_KEY, base);
                 }
                 mem.set(AUTO_POINTS_MULT_KEY, (base == 0f ? 1f : base) * mult);
+            } else if (coreBase != null) {
+                mem.set(AUTO_POINTS_MULT_KEY, coreBase);
+                mem.unset(AUTO_POINTS_MULT_BASE_KEY);
             } else if (mem.contains(AUTO_POINTS_MULT_BASE_KEY)) {
                 float base = mem.getFloat(AUTO_POINTS_MULT_BASE_KEY);
                 if (base == 0f) mem.unset(AUTO_POINTS_MULT_KEY);
                 else mem.set(AUTO_POINTS_MULT_KEY, base);
                 mem.unset(AUTO_POINTS_MULT_BASE_KEY);
             }
+        }
+    }
+
+    /** Vanilla $autoPointsMult for a vanilla AI-core captain, or null (not a core / modded core). */
+    private static Float vanillaCoreMult(PersonAPI captain) {
+        String core = captain.getAICoreId();
+        if (core == null) return null;
+        switch (core) {
+            case Commodities.ALPHA_CORE: return AICoreOfficerPluginImpl.ALPHA_MULT;
+            case Commodities.BETA_CORE:  return AICoreOfficerPluginImpl.BETA_MULT;
+            case Commodities.GAMMA_CORE: return AICoreOfficerPluginImpl.GAMMA_MULT;
+            case Commodities.OMEGA_CORE: return AICoreOfficerPluginImpl.OMEGA_MULT;
+            default: return null;
         }
     }
 

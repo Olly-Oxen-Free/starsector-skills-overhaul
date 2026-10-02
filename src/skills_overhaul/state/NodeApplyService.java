@@ -58,6 +58,9 @@ public final class NodeApplyService {
         }
         // Drop abilities no owned/active node granted (incl. the old unlockedAtStart rows).
         skills_overhaul.effect.AbilityGrants.revokeUngranted();
+        // Always re-stamp (even with no automated-points node owned) so AI-core
+        // captains damaged by the old $autoPointsMult overwrite self-heal.
+        skills_overhaul.artificer.AutomatedShipCapApplier.applyToPlayerFleet();
         Global.getLogger(NodeApplyService.class).info(
                 "[skills_overhaul] re-applied " + count + " owned nodes on load");
     }
