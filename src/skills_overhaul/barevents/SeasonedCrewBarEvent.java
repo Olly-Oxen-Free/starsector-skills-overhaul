@@ -6,6 +6,7 @@ import com.fs.starfarer.api.campaign.OptionPanelAPI;
 import com.fs.starfarer.api.campaign.TextPanelAPI;
 import com.fs.starfarer.api.campaign.econ.MarketAPI;
 import com.fs.starfarer.api.impl.campaign.intel.bar.PortsideBarEvent;
+import com.fs.starfarer.api.impl.campaign.intel.bar.events.BarEventManager;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventCreator;
 import com.fs.starfarer.api.impl.campaign.intel.bar.events.BaseBarEventWithPerson;
 import skills_overhaul.state.SkillMemory;
@@ -32,13 +33,29 @@ public class SeasonedCrewBarEvent extends BaseBarEventCreator {
 
     static final class SeasonedCrewDialog extends BaseBarEventWithPerson {
 
+        /**
+         * Bar-menu entry. The option data must be the event itself: BarCMD only routes options whose
+         * data is a PortsideBarEvent to the event; String data went to the rules engine and the
+         * accept/decline options previously added here did nothing.
+         */
         @Override
         public void addPromptAndOption(InteractionDialogAPI dialog,
                                        Map<String, com.fs.starfarer.api.campaign.rules.MemoryAPI> memoryMap) {
+            super.addPromptAndOption(dialog, memoryMap);
             TextPanelAPI text = dialog.getTextPanel();
-            text.addPara("A grizzled spacer catches your eye. \"I've flown more tonnage than most "
+            text.addPara("A grizzled spacer nurses a drink alone at the end of the bar.");
+            dialog.getOptionPanel().addOption("Talk to the grizzled spacer", this);
+        }
+
+        @Override
+        public void init(InteractionDialogAPI dialog,
+                         Map<String, com.fs.starfarer.api.campaign.rules.MemoryAPI> memoryMap) {
+            super.init(dialog, memoryMap);
+            done = false;
+            dialog.getTextPanel().addPara("The spacer catches your eye. \"I've flown more tonnage than most "
                     + "admirals. Teach you what I know — for the right price.\"");
             OptionPanelAPI opts = dialog.getOptionPanel();
+            opts.clearOptions();
             opts.addOption("Pay " + COST + " credits for their expertise (+1 Pilot point)", OPT_ACCEPT);
             opts.addOption("Politely decline", OPT_DECLINE);
             long credits = (long) Global.getSector().getPlayerFleet().getCargo().getCredits().get();
@@ -55,6 +72,9 @@ public class SeasonedCrewBarEvent extends BaseBarEventCreator {
                 SkillMemory.addPoints(Global.getSector().getMemoryWithoutUpdate(), Tree.PILOT, 1);
                 dialog.getTextPanel().addPara(
                         "You spend a few hours with the veteran. Something clicks. (+1 Pilot point)");
+                // Remove from the bar + start the accepted timeout; otherwise the event stayed
+                // and could be bought repeatedly (+1 point per 10k credits, unbounded).
+                BarEventManager.getInstance().notifyWasInteractedWith(this);
                 done = true;
                 noContinue = false;
             } else {

@@ -130,6 +130,7 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
             int nearby = 0;
             for (ShipAPI o : engine.getShips()) {
                 if (o == s || o.getOwner() != s.getOwner()) continue;
+                if (o.isFighter() || !o.isAlive()) continue; // fighters alone met the 2-friendly threshold
                 if (Misc.getDistance(s.getLocation(), o.getLocation()) <= 2000f) nearby++;
             }
             if (nearby >= 2) {
@@ -154,6 +155,10 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
                     s.getMutableStats().getMaxSpeed().modifyMult("commandant_t2_reserve", 1.15f);
                 }
                 s.getMutableStats().getMaxTurnRate().modifyMult("commandant_t2_reserve", 1.25f);
+            } else {
+                // The window closed but the buff was never removed — it lasted the rest of the battle.
+                s.getMutableStats().getMaxSpeed().unmodify("commandant_t2_reserve");
+                s.getMutableStats().getMaxTurnRate().unmodify("commandant_t2_reserve");
             }
         }
     }

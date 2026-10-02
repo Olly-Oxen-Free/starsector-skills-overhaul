@@ -19,8 +19,11 @@ public final class LetterOfMarqueAbility extends BaseDurationAbility {
             this.deactivate();
             return;
         }
-        SkillMemory.setSupplyBuffer(mem, 0f);
-        PrivateerFleetService.commission((int) buffer);
+        // Spend the buffer only if a fleet was actually commissioned (commission() returns null when
+        // a privateer is already active or fleet creation fails).
+        if (PrivateerFleetService.commission((int) buffer) != null) {
+            SkillMemory.setSupplyBuffer(mem, 0f);
+        }
         this.deactivate();
     }
 

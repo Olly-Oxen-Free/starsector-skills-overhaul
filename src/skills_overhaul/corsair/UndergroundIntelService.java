@@ -155,19 +155,28 @@ public final class UndergroundIntelService {
         float ratioMid = s == Strength.WEAK ? 0.725f : s == Strength.STRONG ? 1.275f : 1.0f;
         float fp = playerFP * ratioMid;
 
+        // Only factions that own a market can anchor a spawn (hidden factions like derelict/omega can't).
+        Set<FactionAPI> withMarkets = new HashSet<>();
+        for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
+            if (m.getFaction() != null && m.getPrimaryEntity() != null) withMarkets.add(m.getFaction());
+        }
         List<FactionAPI> hostile = new ArrayList<>();
         for (FactionAPI fac : Global.getSector().getAllFactions()) {
             if (fac == Global.getSector().getPlayerFaction()) continue;
             if (!fac.isHostileTo(Global.getSector().getPlayerFaction())) continue;
+            if (!withMarkets.contains(fac)) continue;
             hostile.add(fac);
         }
         if (hostile.isEmpty()) return null;
         FactionAPI faction = hostile.get((int)(Math.random() * hostile.size()));
 
-        SectorEntityToken anchor = Global.getSector().getPlayerFleet();
+        SectorEntityToken anchor = null;
         for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
-            if (m.getFaction() == faction) { anchor = m.getPrimaryEntity(); break; }
+            if (m.getFaction() == faction && m.getPrimaryEntity() != null) { anchor = m.getPrimaryEntity(); break; }
         }
+        // No market for the picked faction: previously fell back to the player fleet, spawning a
+        // hostile fleet on top of the player. Report "no contacts" instead (the caller refunds).
+        if (anchor == null) return null;
 
         Vector2f locInHyper = anchor.getLocationInHyperspace();
         FleetParamsV3 params = new FleetParamsV3(
@@ -181,6 +190,9 @@ public final class UndergroundIntelService {
         if (fleet == null) return null;
         anchor.getContainingLocation().addEntity(fleet);
         fleet.setLocation(anchor.getLocation().x, anchor.getLocation().y);
+        // Without assignments the spawned fleet idled at the market forever (fleet leak).
+        fleet.addAssignment(com.fs.starfarer.api.campaign.FleetAssignment.PATROL_SYSTEM, anchor, 30f);
+        fleet.addAssignment(com.fs.starfarer.api.campaign.FleetAssignment.GO_TO_LOCATION_AND_DESPAWN, anchor, 1000f);
         return fleet;
     }
 

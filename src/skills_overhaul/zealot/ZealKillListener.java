@@ -74,7 +74,14 @@ public final class ZealKillListener extends BaseCampaignEventListener {
         if (oath == null) return;
 
         String factionId = loserFleet.getFaction() == null ? null : loserFleet.getFaction().getId();
-        float fp = loserFleet.getFleetPoints();
+        // FP actually defeated this engagement. loserFleet.getFleetPoints() is the post-battle
+        // remainder: 0 for a wiped fleet, full value for one that retreated untouched.
+        float fp = 0f;
+        java.util.List<com.fs.starfarer.api.fleet.FleetMemberAPI> destroyed = loser.getDestroyed();
+        if (destroyed != null) for (com.fs.starfarer.api.fleet.FleetMemberAPI m : destroyed) fp += m.getFleetPointCost();
+        java.util.List<com.fs.starfarer.api.fleet.FleetMemberAPI> disabled = loser.getDisabled();
+        if (disabled != null) for (com.fs.starfarer.api.fleet.FleetMemberAPI m : disabled) fp += m.getFleetPointCost();
+        if (fp <= 0f) return;
 
         int stacks = stacksForOath(oath, factionId, fp);
         if (stacks > 0) {
