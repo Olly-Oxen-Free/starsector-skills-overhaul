@@ -28,7 +28,7 @@ public class LevelReconciler implements EveryFrameScript {
             int currentLevel = SkillMemory.getLevel(mem, t);
             int targetLevel  = XPCurve.levelFromXP(xp);
             for (int lv = currentLevel + 1; lv <= targetLevel; lv++) {
-                int granted = cfg.perLevel + (lv > 0 && lv % 5 == 0 ? cfg.bonusEvery5 : 0);
+                int granted = LevelService.pointsForLevel(lv, cfg);
                 SkillMemory.addPoints(mem, t, granted);
                 SkillMemory.setLevel(mem, t, lv);
                 Global.getSector().getCampaignUI().addMessage(

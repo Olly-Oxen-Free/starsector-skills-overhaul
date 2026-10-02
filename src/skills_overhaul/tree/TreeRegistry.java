@@ -11,6 +11,20 @@ public final class TreeRegistry {
         defs.put(Tree.PILOT,     TreeLoader.loadAllForTab("pilot"));
         defs.put(Tree.COMMANDER, TreeLoader.loadAllForTab("commander"));
         defs.put(Tree.ADMIN,     TreeLoader.loadAllForTab("admin"));
+        // $skills.purchased.<id> is global: an id reused in another tree would
+        // share ownership. TreeLoader only checks within one file.
+        Map<String, String> seen = new HashMap<>();
+        for (Tree t : Tree.values()) {
+            for (TreeDef d : defs.get(t)) {
+                for (Node n : d.getNodes()) {
+                    String prev = seen.put(n.getId(), d.getTree());
+                    if (prev != null) {
+                        throw new IllegalStateException("node id " + n.getId()
+                                + " defined in both " + prev + " and " + d.getTree());
+                    }
+                }
+            }
+        }
     }
 
     public static List<TreeDef> getTrees(Tree tab) {

@@ -485,6 +485,8 @@ public final class PathTreeBuilder {
         host.edges.clear();
         for (TreeDef def : defs) buildEdges(host, def, owned, pending);
 
+        // Empty tab (e.g. empty *_index.json): defs.get(0) would throw inside a UI callback.
+        if (defs.isEmpty()) return new Metrics(0f, 0f, 0, 0, 0, 0);
         Metrics first = computeMetrics(defs.get(0));
         // Multi-tree return: laneCount preserved for first tree; treeCount = defs.size().
         return new Metrics(contentW, contentH, first.rowCount, first.maxTier,
@@ -698,6 +700,8 @@ public final class PathTreeBuilder {
         Color blue  = new Color( 80, 150, 220);
         Color gray  = new Color( 70,  85, 105);
         Color green = new Color(120, 210, 140);
+        // Hoisted: invariant per call, and this runs every frame from renderBelow.
+        Map<String, Object> ownedPendingSnap = snapshotOwnedPending(owned, pending);
 
         for (Node n : def.getNodes()) {
             float[] cCenter = host.nodeCenters.get(n.getId());
@@ -711,7 +715,7 @@ public final class PathTreeBuilder {
                 boolean stippled = n.isMerge() || isCrossLane(def, n.getId(), prereqId);
                 boolean prereqSatisfied = pOwned || pending.contains(prereqId);
                 boolean childReady = PrereqValidator.canPurchaseWithPending(
-                        def, snapshotOwnedPending(owned, pending), pending, n.getId());
+                        def, ownedPendingSnap, pending, n.getId());
 
                 Color col;
                 if (stippled) {

@@ -132,7 +132,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
     public void rebuild() {
         if (panel == null) return;
-        Global.getLogger(CharacterTabPanelPlugin.class).info("[SkillsOverhaul/UI] rebuild " + UI_VERSION);
+        Global.getLogger(CharacterTabPanelPlugin.class).debug("[SkillsOverhaul/UI] rebuild " + UI_VERSION);
 
         for (UIComponentAPI child : uiChildren) {
             try { panel.removeComponent(child); } catch (Throwable ignored) {}
@@ -231,7 +231,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         }
         contentW = combinedW;
 
-        Global.getLogger(CharacterTabPanelPlugin.class).info(
+        Global.getLogger(CharacterTabPanelPlugin.class).debug(
                 "[SkillsOverhaul/UI] layout " + currentTree.key
                 + " view=" + (int) viewW + "x" + (int) viewH
                 + " node=" + PathTreeBuilder.NODE
@@ -961,8 +961,10 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             // Respec is only actionable if the player has at least one owned
             // node in the current tree.
             if (ownedCountForTree(currentTree) > 0) {
-                SkillUISounds.playRespecReset();
-                skills_overhaul.level.RespecRunner.run(currentTree);
+                // null = refused (paid respec without a story point).
+                if (skills_overhaul.level.RespecRunner.run(currentTree) != null) {
+                    SkillUISounds.playRespecReset();
+                }
                 rebuild();
             }
             return;
@@ -1128,7 +1130,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                 String clickedId = pickNodeAtEvent(e);
                 if (clickedId == null) clickedId = pickNodeAtPanelLocal(lx, ly);
                 if (clickedId != null) {
-                    Global.getLogger(CharacterTabPanelPlugin.class).info(
+                    Global.getLogger(CharacterTabPanelPlugin.class).debug(
                             "[SkillsOverhaul/UI] click " + clickedId + " @ (" + e.getX() + "," + e.getY() + ")");
                     e.consume();
                     handleNodeClick(clickedId);
@@ -1225,7 +1227,12 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
         int treePts   = SkillMemory.getPoints(snap, currentTree);
         int migLocked = (int) f(snap.get(migLockedK));
-        int migPool   = (int) f(snap.get(migPoolK));
+        // SpendService only draws the unallocated pool when unlocked or locked
+        // to this tree; counting it otherwise lets the commit fail mid-batch.
+        String lockedTo = mem.contains(skills_overhaul.level.SpendService.POOL_LOCK_KEY)
+                ? mem.getString(skills_overhaul.level.SpendService.POOL_LOCK_KEY) : null;
+        int migPool   = (lockedTo == null || lockedTo.equals(currentTree.name()))
+                ? (int) f(snap.get(migPoolK)) : 0;
         int freeUni   = (int) f(snap.get(freeUniK));
         int totalPts  = treePts + migLocked + migPool + freeUni;
         if (sumPendingCost(pending) + clicked.getCost() > totalPts) {

@@ -18,6 +18,12 @@ public final class RespecRunner {
     public static RespecService.Result run(Tree tree) {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
 
+        // Paid respec with no story point: refuse before mutating anything
+        // (spendStoryPoints clamps the pool at 0, so the respec would be free).
+        boolean firstFree = !(mem.contains(SkillMemory.respecUsedKey(tree))
+                && mem.getBoolean(SkillMemory.respecUsedKey(tree)));
+        if (!firstFree && Global.getSector().getPlayerStats().getStoryPoints() < 1) return null;
+
         // Collect previously-owned nodes BEFORE respec clears their purchased flags
         List<Node> ownedBefore = new ArrayList<Node>();
         for (TreeDef def : TreeRegistry.getTrees(tree)) {

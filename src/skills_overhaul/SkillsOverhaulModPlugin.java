@@ -63,7 +63,11 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
     @Override
     public void onGameLoad(boolean newGame) {
         Global.getSector().addTransientListener(new skills_overhaul.xp.CommanderXPListener());
-        Global.getSector().getListenerManager().addListener(new skills_overhaul.xp.AdminXPTracker(), false);
+        // addListener(l, true) = transient. The old `false` registered a
+        // persistent copy per load (saved into the save, stacking: N loads =
+        // N monthly XP awards). removeListenerOfClass purges those from saves.
+        Global.getSector().getListenerManager().removeListenerOfClass(skills_overhaul.xp.AdminXPTracker.class);
+        Global.getSector().getListenerManager().addListener(new skills_overhaul.xp.AdminXPTracker(), true);
         Global.getSector().addTransientScript(new skills_overhaul.level.LevelReconciler());
         Global.getSector().addTransientListener(new skills_overhaul.supply.SalvageBonusListener());
         Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferRenderer());
@@ -93,16 +97,19 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
                 new skills_overhaul.collective.CollectiveBattleEndListener());
         Global.getSector().addTransientScript(
                 new skills_overhaul.supply.ForgeCampaignBuffsTicker());
-        if (!Boolean.TRUE.equals(Global.getSector().getMemoryWithoutUpdate()
-                .get("$so_bar_seasoned_crew_registered"))) {
+        // The creator is saved with BarEventManager; the old 0-day memory flag
+        // expired, so a duplicate creator was added on every load.
+        if (!BarEventManager.getInstance().hasEventCreator(SeasonedCrewBarEvent.class)) {
             BarEventManager.getInstance().addEventCreator(new SeasonedCrewBarEvent());
-            Global.getSector().getMemoryWithoutUpdate().set(
-                    "$so_bar_seasoned_crew_registered", true, 0f);
         }
-        skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
-        skills_overhaul.console.OrphanSkillGranter.applyAllOnLoad();
-        skills_overhaul.state.NodeApplyService.reapplyAllOwned();
+        // Migration must read vanilla skill levels BEFORE suppression zeroes
+        // them, or every existing save migrates with spent=0.
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
+        skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
+        skills_overhaul.state.NodeApplyService.reapplyAllOwned();
+        // After reapplyAllOwned: its static reset pass would otherwise wipe
+        // the ACTIVE_NODES entries orphan grants just added.
+        skills_overhaul.console.OrphanSkillGranter.applyAllOnLoad();
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
                 LOG_PREFIX + "listeners registered; newGame=" + newGame);
     }

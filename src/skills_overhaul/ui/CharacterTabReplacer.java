@@ -34,6 +34,7 @@ public final class CharacterTabReplacer implements EveryFrameScript {
     private UIPanelAPI mountParent;      // where OUR panel was added (core UI)
     private CustomPanelAPI ourPanel;
     private boolean reflectionWarned = false;
+    private boolean bailWarned = false;
 
     // Screen size at install; a resolution change while open requires a remount.
     private float installedScreenW, installedScreenH;
@@ -79,6 +80,9 @@ public final class CharacterTabReplacer implements EveryFrameScript {
     private void install() {
         Object rawState = AppDriver.getInstance().getCurrentState();
         if (!(rawState instanceof CampaignState)) {
+            // install() retries every frame while the tab is open; warn once.
+            if (bailWarned) return;
+            bailWarned = true;
             Global.getLogger(CharacterTabReplacer.class).warn(LOG_PREFIX + "install: rawState is not CampaignState, got " + (rawState != null ? rawState.getClass().getName() : "null"));
             return;
         }
@@ -101,6 +105,8 @@ public final class CharacterTabReplacer implements EveryFrameScript {
             }
         }
         if (core == null) {
+            if (bailWarned) return;
+            bailWarned = true;
             Global.getLogger(CharacterTabReplacer.class).warn(LOG_PREFIX + "install: could not find core UI panel, bailing");
             return;
         }

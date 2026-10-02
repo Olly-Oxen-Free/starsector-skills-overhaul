@@ -19,9 +19,11 @@ public final class SupplyBufferRenderer implements EveryFrameScript, CampaignUIR
     @Override
     public void advance(float amount) {
         if (!listenerRegistered) {
-            // Transient (false): this script is re-added on every game load, so a
-            // persistent registration would stack one render listener per load.
-            Global.getSector().getListenerManager().addListener(this, false);
+            // addListener(l, true) = transient. This script is re-added on every
+            // game load; the old `false` saved a persistent copy per load that
+            // stacked. removeListenerOfClass purges those from existing saves.
+            Global.getSector().getListenerManager().removeListenerOfClass(SupplyBufferRenderer.class);
+            Global.getSector().getListenerManager().addListener(this, true);
             listenerRegistered = true;
         }
     }

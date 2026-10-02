@@ -75,6 +75,20 @@ public final class NodeApplyService {
         skills_overhaul.artificer.forge.ForgeRecipeRegistry.resetUnlocks();
         skills_overhaul.artificer.forge.FreeDeployQuotaTracker.reset();
         skills_overhaul.artificer.AutomatedShipPointService.reset();
+        skills_overhaul.effect.handlers.corsair.BountyBoardListener.active = false;
+        skills_overhaul.effect.handlers.corsair.BountyBoardListener.weaponDropMult = 1f;
+        skills_overhaul.commandant.FieldCommandsService.active = false;
+        // Salvage multipliers are keyed by node id and have no bulk clear.
+        for (Tree tab : Tree.values()) {
+            List<TreeDef> trees;
+            try { trees = TreeRegistry.getTrees(tab); }
+            catch (Exception e) { continue; }
+            for (TreeDef def : trees) {
+                for (Node node : def.getNodes()) {
+                    skills_overhaul.effect.handlers.corsair.PostBattleSalvageMultiplierListener.unregister(node.getId());
+                }
+            }
+        }
     }
 
     private NodeApplyService() {}
