@@ -70,6 +70,7 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int playerHeld,
                                      boolean marching, boolean totalControl) {
         if (ACTIVE_NODES.contains("commandant_t1_officer_training")) OfficerTraining.apply(s);
+        if (ACTIVE_NODES.contains("commandant_t1_drilled")) DrilledAndReady.apply(s);
         if (ACTIVE_NODES.contains("commandant_t2_authority")) Authority.apply(s, playerHeld);
         if (ACTIVE_NODES.contains("commandant_t2_cohesion")) TacticalCohesion.apply(s, engine);
         if (ACTIVE_NODES.contains("commandant_t2_reserve")) ReserveCommitment.apply(s, combatTime);
@@ -96,6 +97,16 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
             s.getMutableStats().getBallisticWeaponDamageMult().modifyMult("commandant_t5_marching", 1f + dmg);
             s.getMutableStats().getEnergyWeaponDamageMult().modifyMult("commandant_t5_marching", 1f + dmg);
             s.getMutableStats().getMaxSpeed().modifyMult("commandant_t5_marching", 1f + spd);
+        }
+    }
+
+    /** Drilled and Ready: +5% weapon damage fleet-wide (vanilla Tactical Drills stats). */
+    static final class DrilledAndReady {
+        static void apply(ShipAPI s) {
+            if (s.isFighter()) return;
+            s.getMutableStats().getBallisticWeaponDamageMult().modifyPercent("commandant_t1_drilled", 5f);
+            s.getMutableStats().getEnergyWeaponDamageMult().modifyPercent("commandant_t1_drilled", 5f);
+            s.getMutableStats().getMissileWeaponDamageMult().modifyPercent("commandant_t1_drilled", 5f);
         }
     }
 
