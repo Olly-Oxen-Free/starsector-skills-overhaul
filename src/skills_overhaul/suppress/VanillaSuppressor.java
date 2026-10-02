@@ -7,10 +7,13 @@ import com.fs.starfarer.api.characters.MutableCharacterStatsAPI;
 import com.fs.starfarer.api.characters.SkillSpecAPI;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
- * Zeros all non-so_ skill levels on load, stashing prior levels under SUPPRESS_TAG
+ * Zeros all vanilla skill levels on load, stashing prior levels under SUPPRESS_TAG
  * so vanilla XP/point counters survive and skills can be restored on uninstall.
  *
  * Per spec §7.2: explicit unregister of registered SkillEffect modifiers is
@@ -23,14 +26,48 @@ public final class VanillaSuppressor {
     /** Set by UninstallHelper.prepareUninstall(); skips suppression on load. */
     public static final String K_SUPPRESSION_DISABLED = "$so_suppression_disabled";
 
+    /**
+     * Vanilla skill ids (starsector-core data/characters/skills/skill_data.csv, 0.98a).
+     * Only these are suppressed — other mods' skills (often hidden/permanent) are left alone.
+     */
+    static final Set<String> VANILLA_SKILL_IDS = new HashSet<String>(Arrays.asList(
+            "helmsmanship", "combat_endurance", "impact_mitigation", "damage_control",
+            "field_modulation", "point_defense", "target_analysis", "ballistic_mastery",
+            "systems_expertise", "missile_specialization", "tactical_drills",
+            "coordinated_maneuvers", "wolfpack_tactics", "crew_training", "fighter_uplink",
+            "carrier_group", "officer_training", "officer_management", "best_of_the_best",
+            "support_doctrine", "force_concentration", "navigation", "sensors", "gunnery_implants",
+            "energy_weapon_mastery", "electronic_warfare", "flux_regulation",
+            "cybernetic_augmentation", "phase_corps", "special_modifications", "neural_link",
+            "automated_ships", "bulk_transport", "salvaging", "field_repairs", "ordnance_expert",
+            "polarized_armor", "containment_procedures", "makeshift_equipment",
+            "industrial_planning", "derelict_contingent", "hull_restoration", "omega_ecm",
+            "hypercognition", "space_operations", "planetary_operations", "colony_management",
+            "strike_commander", "ranged_specialization", "shield_modulation", "phase_mastery",
+            "reliability_engineering", "weapon_drills", "auxiliary_support", "aptitude_combat",
+            "aptitude_leadership", "aptitude_technology", "aptitude_industry"));
+
     public static void applyOnEveryLoad() {
         MutableCharacterStatsAPI s = Global.getSector().getPlayerPerson().getStats();
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         if (mem.getBoolean(K_SUPPRESSION_DISABLED)) return;
 
+        // Older versions suppressed every non-so_ skill, including other mods'.
+        // Give those back from the stash.
+        List<String> foreign = new ArrayList<String>();
+        for (String k : mem.getKeys()) {
+            if (k.startsWith(SUPPRESS_TAG) && !VANILLA_SKILL_IDS.contains(k.substring(SUPPRESS_TAG.length()))) {
+                foreign.add(k);
+            }
+        }
+        for (String k : foreign) {
+            s.setSkillLevel(k.substring(SUPPRESS_TAG.length()), mem.getFloat(k));
+            mem.unset(k);
+        }
+
         for (MutableCharacterStatsAPI.SkillLevelAPI sl : s.getSkillsCopy()) {
             String id = sl.getSkill().getId();
-            if (id.startsWith("so_")) continue;
+            if (!VANILLA_SKILL_IDS.contains(id)) continue;
 
             float prev = sl.getLevel();
             if (prev > 0f) {
