@@ -87,7 +87,14 @@
     },
     { "id": "corsair_t3_hunting_grounds", "name": "Hunting Grounds",
       "x": 4, "y": 3, "cost": 1, "prereqs": [{ "all": ["corsair_t2_jumpstart"] }],
-      "effects": []
+      "effects": [
+        { "type": "SO_corsair_combat_script", "node": "corsair_t3_hunting_grounds" },
+        { "type": "SO_fleet_stat",
+          "stats": [
+            { "key": "planetaryOperationsMod", "value": 0.30 },
+            { "key": "planetaryOperationsCasualtiesMod", "value": -0.25 }
+          ] }
+      ]
     },
 
     { "id": "corsair_t4_derelict_fortifications", "name": "Derelict Fortifications",

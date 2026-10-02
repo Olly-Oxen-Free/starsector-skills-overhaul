@@ -68,6 +68,7 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
         if (ACTIVE_NODES.contains("corsair_t3_pack_hunter"))   PackHunter.apply(s, engine);
         if (ACTIVE_NODES.contains("corsair_t3_trapped_prey"))  TrappedPrey.apply(s, trappedPreyNow);
+        if (ACTIVE_NODES.contains("corsair_t3_hunting_grounds")) HuntingGrounds.apply(s);
         if (ACTIVE_NODES.contains("corsair_t4_quick_wind"))    QuickAsTheWind.apply(s);
         if (ACTIVE_NODES.contains("corsair_t4_shifting_tides")) ShiftingTides.apply(s, engine);
         if (ACTIVE_NODES.contains("corsair_t4_blood_in_water")) BloodInTheWater.applyShip(s, engine);
@@ -79,6 +80,20 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
      * +2% CR per d-mod (cap 5); CR-per-deployment +5% per d-mod (cap 5).
      * getCRPerDeploymentPercent confirmed present in API jar.
      */
+    /** Hunting Grounds: frigates/destroyers +15% speed, +10% maneuverability (vanilla Helmsmanship stats). */
+    static final class HuntingGrounds {
+        static final String ID = "corsair_t3_hunting_grounds";
+        static void apply(ShipAPI s) {
+            ShipAPI.HullSize h = s.getHullSize();
+            if (h != ShipAPI.HullSize.FRIGATE && h != ShipAPI.HullSize.DESTROYER) return;
+            s.getMutableStats().getMaxSpeed().modifyPercent(ID, 15f);
+            s.getMutableStats().getAcceleration().modifyPercent(ID, 10f);
+            s.getMutableStats().getDeceleration().modifyPercent(ID, 10f);
+            s.getMutableStats().getTurnAcceleration().modifyPercent(ID, 10f);
+            s.getMutableStats().getMaxTurnRate().modifyPercent(ID, 10f);
+        }
+    }
+
     static final class ScrappyMaintenance {
         static void apply(ShipAPI s) {
             int eff = countDMods(s);
