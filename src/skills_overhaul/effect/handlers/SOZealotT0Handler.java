@@ -20,6 +20,8 @@ public final class SOZealotT0Handler implements EffectHandler {
             Global.getSector().getMemoryWithoutUpdate().set("$skills.zealot.t0.cap_cruiser_armor_bonus", 25f);
         } else if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().set(K_CORE_ACTIVE, true);
+            // Spec: core channel "Rivalry campaign ability unlocked".
+            skills_overhaul.effect.AbilityGrants.grant(skills_overhaul.zealot.DesignateRivalAbility.ABILITY_ID);
         }
     }
 
@@ -32,6 +34,7 @@ public final class SOZealotT0Handler implements EffectHandler {
             Global.getSector().getMemoryWithoutUpdate().unset("$skills.zealot.t0.cap_cruiser_armor_bonus");
         } else if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().unset(K_CORE_ACTIVE);
+            skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.zealot.DesignateRivalAbility.ABILITY_ID);
         }
     }
 }

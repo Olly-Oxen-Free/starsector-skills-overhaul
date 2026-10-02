@@ -10,6 +10,7 @@ public final class LetterOfMarqueHandler implements EffectHandler {
         String channel = params.optString("channel", "core");
         if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().set("$skills.corsair.t5.purchased", true);
+            skills_overhaul.effect.AbilityGrants.grant(skills_overhaul.corsair.LetterOfMarqueAbility.ABILITY_ID);
         }
     }
 
@@ -18,6 +19,7 @@ public final class LetterOfMarqueHandler implements EffectHandler {
         String channel = params.optString("channel", "core");
         if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().unset("$skills.corsair.t5.purchased");
+            skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.corsair.LetterOfMarqueAbility.ABILITY_ID);
         }
     }
 }

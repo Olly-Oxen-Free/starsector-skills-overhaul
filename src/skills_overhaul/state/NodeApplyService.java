@@ -31,6 +31,7 @@ public final class NodeApplyService {
         // reset, loading save B after save A carries A's active nodes,
         // recipe unlocks, cap multipliers and command-field params into B.
         resetTransientStatics();
+        skills_overhaul.effect.AbilityGrants.beginReapply();
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         int count = 0;
@@ -55,6 +56,8 @@ public final class NodeApplyService {
                 }
             }
         }
+        // Drop abilities no owned/active node granted (incl. the old unlockedAtStart rows).
+        skills_overhaul.effect.AbilityGrants.revokeUngranted();
         Global.getLogger(NodeApplyService.class).info(
                 "[skills_overhaul] re-applied " + count + " owned nodes on load");
     }

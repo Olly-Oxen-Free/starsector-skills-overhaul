@@ -23,6 +23,7 @@ public final class CorsairT0Handler implements EffectHandler {
             Global.getSector().getMemoryWithoutUpdate().set(K_BM_DISCOUNT, 0.05f);
         } else if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().set(K_CORE_ACTIVE, true);
+            skills_overhaul.effect.AbilityGrants.grant(skills_overhaul.corsair.UndergroundIntelAbility.ABILITY_ID);
         }
     }
 
@@ -37,6 +38,7 @@ public final class CorsairT0Handler implements EffectHandler {
             Global.getSector().getMemoryWithoutUpdate().unset(K_BM_DISCOUNT);
         } else if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().unset(K_CORE_ACTIVE);
+            skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.corsair.UndergroundIntelAbility.ABILITY_ID);
         }
     }
 }
