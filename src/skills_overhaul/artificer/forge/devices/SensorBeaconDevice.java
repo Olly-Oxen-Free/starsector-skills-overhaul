@@ -18,8 +18,7 @@ public final class SensorBeaconDevice implements ForgeDeviceEffect {
                     null, "Forge Sensor Beacon", "sensor_array", null);
             beacon.setLocation(pos.x, pos.y);
             // 7-day expire — schedule via memory key
-            int expire = (int) Global.getSector().getClock().getCycle() * 365
-                    + (int) Global.getSector().getClock().getDay() + 7;
+            int expire = skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay() + 7;
             Global.getSector().getMemoryWithoutUpdate().set(
                     "$skills.artificer.forge.sensor_beacon_expire." + beacon.getId(), expire);
         } catch (Throwable t) {

@@ -46,9 +46,10 @@ public final class ZealDailyTicker implements EveryFrameScript {
         return false;
     }
 
+    /** cycle*365 + day-of-year. getDay() is day-of-month and would run backwards at month rollover. */
     public static int monotonicDay() {
         return (int) Global.getSector().getClock().getCycle() * 365
-                + (int) Global.getSector().getClock().getDay();
+                + Global.getSector().getClock().getCal().get(java.util.Calendar.DAY_OF_YEAR);
     }
 
     /**

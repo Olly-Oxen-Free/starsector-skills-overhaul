@@ -20,9 +20,12 @@ public final class InfamyDailyTicker implements EveryFrameScript {
         InfamyService.getInfamy(Global.getSector().getMemoryWithoutUpdate(), day);
     }
 
-    /** Monotonic int day count (cycle*365 + day). */
+    /**
+     * Monotonic int day count (cycle*365 + day-of-year). getDay() is the day of the MONTH, so
+     * the old cycle*365 + getDay() went backwards at every month rollover.
+     */
     public static int monotonicDay() {
         return (int) Global.getSector().getClock().getCycle() * 365
-                + (int) Global.getSector().getClock().getDay();
+                + Global.getSector().getClock().getCal().get(java.util.Calendar.DAY_OF_YEAR);
     }
 }

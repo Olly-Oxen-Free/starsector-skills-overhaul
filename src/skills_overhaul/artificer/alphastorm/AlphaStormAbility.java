@@ -56,8 +56,12 @@ public final class AlphaStormAbility extends BaseDurationAbility {
         t.addPara("Generates an Alpha Storm enveloping the fleet. Replaces Sustained Burn. Consumes supplies daily; intensity ramps over 7 days.", 5f);
     }
 
+    /**
+     * Monotonic campaign day counter. Uses DAY_OF_YEAR — {@code getClock().getDay()} is the
+     * day of the MONTH, which made this value drop ~30 at every month rollover.
+     */
     public static int monotonicDay() {
         return (int) Global.getSector().getClock().getCycle() * 365
-                + (int) Global.getSector().getClock().getDay();
+                + Global.getSector().getClock().getCal().get(java.util.Calendar.DAY_OF_YEAR);
     }
 }
