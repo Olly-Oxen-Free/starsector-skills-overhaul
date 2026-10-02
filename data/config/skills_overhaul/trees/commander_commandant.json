@@ -28,7 +28,14 @@
     },
     { "id": "commandant_t1_discipline", "name": "Fleet Discipline",
       "x": 2, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
-      "effects": []
+      "effects": [
+        { "type": "SO_fleet_stat",
+          "stats": [
+            { "key": "minCrewMod", "value": -0.33 },
+            { "key": "crewLossMod", "value": -0.33 },
+            { "key": "officeredMaxCombatReadinessFlat", "value": 0.05 }
+          ] }
+      ]
     },
     { "id": "commandant_t1_logistics", "name": "Logistics Supremacy",
       "x": 3, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
