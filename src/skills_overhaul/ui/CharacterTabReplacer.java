@@ -8,15 +8,14 @@ import com.fs.starfarer.api.ui.UIPanelAPI;
 import com.fs.starfarer.campaign.CampaignState;
 import com.fs.state.AppDriver;
 
-import skills_overhaul.state.Tree;
-import skills_overhaul.tree.TreeRegistry;
+import skills_overhaul.ui.view.SkillTreeView;
 
 import java.util.List;
 
 /**
  * Polls the core UI once per frame (while paused on the CHARACTER tab) and,
  * when the vanilla skill panel is showing, hides it and attaches our
- * CharacterTabPanelPlugin in its place.
+ * SkillTreeView in its place.
  *
  * Instead of removeComponent (which the layout manager often reverts),
  * we HIDE the vanilla panel by setting its size to 0 and moving it off-screen.
@@ -33,6 +32,7 @@ public final class CharacterTabReplacer implements EveryFrameScript {
     private UIPanelAPI vanillaPanel;
     private UIPanelAPI mountParent;      // where OUR panel was added (core UI)
     private CustomPanelAPI ourPanel;
+    private SkillTreeView ourView;
     private boolean reflectionWarned = false;
     private boolean bailWarned = false;
 
@@ -177,16 +177,6 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         hideSiblings(p, target);
 
         // --- Panel sizing & centered mount ---------------------------------
-        // Diagnostics: widest tree's content width.
-        float maxGridW = 0f, maxGridH = 0f;
-        for (Tree t : Tree.values()) {
-            for (skills_overhaul.tree.TreeDef def : TreeRegistry.getTrees(t)) {
-                PathTreeBuilder.Metrics m = PathTreeBuilder.computeMetrics(def);
-                if (m.totalW > maxGridW) maxGridW = m.totalW;
-                if (m.totalH > maxGridH) maxGridH = m.totalH;
-            }
-        }
-
         float screenW = Global.getSettings().getScreenWidth();
         float screenH = Global.getSettings().getScreenHeight();
         float panelW = Math.min(1700f, screenW * 0.90f);
@@ -196,8 +186,8 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         // Centering via inMid() then places us dead-center on screen.
         mountParent = core;
 
-        CharacterTabPanelPlugin plugin = new CharacterTabPanelPlugin();
-        ourPanel = Global.getSettings().createCustom(panelW, panelH, plugin);
+        ourView = new SkillTreeView(panelW, panelH);
+        ourPanel = ourView.getPanel();
         mountParent.addComponent(ourPanel);
         try {
             ourPanel.getPosition().inMid();
@@ -208,13 +198,11 @@ public final class CharacterTabReplacer implements EveryFrameScript {
             float cy = (cPos.getHeight() - panelH) / 2f;
             ourPanel.getPosition().inTL(cx, cy);
         }
-        plugin.attach(ourPanel);
 
         Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX
                 + "install: mounted at core=" + mountParent.getClass().getSimpleName()
                 + " panel=" + panelW + "x" + panelH
-                + " screen=" + screenW + "x" + screenH
-                + " contentMax=" + maxGridW + "x" + maxGridH);
+                + " screen=" + screenW + "x" + screenH);
         installedScreenW = screenW;
         installedScreenH = screenH;
         installed = true;
@@ -295,6 +283,11 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         if (!installed) return;
         try {
             // Remove our custom panel from the core UI.
+            // Discarding the view clears its pending purchases.
+            if (ourView != null) {
+                try { ourView.discard(); } catch (Throwable ignored) {}
+                ourView = null;
+            }
             if (mountParent != null && ourPanel != null) {
                 try { mountParent.removeComponent(ourPanel); } catch (Throwable ignored) {}
                 ourPanel = null;
