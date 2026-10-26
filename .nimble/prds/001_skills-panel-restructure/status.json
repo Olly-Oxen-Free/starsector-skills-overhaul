@@ -1,7 +1,7 @@
 {
   "prd_slug": "skills-panel-restructure",
   "version": "5.0",
-  "status": "merging",
+  "status": "complete",
   "execution_mode": "feature-branch",
   "tier": "architectural",
   "created_at": "2026-10-26T07:38:20Z",
@@ -179,5 +179,6 @@
     }
   },
   "completed_at": "2026-10-26T08:50:37Z",
-  "final_pr_number": 9
+  "final_pr_number": 9,
+  "merged_to_main_at": "2026-10-26T19:58:43Z"
 }
