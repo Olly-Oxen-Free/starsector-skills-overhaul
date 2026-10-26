@@ -23,10 +23,15 @@ public final class RespecService {
         mem.put(RECORD_PREFIX + nodeId + ".mg", (float) migration);
     }
 
+    /** Story points a respec of {@code tree} costs: 0 until {@code respec_used} is set for it, then 1. */
+    public static int costFor(Map<String,Object> snapshot, Tree tree) {
+        return Boolean.TRUE.equals(snapshot.get(SkillMemory.respecUsedKey(tree))) ? 1 : 0;
+    }
+
     public static Result respecTree(Map<String,Object> mem, Tree tree) {
         Result r = new Result();
-        boolean firstFree = !Boolean.TRUE.equals(mem.get(SkillMemory.respecUsedKey(tree)));
-        r.storyPointsCharged = firstFree ? 0 : 1;
+        r.storyPointsCharged = costFor(mem, tree);
+        boolean firstFree = r.storyPointsCharged == 0;
 
         int totalTL = 0, totalFU = 0, totalMig = 0;
 

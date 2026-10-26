@@ -97,7 +97,9 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientListener(new skills_overhaul.zealot.ZealKillListener());
         Global.getSector().addTransientScript(new skills_overhaul.zealot.ZealDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.PostBattleRestoreListener());
-        Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.RaidZealListener());
+        if (!lm.hasListenerOfClass(skills_overhaul.effect.handlers.RaidZealListener.class)) {
+            lm.addListener(new skills_overhaul.effect.handlers.RaidZealListener(), true);
+        }
         Global.getSector().addTransientScript(new skills_overhaul.zealot.DoctrinalAuthorityTicker());
         Global.getSector().addTransientScript(
                 new skills_overhaul.artificer.forge.MobileFabUnitTicker());
