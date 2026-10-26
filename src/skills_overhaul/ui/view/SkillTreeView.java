@@ -25,6 +25,7 @@ import skills_overhaul.level.GameSpend;
 import skills_overhaul.ui.host.HostRouter;
 import skills_overhaul.level.PurchasePlan;
 import skills_overhaul.level.RespecRunner;
+import skills_overhaul.level.RespecService;
 import skills_overhaul.level.XPCurve;
 import skills_overhaul.state.SkillMemory;
 import skills_overhaul.state.Tree;
@@ -110,6 +111,9 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
     private final Set<String> ownedOrPending = new HashSet<String>();
     private final List<ConnectionLineDrawer.Edge> edges = new ArrayList<ConnectionLineDrawer.Edge>();
     private List<String> activeIds = Collections.emptyList();
+    /** T0 node awaiting a choice of which active T0 it replaces; null outside replace mode. */
+    private String replacePending;
+    private boolean respecUnaffordable;
     private long xpCur, xpReq = 1;
 
     /** Sprite per icon path; a null value records a path whose texture could not load. */
@@ -150,9 +154,9 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
 
     public Tree getCurrentTab() { return currentTab; }
 
-    /** True while the current tab holds unconfirmed purchases (Esc then clears them). */
+    /** True while the current tab holds unconfirmed purchases or a T0 replace is awaiting a choice (Esc then cancels it). */
     public boolean hasPending() {
-        return model != null && !model.getPending().isEmpty();
+        return replacePending != null || (model != null && !model.getPending().isEmpty());
     }
 
     /** Clears pending purchases; hosts call this when they remove the panel. */
@@ -161,6 +165,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
             model = new SkillTreeModel(currentTab, defs, GameSpend.snapshot(currentTab));
         }
         flashes.clear();
+        replacePending = null;
         pressing = false;
         dragging = false;
     }
@@ -177,6 +182,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
         columnHeaders.clear();
         nodesById.clear();
         flashes.clear();
+        replacePending = null;
         pressing = false;
         dragging = false;
 
@@ -260,9 +266,17 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
         confirmButton = tip.addButton("Confirm (0 pts)", BTN_CONFIRM,
                 new Color(60, 160, 90), new Color(30, 90, 50),
                 Alignment.MID, CutStyle.C2_MENU, btnW, btnH, 4f);
-        respecButton = tip.addButton("Respec (1 SP)", BTN_RESPEC,
+        respecButton = tip.addButton("Respec (free)", BTN_RESPEC,
                 new Color(180, 60, 60), new Color(100, 30, 30),
                 Alignment.MID, CutStyle.C2_MENU, btnW, btnH, 4f);
+        tip.addTooltipToPrevious(new TooltipMakerAPI.TooltipCreator() {
+            public boolean isTooltipExpandable(Object p) { return false; }
+            public float getTooltipWidth(Object p) { return 220f; }
+            public void createTooltip(TooltipMakerAPI t, boolean expanded, Object p) {
+                t.addPara(respecUnaffordable ? "Needs 1 story point"
+                        : "The first respec of each tree is free; later ones cost 1 story point.", 0f);
+            }
+        }, TooltipMakerAPI.TooltipLocation.RIGHT);
         addElement(tip, leftX, leftY);
         rail = tip;
     }
@@ -401,8 +415,13 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
             confirmButton.setEnabled(!pending.isEmpty());
         }
         if (respecButton != null) {
-            boolean canRespec = pending.isEmpty() && ownedCount() > 0;
-            respecButton.setText(canRespec ? "Respec (1 SP)" : "Respec (n/a)");
+            int respecCost = respecCost();
+            respecUnaffordable = respecCost > 0 && sp < respecCost;
+            boolean canRespec = pending.isEmpty() && ownedCount() > 0 && !respecUnaffordable
+                    && replacePending == null;
+            respecButton.setText(pending.isEmpty() && ownedCount() > 0
+                    ? (respecCost > 0 ? "Respec (" + respecCost + " SP)" : "Respec (free)")
+                    : "Respec (n/a)");
             respecButton.setEnabled(canRespec);
         }
 
@@ -418,12 +437,26 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
         long cur = xp - XPCurve.cumulativeXP(level);
         xpCur = Math.max(0, cur);
         xpReq = req <= 0 ? 1 : req;
-        if (bottomLabel != null) {
+        if (bottomLabel != null && replacePending != null) {
+            Node rn = nodesById.get(replacePending);
+            bottomLabel.setText("Replace which active basic with "
+                    + (rn == null ? replacePending : rn.getName())
+                    + "? Click a pulsing node. Esc cancels.");
+        } else if (bottomLabel != null) {
             bottomLabel.setText(currentTab.key.toUpperCase()
                     + "   Level " + level
                     + "   " + xpCur + " / " + xpReq + " XP"
                     + "   (" + pts + " points)");
         }
+    }
+
+    /** Story points a respec of the current tab costs right now. */
+    private int respecCost() {
+        MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        Map<String, Object> m = new HashMap<String, Object>();
+        String k = SkillMemory.respecUsedKey(currentTab);
+        if (mem.contains(k) && mem.getBoolean(k)) m.put(k, Boolean.TRUE);
+        return RespecService.costFor(m, currentTab);
     }
 
     private int ownedCount() {
@@ -559,6 +592,19 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
                 TreeLayout.Rect r = layout.getNodeRect(id);
                 if (r == null) continue;
                 loop((float) r.x - 3f, (float) r.y - 3f, (float) r.w + 6f, (float) r.h + 6f, 0f);
+            }
+        }
+
+        if (replacePending != null && !activeIds.isEmpty()) {
+            float k = 0.5f + 0.5f * (float) Math.sin(System.currentTimeMillis() * 0.008);
+            for (String id : activeIds) {
+                TreeLayout.Rect r = layout.getNodeRect(id);
+                if (r == null) continue;
+                color(FLASH_RED, 0.40f * k * alphaMult);
+                quad((float) r.x, (float) r.y, (float) r.w, (float) r.h);
+                color(FLASH_RED, (0.4f + 0.6f * k) * alphaMult);
+                GL11.glLineWidth(2.0f);
+                loop((float) r.x, (float) r.y, (float) r.w, (float) r.h, 0.5f);
             }
         }
 
@@ -805,6 +851,11 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
                         return;
                     }
                 }
+                if (key == Keyboard.KEY_ESCAPE && replacePending != null) {
+                    e.consume();
+                    cancelReplace();
+                    return;
+                }
                 if (key == Keyboard.KEY_ESCAPE && !model.getPending().isEmpty()) {
                     e.consume();
                     reloadModel();
@@ -866,7 +917,8 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
                 e.consume();
                 if (!wasDrag) {
                     String id = layout.hitTest(pressX, pressY);
-                    if (id != null) handleNodeClick(id);
+                    if (replacePending != null) resolveReplace(id);
+                    else if (id != null) handleNodeClick(id);
                 }
             }
         }
@@ -896,8 +948,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
     }
 
     /**
-     * Owned T0 click: make it an active basic. With every slot full, v0 auto-displaces the
-     * first active slot.
+     * Owned T0 click: make it an active basic. With every slot full, enters replace mode.
      */
     private void toggleActiveSlot(String nodeId) {
         Node clicked = nodesById.get(nodeId);
@@ -912,16 +963,32 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
             refreshState();
             return;
         }
-        // TODO(active-basics): v0 auto-displaces the first active slot. A follow-up should
-        //   open a modal letting the player choose which active T0 to displace.
-        String displaced = active.get(0);
-        if (ActiveLaneService.swap(mem, displaced, nodeId)) {
-            TreeDef displacedDef = TreeRegistry.findTreeOfAnywhere(displaced);
-            Node displacedNode = displacedDef != null ? displacedDef.getNode(displaced) : null;
-            if (displacedNode != null) NodeEffectApplier.reapplyForActiveChange(displacedNode, false);
-            NodeEffectApplier.reapplyForActiveChange(clicked, true);
-            refreshState();
+        // Both slots full: enter replace mode and let the player pick the active T0 to displace.
+        replacePending = nodeId;
+        refreshState();
+    }
+
+    private void cancelReplace() {
+        replacePending = null;
+        refreshState();
+    }
+
+    /** Replace-mode click: an active T0 is displaced by the pending one; anything else cancels. */
+    private void resolveReplace(String clickedId) {
+        String incoming = replacePending;
+        replacePending = null;
+        if (clickedId != null && incoming != null && ActiveLaneService.canSwapLive()) {
+            MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+            Node clicked = nodesById.get(incoming);
+            if (clicked != null && ActiveLaneService.isActive(mem, clickedId)
+                    && ActiveLaneService.swap(mem, clickedId, incoming)) {
+                TreeDef displacedDef = TreeRegistry.findTreeOfAnywhere(clickedId);
+                Node displacedNode = displacedDef != null ? displacedDef.getNode(clickedId) : null;
+                if (displacedNode != null) NodeEffectApplier.reapplyForActiveChange(displacedNode, false);
+                NodeEffectApplier.reapplyForActiveChange(clicked, true);
+            }
         }
+        refreshState();
     }
 
     // ================================================================== helpers
