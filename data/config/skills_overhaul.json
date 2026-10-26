@@ -14,5 +14,6 @@
     "good_standing_threshold":       5,
     "stability_streak_cap_months":   6,
     "vassal_xp_mult":                0.25,
-    "administrator_xp_mult":         0.50
+    "administrator_xp_mult":         0.50,
+    "ui_hotkey":                     37
 }
