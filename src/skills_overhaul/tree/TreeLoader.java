@@ -1,6 +1,7 @@
 package skills_overhaul.tree;
 
 import com.fs.starfarer.api.Global;
+import org.apache.log4j.Logger;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -63,16 +64,42 @@ public final class TreeLoader {
      * for the commander tab. Authors update the manifest when adding a tree.
      */
     public static List<TreeDef> loadAllForTab(String tabKey) throws Exception {
+        return loadAllForTab(tabKey, new ArrayList<String>());
+    }
+
+    /** Supplies the raw JSON for one tree key; lets tests inject fixtures without Global. */
+    interface TreeSource {
+        JSONObject get(String key) throws Exception;
+    }
+
+    /**
+     * Like {@link #loadAllForTab(String)}, but a tree that fails to load is logged at WARN,
+     * skipped, and its index key appended to {@code failedOut}. The other trees still load.
+     */
+    public static List<TreeDef> loadAllForTab(final String tabKey, List<String> failedOut) throws Exception {
         String indexPath = "data/config/skills_overhaul/trees/" + tabKey + "_index.json";
         JSONObject index = Global.getSettings().getMergedJSONForMod(indexPath, "skills_overhaul");
-        JSONArray keys = index.getJSONArray("trees");
+        return loadTrees(tabKey, index.getJSONArray("trees"), new TreeSource() {
+            public JSONObject get(String key) throws Exception {
+                return Global.getSettings().getMergedJSONForMod(
+                        "data/config/skills_overhaul/trees/" + tabKey + "_" + key + ".json",
+                        "skills_overhaul");
+            }
+        }, failedOut);
+    }
+
+    static List<TreeDef> loadTrees(String tabKey, JSONArray keys, TreeSource src,
+                                   List<String> failedOut) throws JSONException {
         List<TreeDef> out = new ArrayList<>(keys.length());
         for (int i = 0; i < keys.length(); i++) {
             String key = keys.getString(i);
-            JSONObject j = Global.getSettings().getMergedJSONForMod(
-                    "data/config/skills_overhaul/trees/" + tabKey + "_" + key + ".json",
-                    "skills_overhaul");
-            out.add(fromJSON(j));
+            try {
+                out.add(fromJSON(src.get(key)));
+            } catch (Exception e) {
+                Logger.getLogger(TreeLoader.class).warn("Skills Overhaul: failed to load tree "
+                        + tabKey + "_" + key + ", skipping: " + e);
+                failedOut.add(key);
+            }
         }
         return out;
     }

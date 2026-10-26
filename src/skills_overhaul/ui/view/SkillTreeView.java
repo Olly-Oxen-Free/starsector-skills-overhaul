@@ -93,6 +93,8 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
     // --- Per-tab state (rebuilt by buildTab) ----------------------------------------
     private Tree currentTab = Tree.PILOT;
     private List<TreeDef> defs = Collections.emptyList();
+    /** Header-only placeholders for trees that failed to load (identity compared). */
+    private final List<TreeDef> failedDefs = new ArrayList<TreeDef>();
     private TreeLayout layout;
     private SkillTreeModel model;
     private final Map<String, Node> nodesById = new LinkedHashMap<String, Node>();
@@ -187,7 +189,17 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
                 if (!nodesById.containsKey(n.getId())) nodesById.put(n.getId(), n);
             }
         }
-        layout = new TreeLayout(defs, vpW, vpH);
+        // A tree that failed to load keeps a header-only column reading "Failed to load <tree>".
+        failedDefs.clear();
+        List<String> failedKeys = Collections.<String>emptyList();
+        try { failedKeys = TreeRegistry.getFailed(currentTab); } catch (Throwable ignored) {}
+        List<TreeDef> layoutDefs = new ArrayList<TreeDef>(defs);
+        for (String key : failedKeys) {
+            TreeDef ph = new TreeDef(currentTab.key + "_" + key, new LinkedHashMap<String, Node>());
+            failedDefs.add(ph);
+            layoutDefs.add(ph);
+        }
+        layout = new TreeLayout(layoutDefs, vpW, vpH);
         model = new SkillTreeModel(currentTab, defs, GameSpend.snapshot(currentTab));
         preloadSprites();
 
@@ -268,7 +280,9 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
         for (TreeDef def : layout.getTreeDefs()) {
             TooltipMakerAPI header = panel.createUIElement((float) colW, hh, false);
             try { header.setParaFontVictor14(); } catch (Throwable ignored) {}
-            header.addPara(prettyTreeName(def.getTree()), accent, 0f);
+            boolean bad = failedDefs.contains(def);
+            header.addPara(bad ? "Failed to load " + prettyTreeName(def.getTree())
+                    : prettyTreeName(def.getTree()), bad ? new Color(230, 90, 90) : accent, 0f);
             try { header.setParaFontDefault(); } catch (Throwable ignored) {}
             addElement(header, 0f, 0f);
             columnHeaders.add(header);
