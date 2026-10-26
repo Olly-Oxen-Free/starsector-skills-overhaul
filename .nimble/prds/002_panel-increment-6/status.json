@@ -1,0 +1,10 @@
+{
+  "prd_slug": "panel-increment-6",
+  "version": "5.0",
+  "status": "active",
+  "execution_mode": "direct-to-main",
+  "tier": "bounded",
+  "created_at": "2026-10-26T09:34:16Z",
+  "tasks": {},
+  "started_at": "2026-10-26T09:34:16Z"
+}
