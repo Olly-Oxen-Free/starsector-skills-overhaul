@@ -2,6 +2,9 @@
 
 ## Unreleased — Defense lane spec gap closure (2026-05-10)
 
+**Skills panel:**
+- Skills hotkey: `K` by default (`ui_hotkey` in `data/config/skills_overhaul.json`) opens the skills dialog. Used under Second-in-Command or when the character tab cannot be replaced; a one-time campaign message names the key. `CharacterTabReplacer` is removed; `CharTabHost` mounts the new view in the CHARACTER tab.
+
 **Major fixes:**
 - Iron Bastion (T3): +20% RoF + 25% weapon turn rate while taking active damage. Fighter-kill heal: +5% of dead fighter's HP via polling (no ShipDestroyedListener in 0.98a-RC8).
 - Flux Fortress (T4): shield damage taken scales with flux level (0 → −30% at 100%).
