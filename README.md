@@ -28,7 +28,8 @@ This is a **v0.1 alpha**. Infrastructure is in; content is first-pass drafts fla
 - Combat plugin that applies `piloted_maneuverability` to MaxTurnRate / TurnAcceleration / Acceleration
 
 **Stubbed or unwired (see FIXME markers):**
-- **Entry point**: the mod ships an `OpenSkillPanelCommand` and a `rules.csv` row using the `CharacterInfoMenu` trigger — *this trigger does not fire in vanilla*. Until a `CoreUITabListener` is wired (likely v0.2), open the skill panel only via rules-console or a dev command. Player-facing entry needs playtest to pick the right hook.
+- **Entry point**: the skill panel is mounted over the vanilla CHARACTER tab (`CharTabHost`). When the tab cannot be replaced (Second-in-Command, or the vanilla panel cannot be probed), the `K` hotkey dialog below is the way in. The old `CharacterInfoMenu` rules trigger does not fire in vanilla and is not relied on.
+- **Skills hotkey**: press `K` (default; set `ui_hotkey` in `data/config/skills_overhaul.json`) to open the skills dialog. It is the way in under Second-in-Command or when the character tab cannot be replaced; the player is told once per session.
 - **Ship-stat handlers**: only `piloted_maneuverability` is wired to real combat-time stat modifiers. All other pilot-tree effect types (damage, range, hull, armor, flux, shield) log STUB and no-op. Add branches to `SkillsOverhaulCombatPlugin.applyShipStatEffect()` post-playtest.
 - **Campaign-wide handlers**: commander-tree and admin-tree effects (fleet CR, officer slots, colony production, accessibility, etc.) have no handler — they route to `NoOpHandler` which warns at purchase and does nothing. Content is drafted with effect types; handlers land post-playtest.
 - **Bar event**: `SeasonedCrewBarEvent` is a skeleton; `createBarEvent()` returns null so the event is skipped. Real dialog + XP award is post-playtest.

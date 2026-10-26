@@ -71,7 +71,19 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientScript(new skills_overhaul.level.LevelReconciler());
         Global.getSector().addTransientListener(new skills_overhaul.supply.SalvageBonusListener());
         Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferRenderer());
-        Global.getSector().addTransientScript(new skills_overhaul.ui.CharacterTabReplacer());
+        skills_overhaul.ui.host.HostRouter.reset();
+        com.fs.starfarer.api.campaign.listeners.ListenerManagerAPI lm = Global.getSector().getListenerManager();
+        if (!lm.hasListenerOfClass(skills_overhaul.ui.host.CharTabHost.class)
+                && !Global.getSector().hasTransientScript(skills_overhaul.ui.host.CharTabHost.class)) {
+            // One instance is both the tab listener and the CHARACTER-tab poll script.
+            skills_overhaul.ui.host.CharTabHost tabHost =
+                    new skills_overhaul.ui.host.CharTabHost(new skills_overhaul.ui.host.HostRouter());
+            lm.addListener(tabHost, true);
+            Global.getSector().addTransientScript(tabHost);
+        }
+        if (!lm.hasListenerOfClass(skills_overhaul.ui.host.SkillsHotkeyListener.class)) {
+            lm.addListener(new skills_overhaul.ui.host.SkillsHotkeyListener(), true);
+        }
         Global.getSector().addTransientScript(new skills_overhaul.corsair.InfamyDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.corsair.InfamyKillListener());
         Global.getSector().addTransientListener(
@@ -85,7 +97,9 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientListener(new skills_overhaul.zealot.ZealKillListener());
         Global.getSector().addTransientScript(new skills_overhaul.zealot.ZealDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.PostBattleRestoreListener());
-        Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.RaidZealListener());
+        if (!lm.hasListenerOfClass(skills_overhaul.effect.handlers.RaidZealListener.class)) {
+            lm.addListener(new skills_overhaul.effect.handlers.RaidZealListener(), true);
+        }
         Global.getSector().addTransientScript(new skills_overhaul.zealot.DoctrinalAuthorityTicker());
         Global.getSector().addTransientScript(
                 new skills_overhaul.artificer.forge.MobileFabUnitTicker());

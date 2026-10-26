@@ -56,6 +56,18 @@ public class SpendServiceTest {
         SpendService.refund(lmem, Tree.PILOT, "pool_node", 2, 0, 0, 2);
         assert !lmem.containsKey("$skills.points.universal_migrated_locked_to") : "lock cleared after migUni→0";
 
+        // Failed spend leaves the map unchanged
+        Map<String,Object> fmem = new HashMap<>();
+        SkillMemory.addPoints(fmem, Tree.PILOT, 1);
+        fmem.put(SkillMemory.freeUniKey(), 1f);
+        fmem.put("$skills.points.universal_migrated_unallocated", 2f);
+        fmem.put("$skills.points.universal_migrated_locked_to", "COMMANDER");
+        Map<String,Object> fbefore = new HashMap<>(fmem);
+        SpendService.Result fr = SpendService.spend(fmem, Tree.PILOT, "too_dear", 5);
+        assert !fr.success : "spend of 5 with 2 usable fails";
+        assert fr.reason.equals("not enough points (short 3)") : fr.reason;
+        assert fmem.equals(fbefore) : "failed spend must not touch the map";
+
         System.out.println("ALL PASSED");
     }
 }
