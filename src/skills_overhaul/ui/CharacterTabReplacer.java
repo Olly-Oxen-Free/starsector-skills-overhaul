@@ -211,8 +211,7 @@ public final class CharacterTabReplacer implements EveryFrameScript {
         plugin.attach(ourPanel);
 
         Global.getLogger(CharacterTabReplacer.class).debug(LOG_PREFIX
-                + "install: mounted " + CharacterTabPanelPlugin.UI_VERSION
-                + " at core=" + mountParent.getClass().getSimpleName()
+                + "install: mounted at core=" + mountParent.getClass().getSimpleName()
                 + " panel=" + panelW + "x" + panelH
                 + " screen=" + screenW + "x" + screenH
                 + " contentMax=" + maxGridW + "x" + maxGridH);

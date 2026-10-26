@@ -41,9 +41,6 @@ import java.util.*;
  */
 public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
-    /** Bumped when coordinate / layout semantics change (check logs after deploy). */
-    public static final String UI_VERSION = "V17-EVENT-HIT-FIRST";
-
     static final float TAB_BAR_H    = 24f;
     static final float TAB_W        = 110f;
     static final float TAB_GAP      = 4f;
@@ -63,21 +60,20 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     // --- Layout output (consumed by builder + input + rendering) -----------
     final List<ConnectionLineDrawer.Edge> edges = new ArrayList<ConnectionLineDrawer.Edge>();
     final Map<String, float[]> nodeCenters = new HashMap<String, float[]>();
-    /** Panel-local top-left (x, y) for each node icon; used for GL rendering. */
+    /** Bottom-up panel-local bottom-left (x, y) for each node icon (see {@link PanelCoords}). */
     final Map<String, float[]> nodeLocal = new HashMap<String, float[]>();
     final Map<String, PositionAPI> nodePositions = new HashMap<String, PositionAPI>();
     /** Invisible hit TooltipMakers — one per node id; used to strip stale rects on re-emit. */
     final Map<String, UIComponentAPI> nodeHitById = new HashMap<String, UIComponentAPI>();
     final Map<String, Color> nodeBorderColors = new HashMap<String, Color>();
     final Map<String, NodeState> nodeStates = new HashMap<String, NodeState>();
-    private final List<PathTreeBuilder.LaneColumn> laneColumns = new ArrayList<PathTreeBuilder.LaneColumn>();
     private final List<UIComponentAPI> uiChildren = new ArrayList<UIComponentAPI>();
     /** Left rail element — used to snap GL portrait frame to committed layout. */
     private TooltipMakerAPI leftRailTip;
 
-    // Viewport rect in panel-local (top-down y) coords.
+    // Viewport rect in inTL layout coords (y = top pad from the panel top).
     private float viewX, viewY, viewW, viewH;
-    // Portrait rect in panel-local (top-down y) coords for border drawing.
+    // Portrait rect for border drawing: x panel-local, y bottom-up panel-local (PanelCoords).
     private float portraitX, portraitY, portraitW, portraitH;
     private float contentW;
     /** Panel-local top-down Y where the bottom TooltipMaker bar starts (see rebuild). */
@@ -87,7 +83,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     private String hoveredNodeId;
     private TooltipMakerAPI tooltipElement;
     private float tooltipLocalX, tooltipLocalY, tooltipLocalW, tooltipLocalH;
-    /** Latest cursor in panel-local coords (updated from mouse events in {@link #processInput}). */
+    /** Latest cursor in bottom-up panel-local coords (updated from mouse events in {@link #processInput}). */
     private float lastPanelMouseX, lastPanelMouseY;
 
     public static final class NodeState {
@@ -110,29 +106,11 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
     public void attach(CustomPanelAPI panel) {
         this.panel = panel;
-        try {
-            java.security.CodeSource cs = CharacterTabPanelPlugin.class.getProtectionDomain().getCodeSource();
-            if (cs != null && cs.getLocation() != null) {
-                Global.getLogger(CharacterTabPanelPlugin.class).info(
-                        "[SkillsOverhaul/UI] attach " + UI_VERSION
-                        + " panel=" + panel.getPosition().getWidth() + "x" + panel.getPosition().getHeight()
-                        + " jar=" + cs.getLocation());
-            } else {
-                Global.getLogger(CharacterTabPanelPlugin.class).info(
-                        "[SkillsOverhaul/UI] attach " + UI_VERSION
-                        + " panel=" + panel.getPosition().getWidth() + "x" + panel.getPosition().getHeight());
-            }
-        } catch (Throwable t) {
-            Global.getLogger(CharacterTabPanelPlugin.class).info(
-                    "[SkillsOverhaul/UI] attach " + UI_VERSION
-                    + " panel=" + panel.getPosition().getWidth() + "x" + panel.getPosition().getHeight());
-        }
         rebuild();
     }
 
     public void rebuild() {
         if (panel == null) return;
-        Global.getLogger(CharacterTabPanelPlugin.class).debug("[SkillsOverhaul/UI] rebuild " + UI_VERSION);
 
         for (UIComponentAPI child : uiChildren) {
             try { panel.removeComponent(child); } catch (Throwable ignored) {}
@@ -145,7 +123,6 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         nodeHitById.clear();
         nodeBorderColors.clear();
         nodeStates.clear();
-        laneColumns.clear();
         tooltipElement = null;
         hoveredNodeId = null;
         tooltipLocalX = -1f;
@@ -248,7 +225,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         scrollXByTree.put(currentTree, sx);
 
         PathTreeBuilder.buildPaths(panel, this, currentTree,
-                viewX, viewY, viewW, viewH, sx, uiChildren, laneColumns);
+                viewX, viewY, viewW, viewH, sx, uiChildren);
 
         // --- Bottom bar ----------------------------------------------------
         TooltipMakerAPI bottom = panel.createUIElement(winW - 2f * PAD, BOTTOM_BAR_H, false);
@@ -341,7 +318,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     }
 
     /**
-     * Panel-local top-left for the hover tooltip: X stays beside the node,
+     * {@code inTL} position (x, top pad) for the hover tooltip: X stays beside the node,
      * Y tracks {@link #lastPanelMouseY} (vertically centered on the cursor).
      */
     private float[] computeTooltipPanelTL(String nodeId, float tW, float tH) {
@@ -362,7 +339,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         }
         float tx = ax + nSize + 8f;
         if (tx + tW > panelW - 8f) tx = Math.max(8f, ax - tW - 8f);
-        float ty = lastPanelMouseY - tH * 0.5f;
+        float ty = PanelCoords.topFromLocalY(panelH, lastPanelMouseY - tH * 0.5f, tH);
         if (ty < 8f) ty = 8f;
         if (ty + tH > panelH - 8f) ty = Math.max(8f, panelH - tH - 8f);
         return new float[]{tx, ty};
@@ -404,7 +381,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             }
             // Cache portrait rect so renderBelow can draw a border around it.
             portraitX = leftX + (railW - PORTRAIT_W) / 2f;
-            portraitY = leftY;
+            portraitY = PanelCoords.localYFromTop(panel.getPosition().getHeight(), leftY, PORTRAIT_W);
             portraitW = PORTRAIT_W;
             portraitH = PORTRAIT_W; // portraits are square in vanilla
             tip.addPara(player.getNameString(), 6f);
@@ -418,8 +395,8 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                 ? mem.getFloat(SkillMemory.freeUniKey()) : 0f;
         float migPool = mem.contains("$skills.points.universal_migrated_unallocated")
                 ? mem.getFloat("$skills.points.universal_migrated_unallocated") : 0f;
-        tip.addPara("Free Uni: " + (int) freeUni, 6f);
-        tip.addPara("Mig Pool: " + (int) migPool, 2f);
+        tip.addPara("Free universal points: " + (int) freeUni, 6f);
+        tip.addPara("Migrated points: " + (int) migPool, 2f);
 
         tip.addPara("", 6f);
         tip.addPara("Keys 1-3 switch tabs", new Color(150, 160, 180), 2f);
@@ -451,8 +428,6 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     }
 
     // Cached XP values computed once per rebuild, used by renderBelow for the bar.
-    private int  bbLevel;
-    private int  bbPoints;
     private long bbCur;
     private long bbReq;
 
@@ -472,16 +447,13 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         if (cur < 0) cur = 0;
         if (req <= 0) req = 1;
 
-        bbLevel  = level;
-        bbPoints = pts;
         bbCur    = cur;
         bbReq    = req;
 
         String text = currentTree.key.toUpperCase()
                 + "   Level " + level
                 + "   " + cur + " / " + req + " XP"
-                + "   (" + pts + " points)"
-                + "            " + UI_VERSION;
+                + "   (" + pts + " points)";
         tip.addPara(text, 2f);
     }
 
@@ -508,26 +480,26 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         GL11.glEnable(GL11.GL_BLEND);
         GL11.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
 
-        // Main window backing + frame. Starsector UI / ExampleCustomUIPanel use
-        // screen coords with origin at the TOP-LEFT of the panel (y grows down),
-        // NOT classic GL bottom-left. getY() is the panel's top edge.
-        float winTop = py + winY;
-        float winLeft = px + winX;
+        // Main window backing + frame. Engine space is bottom-up: getY() is the
+        // panel's BOTTOM edge, so convert the inTL window rect (top pad winY)
+        // to its bottom-up local y and draw at py + localY (see PanelCoords).
+        float winBottom = PanelCoords.screenY(py, PanelCoords.localYFromTop(panelH, winY, winH));
+        float winLeft = PanelCoords.screenX(px, winX);
         GL11.glColor4f(0.035f, 0.045f, 0.065f, 0.92f * alphaMult);
         GL11.glBegin(GL11.GL_QUADS);
-        GL11.glVertex2f(winLeft,              winTop);
-        GL11.glVertex2f(winLeft + winW,       winTop);
-        GL11.glVertex2f(winLeft + winW,       winTop + winH);
-        GL11.glVertex2f(winLeft,              winTop + winH);
+        GL11.glVertex2f(winLeft,              winBottom);
+        GL11.glVertex2f(winLeft + winW,       winBottom);
+        GL11.glVertex2f(winLeft + winW,       winBottom + winH);
+        GL11.glVertex2f(winLeft,              winBottom + winH);
         GL11.glEnd();
 
         GL11.glColor4f(0.35f, 0.62f, 0.88f, 0.82f * alphaMult);
         GL11.glLineWidth(2.2f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(winLeft,              winTop);
-        GL11.glVertex2f(winLeft + winW,       winTop);
-        GL11.glVertex2f(winLeft + winW,       winTop + winH);
-        GL11.glVertex2f(winLeft,              winTop + winH);
+        GL11.glVertex2f(winLeft,              winBottom);
+        GL11.glVertex2f(winLeft + winW,       winBottom);
+        GL11.glVertex2f(winLeft + winW,       winBottom + winH);
+        GL11.glVertex2f(winLeft,              winBottom + winH);
         GL11.glEnd();
 
         // Portrait border — align to the left rail's committed bounds (cached leftY alone can
@@ -536,31 +508,31 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             try {
                 PositionAPI rp = ((UIComponentAPI) leftRailTip).getPosition();
                 if (rp != null && rp.getWidth() > 2f && rp.getHeight() > 2f) {
+                    // The portrait is the rail's first item, so it sits at the rail's top edge.
                     portraitX = (rp.getX() - px) + (rp.getWidth() - PORTRAIT_W) * 0.5f;
-                    portraitY = rp.getY() - py;
+                    portraitY = PanelCoords.cursorLocalY(rp.getY(), py) + rp.getHeight() - portraitH;
                 }
             } catch (Throwable ignored) {}
         }
 
         // Portrait border (vanilla-style cyan accent).
         if (portraitW > 0f) {
-            float pTop = py + portraitY;
+            float pBottom = PanelCoords.screenY(py, portraitY);
             GL11.glColor4f(0.50f, 0.78f, 1.00f, 0.85f * alphaMult);
             GL11.glLineWidth(1.5f);
             GL11.glBegin(GL11.GL_LINE_LOOP);
-            GL11.glVertex2f(px + portraitX - 1f,              pTop - 1f);
-            GL11.glVertex2f(px + portraitX + portraitW + 1f,  pTop - 1f);
-            GL11.glVertex2f(px + portraitX + portraitW + 1f,  pTop + portraitH + 1f);
-            GL11.glVertex2f(px + portraitX - 1f,              pTop + portraitH + 1f);
+            GL11.glVertex2f(px + portraitX - 1f,              pBottom - 1f);
+            GL11.glVertex2f(px + portraitX + portraitW + 1f,  pBottom - 1f);
+            GL11.glVertex2f(px + portraitX + portraitW + 1f,  pBottom + portraitH + 1f);
+            GL11.glVertex2f(px + portraitX - 1f,              pBottom + portraitH + 1f);
             GL11.glEnd();
         }
 
         // --- Viewport clipping -------------------------------------------
-        // glScissor() takes FRAMEBUFFER pixel coords (bottom-left origin),
-        // but we're working in UI-space coords (top-down, often a different
-        // logical size than the framebuffer, e.g. 1920x1080 UI on a
-        // 2560x1440 display). To do scissor correctly we have to sample the
-        // current GL_VIEWPORT and derive a ui->pixel scale.
+        // glScissor() takes FRAMEBUFFER pixel coords (bottom-left origin).
+        // UI space is also bottom-up but often a different logical size than
+        // the framebuffer (e.g. 1920x1080 UI on a 2560x1440 display), so we
+        // sample the current GL_VIEWPORT and derive a ui->pixel scale.
         //
         // Empirically this mismatch was what caused the "bottom obscured"
         // bug (and the missing 4th lane): using Display.getHeight() in place
@@ -586,10 +558,10 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                 float kx = vpPxW / uiW;
                 float ky = vpPxH / uiH;
 
-                float uiLeft   = px + viewX;
-                float uiTop    = py + viewY;
+                float uiLeft   = PanelCoords.screenX(px, viewX);
+                float uiBottom = PanelCoords.screenY(py, PanelCoords.localYFromTop(panelH, viewY, viewH));
                 int scLeft   = (int) Math.floor(vpPxX + uiLeft * kx);
-                int scBottom = (int) Math.floor(vpPxY + vpPxH - (uiTop + viewH) * ky);
+                int scBottom = (int) Math.floor(vpPxY + uiBottom * ky);
                 int scW      = (int) Math.ceil(viewW * kx);
                 int scH      = (int) Math.ceil(viewH * ky);
                 if (scW < 1) scW = 1;
@@ -601,9 +573,9 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             }
         }
 
-        // Connection lines (edge coords are panel-local top-down, same as nodeCenters).
+        // Connection lines (edge coords are bottom-up panel-local, same as nodeCenters).
         if (!edges.isEmpty()) {
-            ConnectionLineDrawer.draw(edges, alphaMult, px, py, false);
+            ConnectionLineDrawer.draw(edges, alphaMult, px, py);
         }
 
         // --- Pass 1: icons (textured). Drawn here (renderBelow) so that the
@@ -664,24 +636,24 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         if (needsScissor) GL11.glDisable(GL11.GL_SCISSOR_TEST);
 
         // Scroll track + thumb just under the viewport.
-        drawScrollBar(px, py, scrollXByTree.get(currentTree), alphaMult);
+        drawScrollBar(px, py, panelH, scrollXByTree.get(currentTree), alphaMult);
 
         // XP progress bar inside the bottom bar band.
-        drawXpBar(px, py, winX, winW, alphaMult);
+        drawXpBar(px, py, panelH, winX, winW, alphaMult);
 
         // Tooltip background (drawn last in renderBelow — tooltip text is a
         // child element and therefore paints on top of this bg, and above
         // the scissored icon pass). Prefer the element's committed PositionAPI
         // (screen coords) so the quad matches the engine-placed TooltipMaker.
         if (tooltipElement != null) {
-            float tLeft = 0f, tTop = 0f, tW = 0f, tH = 0f;
+            float tLeft = 0f, tBottom = 0f, tW = 0f, tH = 0f;
             boolean have = false;
             if (tooltipElement instanceof UIComponentAPI) {
                 try {
                     PositionAPI tip = ((UIComponentAPI) tooltipElement).getPosition();
                     if (tip != null && tip.getWidth() > 0.5f && tip.getHeight() > 0.5f) {
                         tLeft = tip.getX();
-                        tTop = tip.getY();
+                        tBottom = tip.getY();
                         tW = tip.getWidth();
                         tH = tip.getHeight();
                         have = true;
@@ -689,8 +661,9 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                 } catch (Throwable ignored) {}
             }
             if (!have && tooltipLocalX >= 0f) {
-                tLeft = px + tooltipLocalX;
-                tTop = py + tooltipLocalY;
+                tLeft = PanelCoords.screenX(px, tooltipLocalX);
+                tBottom = PanelCoords.screenY(py,
+                        PanelCoords.localYFromTop(panelH, tooltipLocalY, tooltipLocalH));
                 tW = tooltipLocalW;
                 tH = tooltipLocalH;
                 have = true;
@@ -699,19 +672,19 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                 GL11.glDisable(GL11.GL_TEXTURE_2D);
                 GL11.glColor4f(0.02f, 0.05f, 0.09f, 0.95f * alphaMult);
                 GL11.glBegin(GL11.GL_QUADS);
-                GL11.glVertex2f(tLeft,           tTop);
-                GL11.glVertex2f(tLeft + tW,      tTop);
-                GL11.glVertex2f(tLeft + tW,      tTop + tH);
-                GL11.glVertex2f(tLeft,           tTop + tH);
+                GL11.glVertex2f(tLeft,           tBottom);
+                GL11.glVertex2f(tLeft + tW,      tBottom);
+                GL11.glVertex2f(tLeft + tW,      tBottom + tH);
+                GL11.glVertex2f(tLeft,           tBottom + tH);
                 GL11.glEnd();
 
                 GL11.glColor4f(0.45f, 0.72f, 1.00f, 0.90f * alphaMult);
                 GL11.glLineWidth(1.3f);
                 GL11.glBegin(GL11.GL_LINE_LOOP);
-                GL11.glVertex2f(tLeft + 0.5f,           tTop + 0.5f);
-                GL11.glVertex2f(tLeft + tW - 0.5f,      tTop + 0.5f);
-                GL11.glVertex2f(tLeft + tW - 0.5f,      tTop + tH - 0.5f);
-                GL11.glVertex2f(tLeft + 0.5f,           tTop + tH - 0.5f);
+                GL11.glVertex2f(tLeft + 0.5f,           tBottom + 0.5f);
+                GL11.glVertex2f(tLeft + tW - 0.5f,      tBottom + 0.5f);
+                GL11.glVertex2f(tLeft + tW - 0.5f,      tBottom + tH - 0.5f);
+                GL11.glVertex2f(tLeft + 0.5f,           tBottom + tH - 0.5f);
                 GL11.glEnd();
             }
         }
@@ -719,20 +692,21 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         GL11.glPopAttrib();
     }
 
-    private void drawXpBar(float px, float py, float winX, float winW, float alphaMult) {
+    private void drawXpBar(float px, float py, float panelH, float winX, float winW, float alphaMult) {
         float barLocalX = winX + PAD + 6f;
         float barW = winW - 2f * PAD - 12f;
         float barH = 10f;
         // Keep the fill under the status line: anchor to the bottom of the bottom bar band.
-        float barTop = py + bottomBarTopY + BOTTOM_BAR_H - barH - 8f;
-        float barX = px + barLocalX;
+        float barBottom = PanelCoords.screenY(py,
+                PanelCoords.localYFromTop(panelH, bottomBarTopY + BOTTOM_BAR_H - barH - 8f, barH));
+        float barX = PanelCoords.screenX(px, barLocalX);
 
         GL11.glColor4f(0.05f, 0.08f, 0.12f, 0.90f * alphaMult);
         GL11.glBegin(GL11.GL_QUADS);
-        GL11.glVertex2f(barX,        barTop);
-        GL11.glVertex2f(barX + barW, barTop);
-        GL11.glVertex2f(barX + barW, barTop + barH);
-        GL11.glVertex2f(barX,        barTop + barH);
+        GL11.glVertex2f(barX,        barBottom);
+        GL11.glVertex2f(barX + barW, barBottom);
+        GL11.glVertex2f(barX + barW, barBottom + barH);
+        GL11.glVertex2f(barX,        barBottom + barH);
         GL11.glEnd();
 
         float frac = (bbReq > 0) ? ((float) bbCur / (float) bbReq) : 0f;
@@ -748,44 +722,46 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             }
             GL11.glColor4f(tint.getRed()/255f, tint.getGreen()/255f, tint.getBlue()/255f, 0.75f * alphaMult);
             GL11.glBegin(GL11.GL_QUADS);
-            GL11.glVertex2f(barX,           barTop + 1f);
-            GL11.glVertex2f(barX + fillW,   barTop + 1f);
-            GL11.glVertex2f(barX + fillW,   barTop + barH - 1f);
-            GL11.glVertex2f(barX,           barTop + barH - 1f);
+            GL11.glVertex2f(barX,           barBottom + 1f);
+            GL11.glVertex2f(barX + fillW,   barBottom + 1f);
+            GL11.glVertex2f(barX + fillW,   barBottom + barH - 1f);
+            GL11.glVertex2f(barX,           barBottom + barH - 1f);
             GL11.glEnd();
         }
 
         GL11.glColor4f(0.35f, 0.62f, 0.88f, 0.80f * alphaMult);
         GL11.glLineWidth(1.0f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(barX + 0.5f,          barTop + 0.5f);
-        GL11.glVertex2f(barX + barW - 0.5f,   barTop + 0.5f);
-        GL11.glVertex2f(barX + barW - 0.5f,   barTop + barH - 0.5f);
-        GL11.glVertex2f(barX + 0.5f,          barTop + barH - 0.5f);
+        GL11.glVertex2f(barX + 0.5f,          barBottom + 0.5f);
+        GL11.glVertex2f(barX + barW - 0.5f,   barBottom + 0.5f);
+        GL11.glVertex2f(barX + barW - 0.5f,   barBottom + barH - 0.5f);
+        GL11.glVertex2f(barX + 0.5f,          barBottom + barH - 0.5f);
         GL11.glEnd();
     }
 
-    private void drawScrollBar(float px, float py, float sx, float alphaMult) {
-        float trackTop = py + viewY + viewH + 2f;
-        float trackX = px + viewX;
+    private void drawScrollBar(float px, float py, float panelH, float sx, float alphaMult) {
+        // Track sits 2 px under the viewport (inTL top pad viewY + viewH + 2).
+        float trackBottom = PanelCoords.screenY(py,
+                PanelCoords.localYFromTop(panelH, viewY + viewH + 2f, SCROLL_H));
+        float trackX = PanelCoords.screenX(px, viewX);
         float trackW = viewW;
 
         GL11.glColor4f(0.08f, 0.10f, 0.14f, 0.70f * alphaMult);
         GL11.glBegin(GL11.GL_QUADS);
-        GL11.glVertex2f(trackX,          trackTop);
-        GL11.glVertex2f(trackX + trackW, trackTop);
-        GL11.glVertex2f(trackX + trackW, trackTop + SCROLL_H);
-        GL11.glVertex2f(trackX,          trackTop + SCROLL_H);
+        GL11.glVertex2f(trackX,          trackBottom);
+        GL11.glVertex2f(trackX + trackW, trackBottom);
+        GL11.glVertex2f(trackX + trackW, trackBottom + SCROLL_H);
+        GL11.glVertex2f(trackX,          trackBottom + SCROLL_H);
         GL11.glEnd();
 
         if (contentW <= viewW + 0.5f) {
             GL11.glColor4f(0.25f, 0.35f, 0.50f, 0.25f * alphaMult);
             GL11.glLineWidth(1.0f);
             GL11.glBegin(GL11.GL_LINE_LOOP);
-            GL11.glVertex2f(trackX + 0.5f,          trackTop + 0.5f);
-            GL11.glVertex2f(trackX + trackW - 0.5f, trackTop + 0.5f);
-            GL11.glVertex2f(trackX + trackW - 0.5f, trackTop + SCROLL_H - 0.5f);
-            GL11.glVertex2f(trackX + 0.5f,          trackTop + SCROLL_H - 0.5f);
+            GL11.glVertex2f(trackX + 0.5f,          trackBottom + 0.5f);
+            GL11.glVertex2f(trackX + trackW - 0.5f, trackBottom + 0.5f);
+            GL11.glVertex2f(trackX + trackW - 0.5f, trackBottom + SCROLL_H - 0.5f);
+            GL11.glVertex2f(trackX + 0.5f,          trackBottom + SCROLL_H - 0.5f);
             GL11.glEnd();
             return;
         }
@@ -798,31 +774,25 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
         GL11.glColor4f(0.35f, 0.62f, 0.88f, 0.85f * alphaMult);
         GL11.glBegin(GL11.GL_QUADS);
-        GL11.glVertex2f(thumbX,          trackTop + 1f);
-        GL11.glVertex2f(thumbX + thumbW, trackTop + 1f);
-        GL11.glVertex2f(thumbX + thumbW, trackTop + SCROLL_H - 1f);
-        GL11.glVertex2f(thumbX,          trackTop + SCROLL_H - 1f);
+        GL11.glVertex2f(thumbX,          trackBottom + 1f);
+        GL11.glVertex2f(thumbX + thumbW, trackBottom + 1f);
+        GL11.glVertex2f(thumbX + thumbW, trackBottom + SCROLL_H - 1f);
+        GL11.glVertex2f(thumbX,          trackBottom + SCROLL_H - 1f);
         GL11.glEnd();
 
         GL11.glColor4f(0.7f, 0.85f, 1f, 0.80f * alphaMult);
         GL11.glLineWidth(1.0f);
         GL11.glBegin(GL11.GL_LINE_LOOP);
-        GL11.glVertex2f(thumbX + 0.5f,          trackTop + 1.5f);
-        GL11.glVertex2f(thumbX + thumbW - 0.5f, trackTop + 1.5f);
-        GL11.glVertex2f(thumbX + thumbW - 0.5f, trackTop + SCROLL_H - 1.5f);
-        GL11.glVertex2f(thumbX + 0.5f,          trackTop + SCROLL_H - 1.5f);
+        GL11.glVertex2f(thumbX + 0.5f,          trackBottom + 1.5f);
+        GL11.glVertex2f(thumbX + thumbW - 0.5f, trackBottom + 1.5f);
+        GL11.glVertex2f(thumbX + thumbW - 0.5f, trackBottom + SCROLL_H - 1.5f);
+        GL11.glVertex2f(thumbX + 0.5f,          trackBottom + SCROLL_H - 1.5f);
         GL11.glEnd();
-    }
-
-    @Override
-    public void render(float alphaMult) {
-        // Rendering moved to renderBelow so tooltip (a child element drawn
-        // after renderBelow) layers on top of icons/frames.
     }
 
     /**
      * @param cx screen x of cell center
-     * @param cy screen y of cell center (y-down, same as ExampleCustomUIPanel)
+     * @param cy screen y of cell center (engine space, bottom-up)
      */
     private void drawNodeIcon(String path, float cx, float cy, float alphaMult) {
         SpriteAPI sprite = null;
@@ -983,34 +953,23 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         rebuild();
     }
 
-    private boolean inputLogOnce = false;
-
     /**
-     * {@link com.fs.starfarer.api.input.InputEventAPI#getY()} uses bottom-origin screen Y
-     * (OpenGL / LWJGL style); {@link PositionAPI} and {@code inTL} use top-down panel space like
-     * {@link #nodeLocal}. Without this conversion, vertical hit tests and tooltips track inverted
-     * vs. the cursor.
+     * {@link com.fs.starfarer.api.input.InputEventAPI#getY()} is engine space (bottom-up), the
+     * same space as {@link PositionAPI#getY()}, so the bottom-up panel-local y is a plain
+     * subtraction with no screen-height flip (see {@link PanelCoords#cursorLocalY}).
      */
     private float eventToPanelLocalY(com.fs.starfarer.api.input.InputEventAPI e) {
         if (panel == null) return 0f;
-        float py = panel.getPosition().getY();
-        try {
-            float sh = Global.getSettings().getScreenHeight();
-            if (sh < 1f) sh = 1f;
-            float yFromScreenTop = sh - (float) e.getY();
-            return yFromScreenTop - py;
-        } catch (Throwable t) {
-            return (float) e.getY() - py;
-        }
+        return PanelCoords.cursorLocalY((float) e.getY(), panel.getPosition().getY());
     }
 
-    /** Hit-test in panel-local coords (same space as {@link #nodeLocal}). */
+    /** Hit-test in bottom-up panel-local coords (same space as {@link #nodeLocal}). */
     private String pickNodeAtPanelLocal(float lx, float ly) {
         float n = PathTreeBuilder.NODE;
         for (Map.Entry<String, float[]> e : nodeLocal.entrySet()) {
             float[] xy = e.getValue();
             if (xy == null) continue;
-            if (lx >= xy[0] && lx <= xy[0] + n && ly >= xy[1] && ly <= xy[1] + n) {
+            if (PanelCoords.contains(xy[0], xy[1], n, n, lx, ly)) {
                 return e.getKey();
             }
         }
@@ -1038,13 +997,6 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
     public void processInput(java.util.List<com.fs.starfarer.api.input.InputEventAPI> events) {
         if (events == null || panel == null) return;
 
-        if (!inputLogOnce) {
-            inputLogOnce = true;
-            Global.getLogger(CharacterTabPanelPlugin.class).info(
-                    "[SkillsOverhaul/UI] processInput is live, nodePositions=" + nodePositions.size()
-                    + " events/frame=" + events.size());
-        }
-
         float pxx = panel.getPosition().getX();
         float pyy = panel.getPosition().getY();
 
@@ -1054,7 +1006,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         for (com.fs.starfarer.api.input.InputEventAPI e : events) {
             if (!e.isMouseMoveEvent() && !e.isMouseEvent()) continue;
             sawMouse = true;
-            float lx = e.getX() - pxx;
+            float lx = PanelCoords.cursorLocalX(e.getX(), pxx);
             float ly = eventToPanelLocalY(e);
             lastPanelMouseX = lx;
             lastPanelMouseY = ly;
@@ -1105,11 +1057,12 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
 
             if (isScrollEvent(e)) {
                 float px = panel.getPosition().getX();
-                float py = panel.getPosition().getY();
-                float mx = e.getX() - px;
+                float mx = PanelCoords.cursorLocalX(e.getX(), px);
                 float my = eventToPanelLocalY(e);
-                boolean overView = mx >= viewX && mx <= viewX + viewW
-                                && my >= viewY - SCROLL_H - 4f && my <= viewY + viewH;
+                // Viewport plus the scroll track under it, in bottom-up panel-local space.
+                float viewBottom = PanelCoords.localYFromTop(panel.getPosition().getHeight(), viewY, viewH);
+                float band = SCROLL_H + 4f;
+                boolean overView = PanelCoords.contains(viewX, viewBottom - band, viewW, viewH + band, mx, my);
                 if (overView) {
                     float delta = scrollDelta(e);
                     if (delta != 0f) {
@@ -1125,7 +1078,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             }
 
             if (isLeftMouseDown(e)) {
-                float lx = e.getX() - pxx;
+                float lx = PanelCoords.cursorLocalX(e.getX(), pxx);
                 float ly = eventToPanelLocalY(e);
                 String clickedId = pickNodeAtEvent(e);
                 if (clickedId == null) clickedId = pickNodeAtPanelLocal(lx, ly);
