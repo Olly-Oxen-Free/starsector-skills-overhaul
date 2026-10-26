@@ -79,79 +79,6 @@ public final class ReflectionUtils {
 
     /* ── public API ─────────────────────────────────────────────────────── */
 
-    /** Calls a zero-arg method on target by name; returns null on any failure. */
-    public static Object invoke(String methodName, Object target) {
-        if (target == null) return null;
-        try {
-            Object method = findMethod(target.getClass(), methodName, 0);
-            if (method == null) {
-                com.fs.starfarer.api.Global.getLogger(ReflectionUtils.class).warn(
-                    "[ReflectionUtils] method not found: " + methodName
-                    + " on " + target.getClass().getName());
-                return null;
-            }
-            METHOD_SET_ACCESSIBLE.invoke(method, true);
-            return METHOD_INVOKE.invoke(method, target, new Object[]{});
-        } catch (Throwable t) {
-            com.fs.starfarer.api.Global.getLogger(ReflectionUtils.class).warn(
-                "[ReflectionUtils] invoke(" + methodName + ") on "
-                + target.getClass().getName() + " failed", t);
-            return null;
-        }
-    }
-
-    /** True iff target's class (or superclasses) declares a method of this name. */
-    public static boolean hasMethodOfName(String methodName, Object target) {
-        if (target == null) return false;
-        Class<?> clazz = target.getClass();
-        java.util.HashSet<String> cache = methodNameCache.get(clazz);
-        if (cache == null) {
-            cache = new java.util.HashSet<>();
-            try {
-                Object raw = clazz.getDeclaredMethods();
-                Object[] methods = (Object[]) raw;
-                for (int i = 0; i < methods.length; i++) {
-                    String name = (String) METHOD_GET_NAME.invoke(methods[i]);
-                    cache.add(name);
-                }
-            } catch (Throwable ignored) {}
-            methodNameCache.put(clazz, cache);
-        }
-        return cache.contains(methodName);
-    }
-
-    /** Returns children of a UIPanelAPI by reflecting its inner component list. */
-    @SuppressWarnings("unchecked")
-    public static List<Object> getChildrenCopy(UIPanelAPI panel) {
-        if (panel == null) return Collections.emptyList();
-        try {
-            Object method = findMethod(panel.getClass(), "getChildrenCopy", 0);
-            if (method != null) {
-                METHOD_SET_ACCESSIBLE.invoke(method, true);
-                Object r = METHOD_INVOKE.invoke(method, panel, new Object[]{});
-                if (r instanceof List) return new ArrayList<>((List<Object>) r);
-            }
-            // Fallback: find any List field
-            Object raw = panel.getClass().getDeclaredFields();
-            Object[] fields = (Object[]) raw;
-            for (int i = 0; i < fields.length; i++) {
-                FIELD_SET_ACCESSIBLE.invoke(fields[i], true);
-                Class<?> type = (Class<?>) FIELD_GET_TYPE.invoke(fields[i]);
-                if (List.class.isAssignableFrom(type)) {
-                    Object r = FIELD_GET.invoke(fields[i], panel);
-                    if (r instanceof List) return new ArrayList<>((List<Object>) r);
-                }
-            }
-        } catch (Throwable ignored) {}
-        return Collections.emptyList();
-    }
-
-    /** Returns the parent UIPanelAPI of a child component, or null. */
-    public static UIPanelAPI getParent(Object child) {
-        Object r = invoke("getParent", child);
-        return r instanceof UIPanelAPI ? (UIPanelAPI) r : null;
-    }
-
     /* ── strict variants: no logging, failures thrown ───────────────────── */
 
     /** A reflective call failed (method missing, access denied, or the call threw). */
@@ -180,8 +107,8 @@ public final class ReflectionUtils {
     }
 
     /**
-     * True iff target's class declares a method of this name (same lookup as
-     * {@link #hasMethodOfName}). Throws instead of returning false when the scan fails; a failed
+     * True iff target's class declares a method of this name (scans the declared
+     * methods of its class and superclasses). Throws instead of returning false when the scan fails; a failed
      * scan is not cached. Never logs.
      */
     public static boolean hasMethodOfNameStrict(String methodName, Object target) throws ReflectionFailure {
@@ -206,7 +133,7 @@ public final class ReflectionUtils {
     }
 
     /**
-     * Children of a UIPanelAPI, as {@link #getChildrenCopy} finds them. Returns an empty list
+     * Children of a UIPanelAPI, as the panel's own getChildrenCopy method or first List field gives them. Returns an empty list
      * only for a null panel or a panel that really has no children; throws when neither
      * getChildrenCopy nor a List field can be read. Never logs.
      */

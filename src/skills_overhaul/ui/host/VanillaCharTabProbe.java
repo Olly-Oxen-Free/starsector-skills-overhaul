@@ -89,6 +89,19 @@ public final class VanillaCharTabProbe {
         }
     }
 
+    /**
+     * Optional lookup: a method missing on the target is null (the caller falls back); a call
+     * that exists but fails still throws. A not-found failure is the one with no cause.
+     */
+    static Object invokeOptional(String name, Object target) throws ReflectionFailure {
+        try {
+            return ReflectionUtils.invokeStrict(name, target);
+        } catch (ReflectionFailure e) {
+            if (e.getCause() == null) return null;
+            throw e;
+        }
+    }
+
     /** Runs discovery once. Never throws. */
     public static Result probe() {
         try {
@@ -102,7 +115,7 @@ public final class VanillaCharTabProbe {
             CampaignState state = (CampaignState) rawState;
 
             UIPanelAPI core = null;
-            Object dialog = ReflectionUtils.invokeStrict("getEncounterDialog", state);
+            Object dialog = invokeOptional("getEncounterDialog", state);
             if (dialog != null) {
                 Object c = ReflectionUtils.invokeStrict("getCoreUI", dialog);
                 if (c instanceof UIPanelAPI) core = (UIPanelAPI) c;
@@ -114,7 +127,7 @@ public final class VanillaCharTabProbe {
             if (core == null) return Result.fail(Failure.NO_CORE, null);
 
             UIPanelAPI vanilla = null;
-            Object currentTab = ReflectionUtils.invokeStrict("getCurrentTab", core);
+            Object currentTab = invokeOptional("getCurrentTab", core);
             if (currentTab instanceof UIPanelAPI) {
                 vanilla = findLargestWithCanReassign((UIPanelAPI) currentTab);
             }

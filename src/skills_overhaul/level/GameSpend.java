@@ -17,37 +17,11 @@ import java.util.List;
 import java.util.Map;
 
 public final class GameSpend {
-    public static boolean purchase(Tree tree, String nodeId) {
-        TreeDef def = TreeRegistry.findTreeOf(tree, nodeId);
-        if (def == null) return false;
-        Node n = def.getNode(nodeId);
-        if (n == null) return false;
-
-        MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
-        Map<String,Object> m = snapshot(mem, tree);
-
-        if (!PrereqValidator.canPurchase(def, m, nodeId)) return false;
-
-        SpendService.Result r = SpendService.spend(m, tree, nodeId, n.getCost());
-        if (!r.success) return false;
-
-        int totalMig = r.fromMigrationToPilot + r.fromMigrationToCommander
-                     + r.fromMigrationToAdmin;
-        RespecService.recordPurchase(m, nodeId, r.fromTreeLocked, r.fromFreeUni, totalMig);
-
-        writeBack(mem, m, nodeId);
-        if (n.getY() == 0) {
-            ActiveLaneService.onPurchased(mem, nodeId);
-        }
-        NodeEffectApplier.apply(n);
-        return true;
-    }
-
     /**
      * Buys every node of {@code nodeIds} or none. Dry-runs the batch with
      * {@link PurchasePlan} on a whole-tab snapshot; on failure writes nothing, plays
      * no sound, and returns the failing node and reason. On success writes each node
-     * in plan order through the same path as {@link #purchase}.
+     * in plan order.
      * A throw from {@link NodeEffectApplier#apply} is logged and the batch continues;
      * points already written stay spent.
      */

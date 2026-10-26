@@ -22,6 +22,7 @@ import org.lwjgl.opengl.GL11;
 import skills_overhaul.basics.ActiveLaneService;
 import skills_overhaul.effect.NodeEffectApplier;
 import skills_overhaul.level.GameSpend;
+import skills_overhaul.ui.host.HostRouter;
 import skills_overhaul.level.PurchasePlan;
 import skills_overhaul.level.RespecRunner;
 import skills_overhaul.level.XPCurve;
@@ -757,7 +758,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
             return;
         }
         if (r != null && r.failedNodeId != null) flash(r.failedNodeId);
-        Global.getLogger(SkillTreeView.class).warn("[SkillsOverhaul/UI] commit refused: "
+        Global.getLogger(SkillTreeView.class).warn(HostRouter.UI_LOG_PREFIX + "commit refused: "
                 + (r == null ? "null result" : r.failedNodeId + " " + r.reason));
     }
 

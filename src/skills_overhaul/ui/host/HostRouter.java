@@ -17,6 +17,9 @@ import skills_overhaul.config.ConfigLoader;
  */
 public final class HostRouter implements HostEvents {
 
+    /** Log prefix shared by the UI host and view classes. */
+    public static final String UI_LOG_PREFIX = "[SkillsOverhaul/UI] ";
+
     private static final Logger LOG = Global.getLogger(HostRouter.class);
 
     private static boolean messageShown;

@@ -55,7 +55,7 @@ public final class DialogHost {
         try {
             return ui.showInteractionDialog(new DummyDialogPlugin(), Global.getSector().getPlayerFleet());
         } catch (Throwable t) {
-            Global.getLogger(DialogHost.class).error("[SkillsOverhaul/UI] dialog host failed to open", t);
+            Global.getLogger(DialogHost.class).error(HostRouter.UI_LOG_PREFIX + "dialog host failed to open", t);
             return false;
         }
     }

@@ -37,7 +37,7 @@ import skills_overhaul.ui.view.SkillTreeView;
  */
 public final class CharTabHost implements EveryFrameScript, CoreUITabListener {
 
-    private static final String LOG_PREFIX = "[SkillsOverhaul/UI] ";
+    private static final String LOG_PREFIX = HostRouter.UI_LOG_PREFIX;
     private static final Logger LOG = Global.getLogger(CharTabHost.class);
 
     private final HostEvents events;
