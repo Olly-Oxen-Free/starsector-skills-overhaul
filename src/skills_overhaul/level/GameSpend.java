@@ -12,7 +12,9 @@ import skills_overhaul.tree.TreeDef;
 import skills_overhaul.tree.TreeRegistry;
 import skills_overhaul.ui.SkillUISounds;
 
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public final class GameSpend {
@@ -23,7 +25,7 @@ public final class GameSpend {
         if (n == null) return false;
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
-        Map<String,Object> m = snapshot(mem, def);
+        Map<String,Object> m = snapshot(mem, tree);
 
         if (!PrereqValidator.canPurchase(def, m, nodeId)) return false;
 
@@ -43,7 +45,53 @@ public final class GameSpend {
         return true;
     }
 
-    private static Map<String,Object> snapshot(MemoryAPI mem, TreeDef def) {
+    /**
+     * Buys every node of {@code nodeIds} or none. Dry-runs the batch with
+     * {@link PurchasePlan} on a whole-tab snapshot; on failure writes nothing, plays
+     * no sound, and returns the failing node and reason. On success writes each node
+     * in plan order through the same path as {@link #purchase} (without its sound).
+     * A throw from {@link NodeEffectApplier#apply} is logged and the batch continues;
+     * points already written stay spent.
+     */
+    public static PurchasePlan.Result commit(Tree tab, Collection<String> nodeIds) {
+        MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        List<TreeDef> defs = TreeRegistry.getTrees(tab);
+        Map<String,Object> m = snapshot(mem, tab);
+
+        PurchasePlan.Result plan = PurchasePlan.dryRun(m, tab, defs, nodeIds);
+        if (!plan.success) return plan;
+
+        for (String nodeId : plan.order) {
+            Node n = TreeRegistry.findNode(tab, nodeId);
+            SpendService.Result r = SpendService.spend(m, tab, nodeId, n.getCost());
+            if (!r.success) {
+                // Unreachable after a successful dry run on the same snapshot.
+                Global.getLogger(GameSpend.class).error(
+                        "[SkillsOverhaul] commit: spend failed after dry run for " + nodeId
+                        + ": " + r.reason);
+                return PurchasePlan.Result.fail(nodeId, PurchasePlan.Reason.BUDGET,
+                        PurchasePlan.shortBy(r, n.getCost()), m);
+            }
+            int totalMig = r.fromMigrationToPilot + r.fromMigrationToCommander
+                         + r.fromMigrationToAdmin;
+            RespecService.recordPurchase(m, nodeId, r.fromTreeLocked, r.fromFreeUni, totalMig);
+
+            writeBack(mem, m, nodeId);
+            if (n.getY() == 0) {
+                ActiveLaneService.onPurchased(mem, nodeId);
+            }
+            try {
+                NodeEffectApplier.apply(n);
+            } catch (Throwable t) {
+                Global.getLogger(GameSpend.class).error(
+                        "[SkillsOverhaul] commit: effect apply failed for " + nodeId, t);
+            }
+        }
+        return plan;
+    }
+
+    /** Points, pools, pool lock and the purchased flags of every node of the tab. */
+    private static Map<String,Object> snapshot(MemoryAPI mem, Tree tab) {
         Map<String,Object> m = new HashMap<String,Object>();
         for (Tree t : Tree.values()) {
             m.put(SkillMemory.pointsKey(t), (float) getFloat(mem, SkillMemory.pointsKey(t)));
@@ -56,8 +104,10 @@ public final class GameSpend {
         }
         // PrereqValidator builds its owned-set from these flags; without them
         // every node with a prereq fails validation against the snapshot.
-        for (String pk : purchasedKeys(def)) {
-            if (mem.getBoolean(pk)) m.put(pk, Boolean.TRUE);
+        for (TreeDef def : TreeRegistry.getTrees(tab)) {
+            for (String pk : purchasedKeys(def)) {
+                if (mem.getBoolean(pk)) m.put(pk, Boolean.TRUE);
+            }
         }
         return m;
     }

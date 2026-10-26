@@ -53,6 +53,45 @@ public class PrereqValidatorTest {
         pending2.add("r0");
         assert !PrereqValidator.canPurchaseWithPending(def, new HashMap<String,Object>(), pending2, "r0");
 
+        // Reason-returning check: OK / PREREQ / UNKNOWN on the clause tree
+        Map<String,Object> mem3 = new HashMap<>();
+        Set<String> none = new HashSet<>();
+        assert PrereqValidator.check(def, mem3, none, "r0") == PrereqValidator.Check.OK;
+        assert PrereqValidator.check(def, mem3, none, "c1a") == PrereqValidator.Check.PREREQ
+                : "c1a needs r0";
+        assert PrereqValidator.check(def, mem3, none, "nope") == PrereqValidator.Check.UNKNOWN;
+        mem3.put("$skills.purchased.r0", true);
+        assert PrereqValidator.check(def, mem3, none, "c1a") == PrereqValidator.Check.OK;
+        assert PrereqValidator.check(def, mem3, none, "c2") == PrereqValidator.Check.PREREQ
+                : "c2 needs any(c1a,c1b)";
+        Set<String> pc1a = new HashSet<>();
+        pc1a.add("c1a");
+        assert PrereqValidator.check(def, mem3, pc1a, "c2") == PrereqValidator.Check.OK
+                : "pending c1a satisfies any() and the tier gate";
+
+        // Tier gate: s2 at y=2 has its prereq (s0) owned but no owned/pending y=1 node
+        String sjson = "{\"tree\":\"s\",\"nodes\":[" +
+                "{\"id\":\"s0\",\"name\":\"S0\",\"x\":2,\"y\":0,\"cost\":1,\"prereqs\":[]}," +
+                "{\"id\":\"s1\",\"name\":\"S1\",\"x\":1,\"y\":1,\"cost\":1," +
+                " \"prereqs\":[{\"all\":[\"s0\"]}]}," +
+                "{\"id\":\"s2\",\"name\":\"S2\",\"x\":2,\"y\":2,\"cost\":1," +
+                " \"prereqs\":[{\"all\":[\"s0\"]}]}" +
+                "]}";
+        TreeDef sdef = TreeLoader.fromJSON(new JSONObject(sjson));
+        Map<String,Object> smem = new HashMap<>();
+        smem.put("$skills.purchased.s0", true);
+        assert PrereqValidator.check(sdef, smem, none, "s2") == PrereqValidator.Check.TIER
+                : "s2 skips tier 1";
+        assert PrereqValidator.canPurchase(sdef, smem, "s2")
+                : "canPurchase stays prereq-only";
+        Set<String> ps1 = new HashSet<>();
+        ps1.add("s1");
+        assert PrereqValidator.check(sdef, smem, ps1, "s2") == PrereqValidator.Check.OK
+                : "pending s1 opens tier 2";
+        smem.put("$skills.purchased.s1", true);
+        assert PrereqValidator.check(sdef, smem, none, "s2") == PrereqValidator.Check.OK
+                : "owned s1 opens tier 2";
+
         System.out.println("ALL PASSED");
     }
 }
