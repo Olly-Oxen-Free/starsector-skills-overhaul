@@ -56,10 +56,10 @@ public final class ZealDailyTicker implements EveryFrameScript {
      * Map view backed by a MemoryAPI. get reads from MemoryAPI; put writes to MemoryAPI; remove unsets.
      * Other Map methods are minimal stubs.
      */
-    static final class MemoryWrapMap extends AbstractMap<String, Object> {
+    public static final class MemoryWrapMap extends AbstractMap<String, Object> {
         private final MemoryAPI mem;
 
-        MemoryWrapMap(MemoryAPI mem) { this.mem = mem; }
+        public MemoryWrapMap(MemoryAPI mem) { this.mem = mem; }
 
         @Override
         public Object get(Object key) { return mem.get((String) key); }
