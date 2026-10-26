@@ -1,7 +1,7 @@
 {
   "prd_slug": "skills-panel-restructure",
   "version": "5.0",
-  "status": "active",
+  "status": "ready-for-merge",
   "execution_mode": "feature-branch",
   "tier": "architectural",
   "created_at": "2026-10-26T07:38:20Z",
@@ -132,6 +132,24 @@
       ],
       "completed_at": "2026-10-26T08:46:17Z",
       "merged_at": "2026-10-26T08:46:25Z"
+    },
+    "5c": {
+      "status": "done",
+      "wave": 6,
+      "branch": "worktree/skills-panel-restructure-5c",
+      "model": "sonnet",
+      "started_at": "2026-10-26T08:48:43Z",
+      "loops": 1,
+      "pr_number": 8,
+      "pr_target": "feature/skills-panel-restructure",
+      "pr_labels": [
+        "nimble",
+        "nimble-skills-panel-restructure",
+        "wave-6",
+        "complexity-4"
+      ],
+      "completed_at": "2026-10-26T08:50:08Z",
+      "merged_at": "2026-10-26T08:50:15Z"
     }
   },
   "feature_branch": "feature/skills-panel-restructure",
@@ -155,6 +173,10 @@
     },
     "5": {
       "status": "complete"
+    },
+    "6": {
+      "status": "complete"
     }
-  }
+  },
+  "completed_at": "2026-10-26T08:50:37Z"
 }

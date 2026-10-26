@@ -80,3 +80,12 @@
 ## 5b (advisory, PR #6)
 - DialogHost.Delegate.close() ordering vs reportDismissed untested in game; confirm discard/dismiss run once (M5).
 - M5 gaps: dummy dialog flash, K consumed in PreCore vs vanilla bindings, Close button at inTR(16,0), view input inside the Frame.
+
+## 5c
+- ReflectionUtils kept: VanillaCharTabProbe still uses its strict variants. generalizes: false
+- Pending M5 in-game: does CoreUITabListener fire for CHARACTER (poll covers it); vanilla parent lifetime across tab flips; whether consuming the hotkey in PreCore blocks vanilla bindings; log/message once-only behaviour under SiC. generalizes: false
+- Once-per-session flags are static in HostRouter and reset in onGameLoad (nex4x pattern). generalizes: true
+
+## 5c (advisory, PR #8)
+- Reviewer flagged the registration guard (`!hasListenerOfClass && !hasTransientScript`) as building a second host when one exists. Lead checked: the expression builds only when neither exists, which is correct. No change.
+- HostRouter hotkey message appears when the CHARACTER tab is first armed, not at game load; confirm the timing in M5.
