@@ -54,7 +54,7 @@ Run Glob to confirm action at start; expected state:
 ## Deliverables
 | Artifact | Path | Done when |
 |---|---|---|
-| Manual in-game verification (user) | `.nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md` section 8 M4 | user confirms tooltips appear on hover, zoom/pan keep clicks on target, an over-budget confirm buys nothing and flashes red, and frame time does not drop with the panel open |
+| Manual in-game verification (user) | `.nimble/prds/001_skills-panel-restructure/PRD_skills-panel-restructure.md` section 8 M4 | user confirms tooltips appear on hover, zoom/pan keep clicks on target, an over-budget confirm buys nothing and flashes red, and frame time does not drop with the panel open |
 
 (List the M4 manual steps in the PR description: open CHARACTER; hover a node for tooltip; wheel zoom and drag pan then click and hover nodes; queue an over-budget batch and confirm, expect no purchase and a red flash; Esc clears pending; keys 1-3 switch tab; click an owned T0 node and see the active-slot toggle; check frame time.)
 
@@ -91,14 +91,15 @@ Run `validate.sh --changed` (targeted tests). Add tests only where named here: n
 Do not edit or weaken existing tests to make them pass. End your report with the `Tests:` evidence line.
 
 ## Boundaries
-- Do not modify: `build/`, `target/`, any `*.jar`. Note: `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`; never edit it by hand and do NOT commit that file (`git restore jars/SkillsOverhaul.jar` or leave it out of the commit). Also leave `.serena/` and unrelated working-tree changes alone.
+- Do not modify: `build/`, `target/`, `*.jar`. Never edit a jar by hand.
+- Commit: commit your work on the task branch per the implementer contract (conventional subject, files staged by explicit path). `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`: never stage or commit it; run `git checkout -- jars/SkillsOverhaul.jar` before each commit.
+- Leave `.serena/` and unrelated working-tree changes alone.
 - Also off limits per PRD: `data/config/skills_overhaul/trees/**`, `src/skills_overhaul/tree/Node.java`, `TreeDef.java`, `src/skills_overhaul/level/SpendService.java`, `src/skills_overhaul/zealot/CrusadeNPCStub.java`.
 - Flag in the commit body if modified: `mod_info.json`, `build.sh` (this task should not touch them).
 - Out of scope: `CharTabHost`, `DialogHost`, probe, hotkey (wave 5); removing `CharacterTabReplacer` (5c); increment 6 (failed-tree label, choosing which T0 to displace, real respec cost); spec 4.1 colour palette, fixed 48x48 nodes, lanes, hybrids, merge nodes; changing `Node`/`TreeDef` APIs or tree JSON; `SpendService` pool order.
-- Do not commit unless the caller asks; the caller said not to commit in this step.
 
 ## Execution
 - Branch: `worktree/skills-panel-restructure-4a`
 - Validate: `"/home/jayden-eppcohen/Documents/Projects/Software/nimble/.claude/plugins/nimble/scripts/validate.sh" --changed`
 - Commands: build `./build.sh`, test `./build.sh test`
-- Gaming guard: run `~/.claude/hooks/gaming-check.sh` before the first build; if it reports gaming, stop and wait.
+- Gaming guard: run `~/.claude/hooks/gaming-check.sh` before the first build or test and before each later build; exit 1 means the owner is gaming: stop, commit WIP, and report `paused: gaming` instead of retrying.

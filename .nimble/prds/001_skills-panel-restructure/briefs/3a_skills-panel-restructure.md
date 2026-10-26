@@ -54,7 +54,7 @@ Verified with Glob: neither exists yet and neither does the `layout` directory, 
 
 ## Implementation guidance
 - Pattern to follow (test): `test/skills_overhaul/tree/TreeLoaderRealJSONTest.java` - a `main()` using plain `assert`, ending with `System.out.println("ALL PASSED")`. Copy its `findModRoot()` (walks up from cwd to `mod_info.json`, because `./build.sh test` runs from `jars/classes`) and its loader: `TreeLoader.fromJSON(new JSONObject(new JSONTokener(new FileReader(path))))`. Package `skills_overhaul.ui.layout`. Second style reference: `test/skills_overhaul/tree/PrereqValidatorTest.java`.
-- Pattern to follow (spacing rules): `src/skills_overhaul/ui/PathTreeBuilder.java` `configureForViewport(List<TreeDef>,...)` (~line 74), `resetLayoutDefaults`, `totalContentWidth/Height`, `emitLaneColumn` (~line 560-610). Port the ratios as instance state; do not call or modify `PathTreeBuilder` (it still serves the old UI until 4a).
+- Pattern to follow (spacing rules): `src/skills_overhaul/ui/PathTreeBuilder.java` `configureForViewport(List<TreeDef>,...)` (the live overload; it separates trees by `2*laneGap`), `resetLayoutDefaults`, `totalContentWidth/Height`, `emitLaneColumn`. Port the ratios as instance state; do not call or modify `PathTreeBuilder` (it still serves the old UI until 4a).
 - Test fixture: load the five real files `data/config/skills_overhaul/trees/commander_{artificer,collective,commandant,corsair,zealot}.json` (each is `{"tree":..., "nodes":[...]}`, T0 at (2,0), capstone at (2,5); 21 nodes, collective 22). The widest real tab is the fit case. Lay out all five TreeDefs as one tab as well as each singly.
 - Overlap test must use rects from the layout; assert content bounds contain every rect and tier-0 rect y < tier-5 rect y.
 - Use `PanelCoords` conventions from 1a: bottom-up, `localY = panelH - yTop - h` for top-relative inputs. The layout itself stays bottom-up and takes no top-down input.
@@ -81,13 +81,14 @@ Run `./build.sh test` from the repo root (it compiles src and test, then runs ea
 Do not edit or weaken existing tests to make them pass. End your report with the `Tests:` evidence line.
 
 ## Boundaries
-- Do not modify: `build/`, `target/`, `*.jar`. Never edit a jar. `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`: do not commit that file (restore it with `git checkout -- jars/SkillsOverhaul.jar` before committing).
+- Do not modify: `build/`, `target/`, `*.jar`. Never edit a jar by hand.
+- Commit: commit your work on the task branch per the implementer contract (conventional subject, files staged by explicit path). `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`: never stage or commit it; run `git checkout -- jars/SkillsOverhaul.jar` before each commit.
 - Flag in the commit body if modified: `mod_info.json`, `build.sh` (this task should not touch them).
 - Also do not touch: `src/skills_overhaul/tree/Node.java`, `TreeDef.java`, `data/config/skills_overhaul/trees/**`, `PathTreeBuilder.java` and `CharacterTabPanelPlugin.java` (wiring is 4a).
 - Out of scope: the view, tooltips, hosts, model; the April spec's fixed 48x48 nodes, lanes, hybrids and merge nodes; palette; GL drawing; input handling.
-- Do not commit unless the caller asks.
 
 ## Execution
 - Branch: `worktree/skills-panel-restructure-3a`
 - Validate: `"/home/jayden-eppcohen/Documents/Projects/Software/nimble/.claude/plugins/nimble/scripts/validate.sh" --changed`
 - Commands: build `./build.sh`, test `./build.sh test`
+- Gaming guard: run `~/.claude/hooks/gaming-check.sh` before the first build or test and before each later build; exit 1 means the owner is gaming: stop, commit WIP, and report `paused: gaming` instead of retrying.

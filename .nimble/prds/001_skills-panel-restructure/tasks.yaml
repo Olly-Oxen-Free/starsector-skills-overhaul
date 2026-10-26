@@ -36,7 +36,7 @@ tasks:
         path: "src/skills_overhaul/ui/PanelCoords.java, test/skills_overhaul/ui/PanelCoordsTest.java"
         done_when: "PanelCoordsTest runs under ./build.sh test and covers a non-centred panel"
       - artifact: "Manual in-game verification (user)"
-        path: ".nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M1"
+        path: ".nimble/prds/001_skills-panel-restructure/PRD_skills-panel-restructure.md §8 M1"
         done_when: "user confirms frame, XP bar, scrollbar and portrait border align with content and node clicks/tooltips still work"
     agent_context: |
       Engine space: origin bottom-left, y up; PositionAPI.getY() is the bottom edge; InputEventAPI.getY()
@@ -63,7 +63,7 @@ tasks:
     priority: must
     success_criteria:
       - "SkillTreeModelTest passes: owned, pending, unlockable and blocked states with reasons PREREQ, TIER and BUDGET(short n) computed from a Map snapshot for nodes across two TreeDefs of one tab"
-      - "Adding an unaffordable or tier-blocked node to pending returns a rejection with its reason and leaves the pending set unchanged; removing a pending node also removes pending dependents evaluated with All/Any/AtLeast clauses, not the flat getPrereqs list"
+      - "Adding an unaffordable or tier-blocked node to pending returns a rejection with its reason and leaves the pending set unchanged; removing a pending node also removes every pending node that no longer passes the reason-returning check (All/Any/AtLeast clauses and the tier gate) against owned + remaining pending, not the flat getPrereqs list"
       - "PurchasePlanTest passes: a batch whose third node is unaffordable returns failure naming that node and the input snapshot map is unchanged; an affordable batch returns nodes in topological order; SpendServiceTest asserts a failed spend leaves the map unchanged"
       - "PrereqValidator gains a reason-returning check with the tier gate (y>0 needs an owned or pending node in tier y-1 of the same TreeDef); existing canPurchase/canPurchaseWithPending keep prereq-only semantics; existing PrereqValidatorTest assertions are unchanged and still pass, and new assertions in PrereqValidatorTest cover the reason-returning method (PREREQ, TIER, ok)"
       - "GameSpend.commit(Tree, Collection<String>) builds one whole-tab snapshot, runs the dry run, writes nothing on failure, and plays no sound; GameSpendSnapshotTest and ./build.sh test pass"
@@ -190,7 +190,7 @@ tasks:
       - "src/skills_overhaul/level/GameSpend.java"
     deliverables:
       - artifact: "Manual in-game verification (user)"
-        path: ".nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M4"
+        path: ".nimble/prds/001_skills-panel-restructure/PRD_skills-panel-restructure.md §8 M4"
         done_when: "user confirms tooltips appear on hover, zoom/pan keep clicks on target, an over-budget confirm buys nothing and flashes red, and frame time does not drop with the panel open"
     agent_context: |
       Children (one small CustomPanelAPI per node to anchor addTooltipTo) do not follow glTranslatef/glScalef;
@@ -223,11 +223,13 @@ tasks:
       - "MountRetryTest passes: the deferred-mount scheduler retries for at most 180 frames, stops on success, and reports exhaustion exactly once"
       - "MountRetryTest also shows that the mount is armed by the listener trigger alone, by the CHARACTER-tab poll alone, and only once when both fire for the same tab open; the poll re-arms after the tab leaves CHARACTER and opens again"
       - "CharTabHost mounts SkillTreeView sized to the parent's width and height via parent.removeComponent(vanilla) + addComponent, parks no siblings, and unmounts when getCurrentCoreTab() is no longer CHARACTER"
-      - "Probe failure and SiC detection are exposed to the caller as results, not silent returns; ./build.sh and ./build.sh test pass"
+      - "Probe failure and SiC detection are reported through a HostEvents callback passed to the CharTabHost constructor (onSicDetected, onProbeExhausted(reason)), each at most once per arming; failed attempts log at DEBUG only; ./build.sh and ./build.sh test pass"
     files_affected:
       - "src/skills_overhaul/ui/host/VanillaCharTabProbe.java"
       - "src/skills_overhaul/ui/host/CharTabHost.java"
       - "src/skills_overhaul/ui/host/MountRetry.java"
+      - "src/skills_overhaul/ui/host/HostEvents.java"
+      - "src/skills_overhaul/ui/ReflectionUtils.java"
       - "test/skills_overhaul/ui/host/MountRetryTest.java"
     deliverables: []
     agent_context: |
@@ -242,6 +244,10 @@ tasks:
       and the current CharacterTabReplacer (advance) do. Both triggers feed one arm-once-per-open state, which
       MountRetry owns so it stays headless and testable.
       SiC mount precedent: game/mods/.../second_in_command/ui/SCSkillMenuPanel.kt:97-104.
+      ReflectionUtils.invoke/getParent log WARN and return null on failure, hasMethodOfName and getChildrenCopy swallow
+      silently: add non-logging, throwing variants (new methods only) so the probe can report REFLECTION_ERROR.
+      Log failed attempts at DEBUG only; report SiC and exhaustion through HostEvents (onSicDetected,
+      onProbeExhausted(lastReason)), a constructor argument; 5c's HostRouter logs the WARN/INFO.
       Reset statics on game load (nex4x pattern). Research: research/internal/findings.md Q5, Q6;
       research/external/findings.md Q4.
 
@@ -276,6 +282,8 @@ tasks:
       Precedents: showCustomVisualDialog(1000f, 700f, delegate) in
       game/mods/Interastral Peace Casino-1.6.3/src/data/scripts/casino/interaction/GachaHandler.java:414,500;
       CampaignInputListener in game/mods/Console Commands-4.0.9/src/org/lazywizard/console/ConsolePlugins.kt.
+      Create the SkillTreeView plugin before showCustomVisualDialog; getCustomPanelPlugin returns it; init only attaches
+      the view to the panel (LunaLib OpenCustomPanelFromDialog.VisualDelegate, Casino BlackjackDialogDelegate).
       reportDismissed(int) meaning is undocumented; treat any call as closed and drop pending.
       Whether consuming in PreCore blocks vanilla bindings is an in-game gap; note it in the PR.
       Research: research/external/findings.md Q2, Q3.
@@ -294,7 +302,7 @@ tasks:
     model: sonnet
     priority: must
     success_criteria:
-      - "SkillsOverhaulModPlugin registers CharTabHost and SkillsHotkeyListener with addListener(l, true), each guarded by hasListenerOfClass, adds the CharTabHost CHARACTER-tab poll with addTransientScript guarded by hasTransientScript, and no longer adds CharacterTabReplacer"
+      - "SkillsOverhaulModPlugin constructs one CharTabHost with HostRouter as its HostEvents and registers that same instance with addListener(host, true) and addTransientScript(host) (guarded by hasListenerOfClass and hasTransientScript), registers SkillsHotkeyListener with addListener(l, true) guarded by hasListenerOfClass, and no longer adds CharacterTabReplacer"
       - "With second_in_command enabled, CharTabHost does not mount, one INFO line is logged, one campaign message naming the hotkey is shown once per game session, and the hotkey still opens DialogHost"
       - "A probe failure logs one WARN with the probe's reason and shows one campaign message naming the hotkey once per game session (not repeated on later tab opens, and not shown twice if SiC is also enabled)"
       - "README.md gains a line naming the default hotkey K, the ui_hotkey key in data/config/skills_overhaul.json, and that it opens the skills dialog under Second-in-Command or when the character tab cannot be replaced; CHANGELOG.md's Unreleased section gains a matching entry"
@@ -311,10 +319,12 @@ tasks:
         path: "README.md, CHANGELOG.md"
         done_when: "README.md and CHANGELOG.md each name the K default and the ui_hotkey config key"
       - artifact: "Manual in-game verification (user)"
-        path: ".nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M5"
-        done_when: "user confirms the CHARACTER tab shows SkillTreeView filling the vanilla panel area, switching tabs and back restores it, and with SiC enabled the hotkey opens the dialog and vanilla bindings still work"
+        path: ".nimble/prds/001_skills-panel-restructure/PRD_skills-panel-restructure.md §8 M5"
+        done_when: "user confirms the CHARACTER tab shows SkillTreeView filling the vanilla panel area, switching tabs and back restores it, and with SiC enabled the hotkey opens the dialog and vanilla bindings still work; with SiC enabled starsector.log has one SiC INFO line and one campaign message names the hotkey once per game session; a probe failure, if it occurs, logs one WARN with the reason"
     agent_context: |
-      Registration convention: addListener(l, true) in onGameLoad (SkillsOverhaulModPlugin.java:69-74).
+      Registration convention: addListener(l, true) in SkillsOverhaulModPlugin.onGameLoad; one CharTabHost instance is both
+      listener and script (as privLifecycle in the same method). HostRouter implements 5a's HostEvents.
+      CHANGELOG: add the entry under the first "## Unreleased" section in the file.
       SiC detection: Global.getSettings().getModManager().isModEnabled("second_in_command") (current
       replacer's second_in_command check in install()). Listeners are transient: re-register each load, guard against duplicates.
       Campaign message: Global.getSector().getCampaignUI().addMessage(text); keep a static shown-this-session

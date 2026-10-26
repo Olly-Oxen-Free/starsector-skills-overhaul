@@ -61,7 +61,8 @@ Run `./build.sh test` (targeted tests via `validate.sh --changed` also fine). Ad
 Do not edit or weaken existing tests to make them pass. End your report with the `Tests:` evidence line.
 
 ## Boundaries
-- Do not modify: `build/`, `target/`, any `*.jar`. `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`; do NOT commit that file (restore it with `git checkout -- jars/SkillsOverhaul.jar` before committing). Do not edit jars by hand.
+- Do not modify: `build/`, `target/`, `*.jar`. Never edit a jar by hand.
+- Commit: commit your work on the task branch per the implementer contract (conventional subject, files staged by explicit path). `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`: never stage or commit it; run `git checkout -- jars/SkillsOverhaul.jar` before each commit.
 - Flag in the commit body if modified: `mod_info.json`, `build.sh` (this task should touch neither).
 - Out of scope: attaching tooltips to nodes or any `CharacterTabPanelPlugin` change (4a); editing or deleting `PathTreeBuilder` (4a); changing `SkillTreeModel`/`NodeStatus` (2a); layout, zoom or pan; in-game verification (the project has no compiler beyond `./build.sh`, tooltips are checked in-game in 4a).
 
@@ -69,4 +70,4 @@ Do not edit or weaken existing tests to make them pass. End your report with the
 - Branch: `worktree/skills-panel-restructure-3b`
 - Validate: `"/home/jayden-eppcohen/Documents/Projects/Software/nimble/.claude/plugins/nimble/scripts/validate.sh" --changed`
 - Commands: build `./build.sh`, test `./build.sh test`
-- Gaming guard: run `~/.claude/hooks/gaming-check.sh` before the first build or test; if it exits 1, stop and wait.
+- Gaming guard: run `~/.claude/hooks/gaming-check.sh` before the first build or test and before each later build; exit 1 means the owner is gaming: stop, commit WIP, and report `paused: gaming` instead of retrying.

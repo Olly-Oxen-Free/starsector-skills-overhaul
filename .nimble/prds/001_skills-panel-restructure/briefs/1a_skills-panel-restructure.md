@@ -32,17 +32,17 @@ Line numbers are from research and may drift; locate by symbol.
 |---|---|---|
 | `src/skills_overhaul/ui/PanelCoords.java` | create | pure static helpers: inTL to localY, cursor to local, rect contains |
 | `test/skills_overhaul/ui/PanelCoordsTest.java` | create | headless test, `main()` + `assert`; new dir `test/skills_overhaul/ui/` |
-| `src/skills_overhaul/ui/CharacterTabPanelPlugin.java` | modify | route y-sites through PanelCoords; drop bbLevel/bbPoints (`:475-476`), empty `render()` (`:818`), `UI_VERSION` display (`:484`), 'processInput is live' log (`:1043`); rename labels (`:421-422`); leave `hasAnyInPreviousTier` (2a owns it) |
-| `src/skills_overhaul/ui/PathTreeBuilder.java` | modify | bottom-up node geometry; remove `emitSublaneColumn` (`:613`), merge branches (`:580,623,650,715,758,770`), `isCrossLane` (`:740`), `SUBLANE_W` (used `:80,145,166,187,215,308+`), `merge:` label (`:793`), `configureForViewport(TreeDef,...)` (`:94-225`), `resolveTreeOf` (`:784`), `LaneColumn` (written `:460`, never read), `LANE_FRAME`, `LANE_FRAME_DIM`, `HEADER_BG` (`:64-66`), `UI_VERSION` (`:45`) and its logs (`:117,122,127`) |
+| `src/skills_overhaul/ui/CharacterTabPanelPlugin.java` | modify | route y-sites through PanelCoords; drop bbLevel/bbPoints, empty `render()`, the `UI_VERSION` constant (declared in this class) with its display line and its logs (the 'attach ... jar=' logs in `attach()` and the 'rebuild' debug log in `rebuild()`), 'processInput is live' log in `processInput`; rename labels (`:421-422`); leave `hasAnyInPreviousTier` (2a owns it) |
+| `src/skills_overhaul/ui/PathTreeBuilder.java` | modify | bottom-up node geometry; remove `emitSublaneColumn` (`:613`), merge branches (`:580,623,650,715,758,770`), `isCrossLane` (`:740`), `SUBLANE_W` (used `:80,145,166,187,215,308+`), `merge:` label (`:793`), `configureForViewport(TreeDef,...)` (`:94-225`), `resolveTreeOf` (`:784`), `LaneColumn` (written `:460`, never read), `LANE_FRAME`, `LANE_FRAME_DIM`, `HEADER_BG` (`:64-66`) |
 | `src/skills_overhaul/ui/ConnectionLineDrawer.java` | modify | use PanelCoords; remove deprecated 4-arg `draw` and `flipY=true` branch; fix top-down doc comment (`:40-44`) |
-| `src/skills_overhaul/ui/CharacterTabReplacer.java` | modify | remove `UI_VERSION` log (`:214`) and the 'attach ... jar=' logs (`:114-129` region, if located here or in the plugin `attach`) |
+| `src/skills_overhaul/ui/CharacterTabReplacer.java` | modify | remove the `CharacterTabPanelPlugin.UI_VERSION` log in `install()` |
 | `src/skills_overhaul/ui/NodeIconPanelPlugin.java` | delete | zero callers |
 
 ## Deliverables
 | Artifact | Path | Done when |
 |---|---|---|
 | Coordinate helper with headless test | `src/skills_overhaul/ui/PanelCoords.java, test/skills_overhaul/ui/PanelCoordsTest.java` | PanelCoordsTest runs under ./build.sh test and covers a non-centred panel |
-| Manual in-game verification (user) | `.nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M1` | user confirms frame, XP bar, scrollbar and portrait border align with content and node clicks/tooltips still work |
+| Manual in-game verification (user) | `.nimble/prds/001_skills-panel-restructure/PRD_skills-panel-restructure.md §8 M1` | user confirms frame, XP bar, scrollbar and portrait border align with content and node clicks/tooltips still work |
 
 The in-game check is the user's; do not claim it passed. State in the report that it is pending.
 
@@ -67,7 +67,8 @@ From `brain/wiki/skills-overhaul-core-systems.md` (verified: 2026-10-08):
 Run `validate.sh --changed` (targeted tests), then the full `./build.sh test` once at the end. Add exactly one new test class, `PanelCoordsTest`, as specified above. `NodeSlotTest` must pass unchanged. There is no JUnit: each `*Test` runs its `main()` with `assert` under Java 8. Rendering and clicks cannot run headless; the in-game check (M1) is the user's. Do not edit or weaken existing tests to make them pass. End your report with the `Tests:` evidence line.
 
 ## Boundaries
-- Do not modify: `build/`, `target/`, `*.jar`. Never edit a jar. `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`: do not commit that file (restore it with `git checkout -- jars/SkillsOverhaul.jar` before committing, or leave it unstaged). Do not commit unless the caller asks.
+- Do not modify: `build/`, `target/`, `*.jar`. Never edit a jar by hand.
+- Commit: commit your work on the task branch per the implementer contract (conventional subject, files staged by explicit path). `./build.sh` rewrites the tracked `jars/SkillsOverhaul.jar`: never stage or commit it; run `git checkout -- jars/SkillsOverhaul.jar` before each commit.
 - Flag in the commit body if modified: `build.sh`, `mod_info.json` (neither should be touched).
 - Out of scope: SkillTreeModel / tier-gate / commit changes (2a), TreeLayout and zoom (3a), tooltips (3b/4a), host or reflection changes (5x), `Node`/`TreeDef` APIs, tree JSON, `SpendService`, `zealot/CrusadeNPCStub`, colour palette, increment 6 items. Pre-existing dead code you notice that is not listed: mention it, do not delete.
 
@@ -75,3 +76,4 @@ Run `validate.sh --changed` (targeted tests), then the full `./build.sh test` on
 - Branch: `worktree/skills-panel-restructure-1a`
 - Validate: `"/home/jayden-eppcohen/Documents/Projects/Software/nimble/.claude/plugins/nimble/scripts/validate.sh" --changed`
 - Commands: build `./build.sh`, test `./build.sh test`
+- Gaming guard: run `~/.claude/hooks/gaming-check.sh` before the first build or test and before each later build; exit 1 means the owner is gaming: stop, commit WIP, and report `paused: gaming` instead of retrying.

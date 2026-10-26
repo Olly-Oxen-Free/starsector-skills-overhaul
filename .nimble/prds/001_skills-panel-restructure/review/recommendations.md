@@ -1,167 +1,254 @@
-# Review: skills-panel-restructure (prd), 2026-10-26
+# Review: skills-panel-restructure (briefs), 2026-10-26
 
-Blocking: 0   Advisory: 8
+Blocking: 2   Advisory: 11
+After apply (2026-10-26): Blocking open: 0   Advisory open: 1 (A11, left optional). See `## Applied`.
 
-Structural checks that passed: `tasks.yaml` parses; ids unique; every task has `wave` and
-`deliverables`; `waves.sh list` exits 0 (waves 1:[1a] 2:[2a] 3:[3a,3b] 4:[4a] 5:[5a,5b] 6:[5c]);
-every task's wave exceeds its dependencies' waves; same-wave tasks (3a/3b, 5a/5b) share no file;
-R1-R10 each map to a task; priorities all `must`; `model` matches `complexity_threshold: 5`;
-4a at complexity 7 carries a recorded reason (PRD:222). No task lists a `never_touch` path
-(`*.jar`, `build/`, `target/`) or a `require_review` file (`mod_info.json`, `build.sh`), and none
-lists the PRD §11 no-touch files (`Node.java`, `TreeDef.java`, `SpendService.java`,
-`CrusadeNPCStub.java`, tree JSON).
+Plan-stage (prd) review: replaced; read it with
+`git show 289fe4c:.nimble/prds/001_skills-panel-restructure/review/recommendations.md`.
+
+Checks that passed:
+- `waves.sh list` exits 0: 1:[1a] 2:[2a] 3:[3a,3b] 4:[4a] 5:[5a,5b] 6:[5c]. Every task's wave is
+  above its dependencies' waves.
+- No files overlap within a wave. 3a (`ui/layout/*`) and 3b (`ui/view/*`) share no file. 5a and 5b
+  share only the new directory `test/skills_overhaul/ui/host/`, which git does not track.
+- R1-R10 each map to a brief: R1/R2 1a; R3/R4 2a+4a; R5 3a+4a; R6 3b+4a; R7 4a; R8 5a+5c;
+  R9 5b+5c; R10 5c.
+- Every `## Deliverables` table matches its `tasks.yaml` entry.
+- No brief edits a `never_touch` path. Every brief says not to commit the
+  build-rewritten `jars/SkillsOverhaul.jar` (1a:70, 2a:88, 3a:84, 3b:64, 4a:94, 5a:77, 5b:74,
+  5c:73). `jars/SkillsOverhaul.jar` is tracked (`git ls-files jars`) and is already modified in
+  the main checkout.
+- The current-state claims I checked hold. Symbols and approximate lines in
+  `CharacterTabPanelPlugin`, `PathTreeBuilder`, `CharacterTabReplacer`, `GameSpend`,
+  `SpendService`, `PrereqValidator`, `Prereq`, `Node`, `TreeRegistry` and
+  `PendingPurchaseTopoSort` match. So do the API signatures in `starfarer.api.zip`
+  (`TooltipCreator`, `addTooltipTo` :333-334, `CustomVisualDialogDelegate`,
+  `CampaignInputListener`, `CoreUITabListener`, `hasListenerOfClass`, `hasTransientScript`,
+  `addMessage`). The five commander tree files have 21 or 22 nodes in slots 0..4 and tiers 0..5,
+  with T0 and the capstone at slot 2. `Config` and `ConfigTest` have the shape 5b describes, and
+  `data/config/skills_overhaul.json` is valid JSON. The `build.sh` test runner does what the
+  briefs say.
 
 ## Blocking
 
-None.
+### B1. CharTabHost has no defined way to report to HostRouter, and the two tasks both log WARN for probe failures
+- Where: `briefs/5a_skills-panel-restructure.md:13,26` and `briefs/5c_skills-panel-restructure.md:21-24,56,75`.
+  The same applies to the `tasks.yaml` criteria for 5a and 5c.
+- Actual: 5a requires CharTabHost to log "one WARN per distinct probe failure reason per session"
+  (5a:26) and only to "expose results". `CharTabHost` runs itself from `advance`, so it is its own
+  caller, and 5a does not define a callback. 5c must then (a) send the 180-frame exhaustion
+  report and the SiC result to `HostRouter` and (b) log "exactly one WARN". But
+  `CharTabHost.java` is not in 5c's `files_affected` (`tasks.yaml:576-582`), and 5c:75 puts
+  changes to `CharTabHost` out of scope. As written, 5c either cannot connect the router or
+  breaks its own scope. Probe failures would also log twice: once per distinct reason from 5a,
+  and transient early-frame reasons such as NO_CORE would also be logged during mounts that
+  succeed. A second WARN would then come from HostRouter. That contradicts the 5c criterion
+  "logs one WARN".
+- Fix:
+  - 5a requirement 7: log each failed attempt at DEBUG only. Add a constructor argument
+    `CharTabHost(HostEvents events)`, where `HostEvents` has `onSicDetected()` and
+    `onProbeExhausted(String lastReason)`. Call each at most once per arming.
+  - 5a success criteria and `tasks.yaml` 5a: add "SiC detection and exhaustion are reported
+    through a HostEvents callback passed to the constructor".
+  - 5c: implement `HostEvents` in `HostRouter` and pass it when constructing CharTabHost. The
+    WARN is logged only in HostRouter.
+
+### B2. Two briefs tell the implementer not to commit, which the workflow needs it to do
+- Where: `briefs/4a_skills-panel-restructure.md:98` ("the caller said not to commit in this step")
+  and `briefs/5c_skills-panel-restructure.md:76` ("Do not commit; leave changes in the worktree").
+  A weaker form is in 1a:70, 3a:88 and 5b:74 ("unless the caller asks").
+- Actual: the implementer contract commits on the task branch as step 9
+  (`.../plugins/nimble/agents/implementer.md:3,77`). The waves workflow merges task branches.
+  If 4a is left uncommitted, waves 5-6 start without `SkillTreeView` (5a:12, 5b:16 expect it
+  merged). The jar is the only file that must stay out of a commit.
+- Fix: in all five briefs, replace the no-commit line with "Commit your work on the task branch
+  per the implementer contract. Never stage `jars/SkillsOverhaul.jar` (restore it with
+  `git checkout -- jars/SkillsOverhaul.jar` first)." Delete "the caller said not to commit in
+  this step" from 4a.
 
 ## Disproof attempts
-
-- Decision: view mounts in the vanilla panel's parent, replacing it; SiC or probe failure uses
-  DialogHost via hotkey. **Held.** SiC 2.0.0 removes the same panel from the same parent
-  (`game/mods/Second-in-Command-2.0.0/src/second_in_command/scripts/SkillPanelReplacerScript.kt:58-63`),
-  and the current code already defers to SiC by mod id `second_in_command`
-  (`src/skills_overhaul/ui/CharacterTabReplacer.java:127-145`; id confirmed in
-  `game/mods/Second-in-Command-2.0.0/mod_info.json:2`). The API supports the dialog path
-  (`CampaignUIAPI.showInteractionDialog(InteractionDialogPlugin, SectorEntityToken)`,
-  `InteractionDialogAPI.showCustomVisualDialog(float, float, CustomVisualDialogDelegate)` in
-  `game/starfarer.api.zip`). See A1 for the trigger mechanism, which is a separate choice.
-- Decision: confirm is all-or-nothing through a dry run on one cloned whole-tab snapshot.
-  **Held.** `SpendService.spend` returns at `src/skills_overhaul/level/SpendService.java:57-61`
-  before any `mem.put` (writes start at :64), and a successful spend sets the purchased flag
-  (:69), so sequential spends on one clone see earlier batch nodes as owned for
-  `PrereqValidator.canPurchase` (`src/skills_overhaul/tree/PrereqValidator.java:9-14`).
-  `TreeRegistry.getTrees(Tree)` exists for the whole-tab snapshot (`TreeRegistry.java:30`).
-- Decision: bottom-up panel-local coordinates everywhere. **Held.** The vanilla example uses
-  `event.getY()` in the same space as `p.getY()` with no flip and draws quads from `y` to `y + h`
-  (`game/starfarer.api.zip` -> `com/fs/starfarer/api/impl/campaign/ExampleCustomUIPanel.java:27-28,44-45,76-79`).
-  The contrary comments in the current code (`CharacterTabPanelPlugin.java:511-513`, `:990-1001`)
-  are the bug this PRD fixes.
+- Not run for the `briefs` target (prd only). The plan-stage results (all three decisions held)
+  are in commit 289fe4c.
 
 ## Advisory
 
-### A1. CoreUITabListener not firing is not a probe failure, so the fallback never announces itself
-- Where: `tasks.yaml:207-209` (5a description), `tasks.yaml:287` (5c), `PRD_skills-panel-restructure.md:105,156,167`
-- Why: The PRD's mitigation for "listener does not fire for CHARACTER" is "probe failure routes
-  to DialogHost". If the listener never fires, the probe never runs, no WARN or campaign message
-  appears, and the player sees the vanilla panel with no hint. Both existing CHARACTER-tab
-  precedents poll instead of listening: SiC's transient `EveryFrameScript` checks
-  `currentCoreTab == CHARACTER` (`SkillPanelReplacerScript.kt:21-34`), as does the current
-  `CharacterTabReplacer` (`CharacterTabReplacer.java:25,49`). The nex4x listener precedent is for
-  INTEL, not CHARACTER (`workspace/nexerelin-4x-mod/src/nex4x/ui/CoreUITabInjectorListener.java:52`).
-  This might be blocking for R8 if the in-game check shows the listener does not fire.
-- Fix: In 5a, drive CharTabHost from a transient `EveryFrameScript` (runWhilePaused) that polls
-  `getCurrentCoreTab() == CHARACTER`, or keep the listener and add that poll as the backstop. Then
-  PRD §9 Q1 stops gating the fallback.
+### A1. 5b creates the view inside `init`, but the precedents create the plugin before the dialog opens
+- Where: `briefs/5b_skills-panel-restructure.md:16`
+- Why: both precedents construct the plugin before `showCustomVisualDialog`. `getCustomPanelPlugin`
+  returns that existing object, and `init` only attaches the panel:
+  `LunaLib-2.0.5/src/lunalib/backend/ui/OpenCustomPanelFromDialog.kt:65-77` and
+  `Interastral Peace Casino-1.6.3/.../blackjack/BlackjackDialogDelegate.java:33-42`. If the engine
+  calls `getCustomPanelPlugin()` before `init`, which is how the panel is created with a plugin,
+  the brief's order returns null and the dialog is blank. This could be blocking. I cannot prove
+  the engine's call order from the obfuscated jar, so it is filed as advisory.
+- Fix: in 5b requirement 2, construct `SkillTreeView` in the delegate constructor, return it from
+  `getCustomPanelPlugin()`, and in `init` only store the callbacks and attach the panel. This is
+  the same way `CharacterTabReplacer.java:199-210` does `createCustom` then `attach`.
 
-### A2. SiC players are never told about the hotkey
-- Where: `PRD_skills-panel-restructure.md:139-140`; `tasks.yaml:286` (5c criterion 2)
-- Why: Under SiC, the case R9 exists for, 5c logs one INFO line only. The campaign message naming
-  the hotkey appears only on probe failure. Neither `README.md` nor `CHANGELOG.md` mentions a
-  hotkey or `skills_overhaul.json` keys (grep finds no `hotkey`, `migration_cap` or
-  `skills_overhaul.json`). A SiC player has no in-game way to find `K`.
-- Fix: Change the 5c criterion to show the one-per-session campaign message under SiC too, and add
-  a `CHANGELOG.md` entry naming `ui_hotkey` to 5b or 5c deliverables.
+### A2. 5c should register one CharTabHost instance as both the listener and the script
+- Where: `briefs/5c_skills-panel-restructure.md:19`
+- Why: 5a:23 makes CharTabHost both the `EveryFrameScript` and the `CoreUITabListener`, and its
+  arm-once state lives in that instance. If 5c creates two instances, the listener instance's
+  `advance` never runs. The listener trigger then does nothing, and the arm-once-per-open
+  behaviour is never exercised. The repo already registers one shared instance:
+  `SkillsOverhaulModPlugin.java:81-84` (`privLifecycle` passed to both `addTransientScript` and
+  `addTransientListener`).
+- Fix: add to 5c requirement 1: "Construct one CharTabHost and pass the same instance to
+  `addListener(host, true)` and `addTransientScript(host)`. Check both guards before
+  constructing it."
 
-### A3. New-behaviour tests without a recorded user ask
-- Where: `tasks.yaml:65,112,144,217,250-251`; `PRD_skills-panel-restructure.md:69,90`
-- Why: `.nimble/config.yaml` does not set `tests.new_behaviour: tester`, and neither the PRD nor
-  `interview.md` records the user asking for tests. "Headless tests" comes from
-  `research/summary.md:13-14`. PanelCoordsTest (1a, y-axis bug) and PurchasePlanTest and the
-  SpendServiceTest assertion (2a, partial commit) are regression tests and are justified by
-  `tests.regression_per_fix: true`. SkillTreeModelTest, TreeLayoutTest, NodeTooltipContentTest,
-  MountRetryTest, SkillsHotkeyGuardTest and the ConfigTest default assertion cover new behaviour.
-  The success metric also says "6 classes" while the tasks create 7 new test classes.
-- Fix: If the user's increment plan asked for headless tests, record that in PRD §9 as an
-  `Assumption:` or user ask and set the metric to 7. If not, keep the two regression tests and
-  drop the new-behaviour test criteria.
+### A3. The 5a probe guidance names only one of three ReflectionUtils calls that swallow errors
+- Where: `briefs/5a_skills-panel-restructure.md:16`
+- Why: `ReflectionUtils.invoke` catches Throwable, logs a WARN and returns null
+  (`ReflectionUtils.java:95-100`). It also logs WARN on "method not found" (:87-91).
+  `hasMethodOfName` swallows errors silently (:117). Over 180 retry frames this can produce up to
+  180 WARN lines, and REFLECTION_ERROR cannot be told apart from a method that returned null.
+- Fix: in 5a requirement 1, add `invoke` and `hasMethodOfName` to the swallow note. Require the
+  probe to use a non-logging, throwing variant (a new method in ReflectionUtils is acceptable) so
+  it can report REFLECTION_ERROR.
 
-### A4. 1a grep criterion passes before any change
-- Where: `tasks.yaml:22`
-- Why: "no remaining `getScreenHeight() -` y conversion" already holds today. The flip is written
-  `sh - (float) e.getY()` after `float sh = Global.getSettings().getScreenHeight()`
-  (`CharacterTabPanelPlugin.java:998-1000`), so the grep matches nothing. The legitimate
-  `getScreenHeight()` at `:583` (scissor viewport scale) would also make a broader grep fail.
-- Fix: Reword to "eventToPanelLocalY (or its PanelCoords replacement) returns `e.getY() - py`
-  with no screen-height flip; the only `getScreenHeight()` left in `CharacterTabPanelPlugin` is
-  the scissor viewport scale".
+### A4. In 2a, `remove()` re-checks only prereq clauses, not the tier gate
+- Where: `briefs/2a_skills-panel-restructure.md:21` and :61 ("a pending node stays only if
+  `Prereq.allSatisfied(...)`")
+- Why: the tier gate counts pending nodes (`CharacterTabPanelPlugin.java:937-948`), and prereqs
+  can skip tiers (2a:62). Removing the only pending node in tier y-1 can leave a tier-y node
+  pending while it is tier-blocked. The commit dry run, which checks the tier, then fails and
+  flashes red for a batch the model said was valid.
+- Fix: the removal loop keeps a pending node only if the new reason-returning `PrereqValidator`
+  check returns ok against owned + remaining pending. Add one `SkillTreeModelTest` case for a
+  tier-only dependent.
 
-### A5. 2a says PrereqValidatorTest passes unchanged but lists it as affected
-- Where: `tasks.yaml:68` versus `tasks.yaml:79`
-- Why: The criterion says "PrereqValidatorTest passes unchanged", and `files_affected` lists
-  `test/skills_overhaul/tree/PrereqValidatorTest.java`. An agent can't tell whether to add the
-  reason-method cases there.
-- Fix: Reword to "existing PrereqValidatorTest assertions are unchanged; new assertions cover the
-  reason-returning method", or remove the file from `files_affected`.
+### A5. The manual-deliverable paths name a folder that does not exist
+- Where: `tasks.yaml:313,467,588`; `briefs/1a:45`, `4a:57`, `5c:48`
+- Why: the paths say `.nimble/prds/skills-panel-restructure/...`, but the folder is
+  `.nimble/prds/001_skills-panel-restructure/`. Nothing checks these paths automatically, but
+  they lead nowhere.
+- Fix: change `skills-panel-restructure/` to `001_skills-panel-restructure/` in all six places.
 
-### A6. TreeLayoutTest's 3-TreeDef case is lighter than the real worst case
-- Where: `tasks.yaml:112`
-- Why: The commander tab has 5 TreeDefs of 21-22 nodes each (x 0..4, y 0..5) in
-  `data/config/skills_overhaul/trees/commander_{artificer,collective,commandant,corsair,zealot}.json`.
-  The admin tab has 4 trees of 2 nodes each at x=2. A 3-tree fixture does not show that fit works
-  for the widest tab, which is the case that matters when the view fills the vanilla parent (5a).
-  `TreeDef.java:18-27` only rejects duplicate coordinates and does not enforce the 0..4/0..5 bounds
-  that `tasks.yaml:126` attributes to it.
-- Fix: Make the fixture 5 TreeDefs (one sparse, like admin) and cite the tree JSON, not
-  `TreeDef.java:20-27`, for the grid bounds.
+### A6. 1a puts the UI_VERSION and attach logs in the wrong files
+- Where: `briefs/1a_skills-panel-restructure.md:36,38`
+- Why: `UI_VERSION` is declared at `CharacterTabPanelPlugin.java:45`, not in PathTreeBuilder. Its
+  attach logs, including `jar=`, are at `CharacterTabPanelPlugin.java:117-127`, and a rebuild
+  debug log is at :135. PathTreeBuilder contains no `UI_VERSION`. The criterion's grep would
+  still catch them.
+- Fix: move these items into the CharacterTabPanelPlugin row (`:45`, `:117-135`, `:484`). Keep
+  only `:214` in the CharacterTabReplacer row.
 
-### A7. `./build.sh` rewrites a tracked never_touch jar
-- Where: every task's `./build.sh` criterion; `.nimble/config.yaml` `boundaries.never_touch: "*.jar"`
-- Why: `build.sh:9,75-76` writes `jars/SkillsOverhaul.jar`, which git tracks (it is not in
-  `.gitignore`; only `jars/classes/` is), and `git status` already shows it modified. A
-  task agent that stages broadly commits a never_touch file, and the code reviewer would block it.
-- Fix: Add to each brief: "do not stage `jars/`; run `git checkout -- jars/SkillsOverhaul.jar`
-  before committing". Alternatively, the user can decide whether the jar stays tracked.
+### A7. Stale anchors and paths in several briefs
+- Where and actual state:
+  - 2a:58 says `SpendService.java:~66-70`; the early return is at :55-59.
+  - 3a:57 says `configureForViewport(List<TreeDef>,...)` is at ~74; it is at :273. Line 74 is
+    `resetLayoutDefaults`. Note that this live overload separates trees by `2*laneGap`.
+  - 5c:53 says AdminXPTracker is at :60-65; it is at :69-70.
+  - 5a:43 says `test/skills_overhaul/ui/` does not exist; 1a and 2a create it.
+  - 5b:51 gives the path `M/LunaLib-2.0.5/...`. The real path is
+    `game/mods/LunaLib-2.0.5/src/lunalib/backend/ui/OpenCustomPanelFromDialog.kt`, and
+    `LunaBaseCustomPanelPlugin.kt` is under `src/lunalib/lunaUI/panel/`.
+- Fix: correct these anchors. Each brief already says to locate code by symbol, so none of these
+  blocks execution.
 
-### A8. Line references into files that 1a rewrites will be stale by waves 2-4
-- Where: `tasks.yaml:87,90-91` (2a: `CharacterTabPanelPlugin.java:937-948, :1208-1242, :1254-1266`),
-  `tasks.yaml:157` (3b: `PathTreeBuilder.java:57-62`), `tasks.yaml:197` (4a: `:1166-1200`)
-- Why: 1a deletes dead fields, methods and log blocks in both files (for example
-  `SUBLANE_W` at `PathTreeBuilder.java:45`, and `bbLevel/bbPoints` and the UI_VERSION logs in
-  `CharacterTabPanelPlugin.java:45,117-135,454-455`), so every later line number shifts.
-- Fix: Name the anchors instead: `hasAnyInPreviousTier`, the budget block in the node-click
-  handler, `commitPending`, the `COLOR_OWNED..COLOR_CAPSTONE` constants, and the owned-T0 branch
-  with `TODO(active-basics)`.
+### A8. 5c's "top `## Unreleased`" CHANGELOG section is ambiguous
+- Where: `briefs/5c_skills-panel-restructure.md:25`
+- Why: `CHANGELOG.md:3` and `:34` are two separate `## Unreleased — ...` sections, and both
+  cover other work (defense lane, gunnery).
+- Fix: tell 5c to add a new `## Unreleased — Skills panel restructure` section above line 3.
 
-## Checks requested by caller
+### A9. Some 5c behaviour can only be seen in-game, and M5 does not check it
+- Where: 5c criteria 2-3 (`tasks.yaml:572-573`); PRD §8 M5
+- Why: the SiC INFO line, the campaign message shown once, and the probe-failure WARN cannot be
+  checked headless. M5 does not list them, and the user cannot trigger the probe-failure path.
+- Fix: add to M5 and the 5c deliverable: "with SiC enabled, `starsector.log` has one INFO line and
+  one campaign message names the hotkey; reload shows it once again". Record the probe-failure
+  path as checked by code review only, or cover it through the optional `HostRouterTest` (A11).
 
-- **Default hotkey `K` (LWJGL keycode 37).** No collision found in campaign bindings. Vanilla
-  rebindable controls live in the Java prefs store, not `data/config/settings.json`
-  (`~/.java/.userPrefs/com/fs/starfarer/prefs.xml`, `controls1`+`controls2`, 220 entries). No
-  entry uses code 37. The game's `data/config/settings.json` defines no key bindings. Two enabled
-  mods bind 37, both in combat only, which a `CampaignInputListener` does not see: Advanced
-  Gunnery Control `agc_mergeHotkey` and Flux Reticle `sun_fr_toggleStrafeAndTurnToCursorKey`
-  (`saves/common/LunaSettings/*.json.data`). SiC 2.0.0 binds no K. Residual: vanilla's fixed
-  core-tab shortcuts are compiled into `starfarer_obf.jar` and were not decompiled; M5's "vanilla
-  bindings still work" check covers this.
-- **never_touch paths.** No task's `files_affected` names `*.jar`, `build/` or `target/`. See A7
-  for the jar that `./build.sh` writes as a side effect.
+### A10. Only two briefs include the gaming-guard step
+- Where: 3b:72 and 4a:104 have it; 1a, 2a, 3a, 5a, 5b and 5c do not.
+- Why: the hooks and `validate.sh` enforce the guard anyway, so this only makes the briefs
+  inconsistent.
+- Fix: add the same Execution line to the other six briefs, or remove it from both.
+
+### A11. 5c's optional `HostRouterTest` is not in the plan
+- Where: `briefs/5c_skills-panel-restructure.md:69`
+- Why: the PRD success metric counts 7 new test classes. An optional eighth test that is not in
+  `files_affected` leaves the scope unclear.
+- Fix: either list `test/skills_overhaul/ui/host/HostRouterTest.java` in `tasks.yaml` 5c with a
+  criterion (SiC plus probe failure shows one message), which also helps A9, or drop the line.
 
 ## Applied
-- A1: tasks.yaml 5a - description, a new MountRetryTest criterion and agent_context make CharTabHost arm the mount from either the CoreUITabListener callback or a transient every-frame `getCurrentCoreTab() == CHARACTER` poll, with one arm-once-per-open state in MountRetry. tasks.yaml 5c - registration criterion adds the poll script via `addTransientScript`, guarded by `hasTransientScript` (`SectorAPI.java:337`). PRD R8 (§4), external blocker row (§6), listener risk row (§6) and Q1 (§9) updated to match.
-- A2: tasks.yaml 5c - description and criteria show a once-per-game-session campaign message naming the hotkey under SiC and on probe failure (shared flag, never shown twice). A new criterion and deliverable add README.md and CHANGELOG.md lines, and both files are added to files_affected. The agent_context names `CampaignUIAPI.addMessage(String)`. PRD R9 and the §5 error state updated.
-- A3 (count only): PRD §3 metric changed from "6 classes" to "7 new classes".
-- A4: tasks.yaml 1a - the grep criterion now requires the cursor y conversion to return `e.getY() - py` with no screen-height flip, with the scissor viewport scale as the only `getScreenHeight()` left.
-- A5: tasks.yaml 2a - the criterion now says existing PrereqValidatorTest assertions stay unchanged and new assertions cover the reason-returning method.
-- A6: tasks.yaml 3a - the fixture is the 5 real commander TreeDefs (21-22 nodes each), loaded like TreeLoaderRealJSONTest (`findModRoot`). The unenforced `TreeDef.java:20-27` bounds claim is replaced by the tree JSON paths.
-- A8: tasks.yaml 2a, 3b and 4a - line anchors replaced with names: `commitPending`, `hasAnyInPreviousTier`, the `totalPts`/`sumPendingCost` over-budget block, the `COLOR_*` constants, the `TODO(active-basics)` branch, the SpendService `remaining > 0` early return (the old `SpendService.java:66-82` anchor was also wrong; the return is at :57-61) and `Prereq.All/Any/AtLeast`.
-- Verified: tasks.yaml parses; `waves.sh list` exits 0 with the same six waves; a grep for the removed strings (`CharacterTabPanelPlugin.java:N`, `PathTreeBuilder.java:N`, `TreeDef.java:20`, `getScreenHeight() -`, `passes unchanged`, `for 3 TreeDefs`, `6 classes`) returns nothing.
+- B1 (resolved):
+  - `briefs/5a`: requirement 7 now logs failed attempts at DEBUG only. A new requirement 8
+    defines `HostEvents { onSicDetected(); onProbeExhausted(String) }` as a `CharTabHost`
+    constructor argument, with each called at most once per arming. The Downstream line, the
+    success criterion and the file table (`HostEvents.java`) are updated.
+  - `briefs/5c`: `HostRouter` implements `HostEvents` and is passed to the `CharTabHost`
+    constructor. It is the only place that logs the SiC INFO and the probe-failure WARN.
+  - `tasks.yaml` 5a: criterion, `files_affected` (+`HostEvents.java`, +`ReflectionUtils.java`) and
+    `agent_context`. `tasks.yaml` 5c: criterion 1 and `agent_context`.
+- B2 (resolved), all 8 briefs:
+  - Every `## Boundaries` section now has the same `- Commit:` bullet: commit on the task branch
+    per the implementer contract, never stage `jars/SkillsOverhaul.jar`, and run
+    `git checkout -- jars/SkillsOverhaul.jar` before each commit.
+  - All "do not commit" lines are removed. 4a's `.serena/` note is kept as its own bullet.
+- A1 (resolved):
+  - `briefs/5b` requirement 2: the `SkillTreeView` plugin is created before
+    `showCustomVisualDialog`, `getCustomPanelPlugin()` returns it, and `init` only stores the
+    callbacks and attaches the view to the panel.
+  - `tasks.yaml` 5b `agent_context`: same rule added.
+- A2 (resolved):
+  - `briefs/5c` requirement 1: one `CharTabHost` instance is registered with both
+    `addListener(host, true)` and `addTransientScript(host)`, following the `privLifecycle`
+    precedent. Both guards are checked before it is constructed.
+  - `tasks.yaml` 5c criterion 1: updated to match.
+- A3 (resolved): `briefs/5a` requirement 1 now names `getChildrenCopy`, `invoke`/`getParent` and
+  `hasMethodOfName`, and asks for new non-logging, throwing variants in `ReflectionUtils`, leaving
+  the existing methods unchanged. `ReflectionUtils.java` is added to 5a's files. There is no
+  conflict within wave 5, because 5b does not touch it.
+- A4 (resolved):
+  - `briefs/2a`: the pending-removal cascade re-checks each remaining pending node with the
+    reason-returning check (clauses and tier gate) until the set is stable. The key-facts line and
+    the `SkillTreeModelTest` cases now include a tier-only dependent.
+  - `tasks.yaml` 2a criterion 2: updated to match.
+- A5 (resolved): `skills-panel-restructure/` changed to `001_skills-panel-restructure/` in
+  `tasks.yaml` (3 places) and in briefs 1a, 4a and 5c.
+- A6 (resolved): in `briefs/1a`, `UI_VERSION`, the attach `jar=` logs (`attach()`) and the rebuild
+  debug log (`rebuild()`) are now listed under `CharacterTabPanelPlugin`. They are removed from the
+  `PathTreeBuilder` row, and the `CharacterTabReplacer` row now reads "the `UI_VERSION` log in
+  `install()`".
+- A7 (resolved): line anchors are replaced with method names in these places:
+  - 2a: `SpendService.spend`, `hasAnyInPreviousTier`, `removePendingWithDependents`,
+    `commitPending`, `PendingPurchaseTopoSort.sort`.
+  - 3a: `configureForViewport(List<TreeDef>,...)`, with the `2*laneGap` note, and `emitLaneColumn`.
+  - 5a: `test/skills_overhaul/ui/` exists; the `AdminXPTracker` registration.
+  - 5b: full LunaLib paths.
+  - 5c: `onGameLoad`, the `AdminXPTracker` registration, the replacer line.
+  - The line-numbered criteria in 1a and the "about :N" notes in 4a are kept. Both briefs already
+    say to locate code by symbol.
+- A8 (resolved): `briefs/5c` and `tasks.yaml` 5c now target the first `## Unreleased` section in
+  `CHANGELOG.md`, which today is `## Unreleased — Defense lane spec gap closure (2026-05-10)`, and
+  say not to add a new section.
+- A9 (resolved): the PRD §8 M5 row, the M5 deliverable in `briefs/5c` and `tasks.yaml` 5c
+  `done_when` now include one SiC INFO line and one campaign message naming the hotkey per game
+  session. A probe failure, if one occurs, logs one WARN with its reason; otherwise that path is
+  checked by code review.
+- A10 (resolved): all 8 briefs end `## Execution` with the same gaming-guard line: run
+  `~/.claude/hooks/gaming-check.sh` before builds; exit 1 means stop, commit WIP, and report
+  `paused: gaming`. The two older, different lines in 3b and 4a are replaced.
 
 ## Skipped
-- A7: left as a recorded note, by user choice. `./build.sh` still rewrites the tracked `jars/SkillsOverhaul.jar`. Before execution, the user must decide whether briefs tell agents to restore it before committing, or whether the jar stops being tracked.
-- A3 (beyond the count): the user has not decided whether the new-behaviour tests stay. The PRD still records no user request for them.
+- A11: left optional on the caller's instruction. 5c may still add `HostRouterTest`, which is not
+  listed in `tasks.yaml`.
 
-## Re-review (changed documents), 2026-10-26
-
-Blocking: 0   Advisory: 3 (A3 still open, A7 still recorded, plus R1 below)
-
-Changed sections re-checked: 1a, 2a, 3a, 3b, 4a, 5a and 5c in tasks.yaml, and PRD §3, §4, §5, §6, §9.
-- 5a: the new criterion can be checked headlessly through MountRetry. Its files_affected is unchanged because the poll lives in CharTabHost. No file is shared with 5b.
-- 5c: README.md and CHANGELOG.md are new to this task and no other task in wave 6 touches them. `hasTransientScript(Class)` and `addMessage(String)` exist in `game/starfarer.api.zip`. Complexity 4 still fits.
-- 3a: the fixture can be loaded; `test/skills_overhaul/tree/TreeLoaderRealJSONTest.java:42-46` locates the mod root from jars/classes.
-- The PRD and tasks.yaml now agree on the R8 trigger, the SiC message and the test count.
-
-### R1. CharacterTabReplacer line anchors in 5a and 5c will drift (new, advisory)
-- Where: `tasks.yaml:235-236` (5a: `:81-134, :230-293, :263-293`), `tasks.yaml:319` (5c: `replacer :127-145`)
-- Why: 1a edits `CharacterTabReplacer.java` (UI_VERSION log at :214) and 4a edits it again before waves 5-6, so these line numbers will be stale. This is the same problem as A8 but in tasks A8 did not cover.
-- Fix: Name the anchors instead: `findLargestPanelWithCanReassign`, the SiC check (`isModEnabled("second_in_command")` plus the `SCSkillMenu` sibling scan), and the reflective core lookup in `advance`.
+## Re-check after apply
+- `tasks.yaml` parses (8 tasks), and `waves.sh list` exits 0 with the same waves.
+- No two tasks in the same wave share a file. 5a adds `HostEvents.java` and `ReflectionUtils.java`,
+  5b adds nothing new, and 5c (wave 6) deletes `ReflectionUtils` only if it is unreferenced.
+- Grep of the briefs finds:
+  - no "do not commit" lines;
+  - exactly one `- Commit:` bullet and one `gaming-check.sh` line in each of the 8 briefs;
+  - no `prds/skills-panel-restructure/` paths;
+  - none of the stale anchors (`~66-70`, `~line 74`, `:60-65`, `M/LunaLib`, `line 74 today`);
+  - no "WARN per distinct" and no "exposed to the caller as results" (5c:13 updated too).
+- The 1a method names were checked in code: `attach()` at `CharacterTabPanelPlugin.java:111`,
+  `rebuild()` at :133, `processInput` at :1038.
+- Every brief's Deliverables table still matches `tasks.yaml`.
+- No new findings.

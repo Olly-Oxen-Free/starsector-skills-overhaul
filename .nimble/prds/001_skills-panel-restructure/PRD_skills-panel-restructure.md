@@ -190,7 +190,7 @@ _None._
 | M2 (wave 2) | Model, reason API, dry-run commit; headless tests green | - |
 | M3 (wave 3) | TreeLayout and tooltip content; headless tests green | - |
 | M4 (wave 4) | SkillTreeView live. **Manual (user):** tooltips on hover; zoom/pan keep clicks on target; over-budget confirm buys nothing and flashes red; no frame-time drop with the panel open; keys 1-3, Esc, owned-T0 toggle behave as before | - |
-| M5 (waves 5-6) | Hosts live. **Manual (user):** CHARACTER tab shows the view filling the vanilla panel area; leaving and reopening the tab restores it; with SiC enabled the `K` hotkey opens the dialog, Esc/close dismisses it, and vanilla bindings still work; `starsector.log` shows no reflection errors | - |
+| M5 (waves 5-6) | Hosts live. **Manual (user):** CHARACTER tab shows the view filling the vanilla panel area; leaving and reopening the tab restores it; with SiC enabled the `K` hotkey opens the dialog, Esc/close dismisses it, and vanilla bindings still work; `starsector.log` shows no reflection errors; with SiC enabled the log has exactly one SiC INFO line and one campaign message names the hotkey, once per game session; a probe failure, if it occurs, logs one WARN with its reason (otherwise checked by code review) | - |
 
 **Release criteria:**
 - `./build.sh` and `./build.sh test` pass after every wave.
