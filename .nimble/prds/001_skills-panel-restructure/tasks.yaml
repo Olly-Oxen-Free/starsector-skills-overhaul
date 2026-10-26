@@ -1,0 +1,322 @@
+metadata:
+  prd_slug: "skills-panel-restructure"
+  created_at: "2026-10-26T08:30:00Z"
+  total_complexity: 42
+  task_count: 8
+
+tasks:
+  - id: "1a"
+    title: "Bottom-up panel coordinates and dead UI code purge"
+    description: |
+      Add a pure coordinate helper for bottom-up panel-local space and route every y-math site in
+      the panel through it, fixing the 14 px frame offset and the broken backup hit test. Remove
+      unreachable merge/sublane code, dead fields and methods, NodeIconPanelPlugin and debug text.
+      Increment 1. Fulfils R1, R2.
+    wave: 1
+    depends_on: []
+    complexity: 6
+    model: opus
+    priority: must
+    success_criteria:
+      - "New PanelCoordsTest passes under ./build.sh test: inTL conversion (localY = panelH - yTop - h), cursor conversion (event.getY() - py) and rect containment hold for a panel whose bottom edge is not at screenH/2 - h/2 (non-centred)"
+      - "CharacterTabPanelPlugin y-sites (winTop :514, pTop :547, barTop :727, trackTop :769, scissor :590-592, tooltip ty :365, wheel region :1111-1112, eventToPanelLocalY and pickNodeAtPanelLocal :994-1018) and ConnectionLineDrawer use PanelCoords; cursor y conversion (eventToPanelLocalY or its PanelCoords replacement) returns e.getY() - py with no screen-height flip, and the only getScreenHeight() call left in CharacterTabPanelPlugin is the scissor viewport scale"
+      - "NodeIconPanelPlugin.java is deleted; emitSublaneColumn, isCrossLane, SUBLANE_W, merge branches, configureForViewport(TreeDef,...), resolveTreeOf, LaneColumn, LANE_FRAME, LANE_FRAME_DIM, HEADER_BG, bbLevel/bbPoints, deprecated 4-arg ConnectionLineDrawer.draw with its flipY branch and the empty render() override are gone (grep returns nothing)"
+      - "UI_VERSION and its display/log lines, the 'processInput is live' and 'attach ... jar=' logs are gone; 'Free Uni'/'Mig Pool' read 'Free universal points'/'Migrated points'"
+      - "./build.sh and ./build.sh test pass; NodeSlotTest is unchanged"
+    files_affected:
+      - "src/skills_overhaul/ui/PanelCoords.java"
+      - "src/skills_overhaul/ui/CharacterTabPanelPlugin.java"
+      - "src/skills_overhaul/ui/PathTreeBuilder.java"
+      - "src/skills_overhaul/ui/ConnectionLineDrawer.java"
+      - "src/skills_overhaul/ui/CharacterTabReplacer.java"
+      - "src/skills_overhaul/ui/NodeIconPanelPlugin.java"
+      - "test/skills_overhaul/ui/PanelCoordsTest.java"
+    deliverables:
+      - artifact: "Coordinate helper with headless test"
+        path: "src/skills_overhaul/ui/PanelCoords.java, test/skills_overhaul/ui/PanelCoordsTest.java"
+        done_when: "PanelCoordsTest runs under ./build.sh test and covers a non-centred panel"
+      - artifact: "Manual in-game verification (user)"
+        path: ".nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M1"
+        done_when: "user confirms frame, XP bar, scrollbar and portrait border align with content and node clicks/tooltips still work"
+    agent_context: |
+      Engine space: origin bottom-left, y up; PositionAPI.getY() is the bottom edge; InputEventAPI.getY()
+      is the same space. inTL(x, yTop) pads are top-relative but the resulting getY() is still the bottom.
+      Convert inTL offsets as localY = panelH - yTop - h. Keep PanelCoords free of Global/GL so it runs headless.
+      Node geometry in PathTreeBuilder: emitNode stores top-down nodeLocal (:686-687) and
+      syncNodeGeometryFromResolvedPositions overwrites it bottom-up (:541-544); make both bottom-up.
+      Node.getLane/isMerge/getParentLanes stay (NodeSlotTest pins them); only UI code that branches on them goes.
+      Keep the "Keys 1-3 switch tabs" hint. Do not change behaviour beyond the coordinate fix.
+      Research: research/internal/findings.md Q1, Q2, Q8.
+
+  - id: "2a"
+    title: "SkillTreeModel, reason-returning PrereqValidator and all-or-nothing commit"
+    description: |
+      Add a headless SkillTreeModel that maps a Map snapshot plus a tab's List<TreeDef> and a pending
+      set to per-node OWNED / PENDING / UNLOCKABLE / BLOCKED(reason), with pending add/remove and a
+      rejection result for the red flash. Add a reason-returning PrereqValidator method that includes the
+      tier gate, a whole-tab snapshot, and GameSpend.commit that dry-runs the batch before writing anything.
+      Increment 2. Fulfils R3, R4.
+    wave: 2
+    depends_on: ["1a"]
+    complexity: 6
+    model: opus
+    priority: must
+    success_criteria:
+      - "SkillTreeModelTest passes: owned, pending, unlockable and blocked states with reasons PREREQ, TIER and BUDGET(short n) computed from a Map snapshot for nodes across two TreeDefs of one tab"
+      - "Adding an unaffordable or tier-blocked node to pending returns a rejection with its reason and leaves the pending set unchanged; removing a pending node also removes pending dependents evaluated with All/Any/AtLeast clauses, not the flat getPrereqs list"
+      - "PurchasePlanTest passes: a batch whose third node is unaffordable returns failure naming that node and the input snapshot map is unchanged; an affordable batch returns nodes in topological order; SpendServiceTest asserts a failed spend leaves the map unchanged"
+      - "PrereqValidator gains a reason-returning check with the tier gate (y>0 needs an owned or pending node in tier y-1 of the same TreeDef); existing canPurchase/canPurchaseWithPending keep prereq-only semantics; existing PrereqValidatorTest assertions are unchanged and still pass, and new assertions in PrereqValidatorTest cover the reason-returning method (PREREQ, TIER, ok)"
+      - "GameSpend.commit(Tree, Collection<String>) builds one whole-tab snapshot, runs the dry run, writes nothing on failure, and plays no sound; GameSpendSnapshotTest and ./build.sh test pass"
+    files_affected:
+      - "src/skills_overhaul/ui/model/SkillTreeModel.java"
+      - "src/skills_overhaul/ui/model/NodeStatus.java"
+      - "src/skills_overhaul/level/PurchasePlan.java"
+      - "src/skills_overhaul/level/GameSpend.java"
+      - "src/skills_overhaul/tree/PrereqValidator.java"
+      - "test/skills_overhaul/ui/model/SkillTreeModelTest.java"
+      - "test/skills_overhaul/level/PurchasePlanTest.java"
+      - "test/skills_overhaul/level/SpendServiceTest.java"
+      - "test/skills_overhaul/tree/PrereqValidatorTest.java"
+    deliverables:
+      - artifact: "Headless model and dry-run tests"
+        path: "test/skills_overhaul/ui/model/SkillTreeModelTest.java, test/skills_overhaul/level/PurchasePlanTest.java"
+        done_when: "both run under ./build.sh test and the all-or-nothing case asserts the snapshot is unchanged after a failed batch"
+    agent_context: |
+      SpendService.spend(Map, Tree, nodeId, cost) returns before mutating on failure (the `remaining > 0` early return precedes every mem.put),
+      so a dry run is sequential spend on one HashMap copy in topo order. PendingPurchaseTopoSort.sort is per
+      TreeDef; concatenate per def as the UI does today (CharacterTabPanelPlugin.commitPending).
+      Widen GameSpend.snapshot to all TreeDefs of the tab (TreeRegistry.getTrees(tab)); keep
+      GameSpend.purchasedKeys(TreeDef) package-private and working, GameSpendSnapshotTest uses it.
+      Copy tier-gate semantics from CharacterTabPanelPlugin.hasAnyInPreviousTier.
+      Budget check must use SpendService pool logic, not the UI's four-pool sum (the `totalPts` /
+      `sumPendingCost` over-budget block in CharacterTabPanelPlugin's node-click handler).
+      GameSpend.commit, after a successful dry run, performs the existing per-node write path
+      (RespecService.recordPurchase, writeBack, ActiveLaneService.onPurchased for y==0, NodeEffectApplier.apply)
+      without the sound; catch a throw from NodeEffectApplier.apply per node and log ERROR, then continue.
+      Leave GameSpend.purchase and the old UI wiring in place; increment 4 switches the view to the model.
+      Model and PurchasePlan must not touch Global, MemoryAPI or GL.
+      Research: research/internal/findings.md Q3, Q4.
+
+  - id: "3a"
+    title: "TreeLayout with zoom and pan"
+    description: |
+      Add a TreeLayout instance that computes node rects and edge endpoints for a tab's TreeDefs in a
+      bottom-up content space, fits them to a viewport, and holds zoom and pan state with clamps and an
+      inverse transform for hit tests. It replaces PathTreeBuilder's static metrics in increment 4. Increment 3.
+      Fulfils R5.
+    wave: 3
+    depends_on: ["2a"]
+    complexity: 5
+    model: opus
+    priority: must
+    success_criteria:
+      - "TreeLayoutTest passes: for the 5 commander TreeDefs (artificer, collective, commandant, corsair, zealot; 21-22 nodes each, slots 0..4, tiers 0..5) in a 1000x700 and a 600x400 viewport, no two node rects overlap and every node lies inside the content bounds; tier 0 is lowest in y (bottom-up)"
+      - "Default zoom fits the whole content in the viewport; zoom is clamped to [fit, 2.0]; zoomAt(cx, cy) keeps the content point under (cx, cy) fixed within 0.5 px"
+      - "Pan is clamped so content cannot leave the viewport entirely; at fit zoom pan is zero"
+      - "screenToContent(contentToScreen(p)) == p within 0.01 px at several zoom/pan states, and hitTest returns the node id at a node centre and null between nodes"
+      - "TreeLayout uses no Global, GL or static mutable fields; ./build.sh test passes"
+    files_affected:
+      - "src/skills_overhaul/ui/layout/TreeLayout.java"
+      - "test/skills_overhaul/ui/layout/TreeLayoutTest.java"
+    deliverables:
+      - artifact: "TreeLayout headless test"
+        path: "test/skills_overhaul/ui/layout/TreeLayoutTest.java"
+        done_when: "runs under ./build.sh test covering fit, zoom clamp, zoom-about-cursor, pan clamp and round-trip transform"
+    agent_context: |
+      Code, not the April spec, is the geometry baseline: one TreeDef = one column group, x = slot 0..4,
+      y = tier 0..5. TreeDef does not enforce these bounds (it only rejects duplicate coordinates); the
+      tree JSON does: data/config/skills_overhaul/trees/commander_{artificer,collective,commandant,corsair,zealot}.json.
+      Build the test fixture from those five files, loaded the way TreeLoaderRealJSONTest loads real
+      JSON (findModRoot walks up to mod_info.json, because ./build.sh test runs from jars/classes), so the widest real tab is the fit case. Node size auto-scales today (44-120 px). Reuse PathTreeBuilder's
+      spacing rules but as instance state. Inputs: List<TreeDef>, viewport w/h, node-size bounds.
+      Use PanelCoords conventions from 1a. Zoom range: fit to 2.0. No vanilla helper for 2D pan/zoom exists;
+      the view (4a) will apply glTranslatef/glScalef from this transform and reposition UI children itself.
+      Research: research/external/findings.md Q7; research/internal/findings.md Q1, Q8.
+
+  - id: "3b"
+    title: "Node tooltip content and TooltipCreator adapter"
+    description: |
+      Add a pure builder that turns a Node plus its SkillTreeModel state into tooltip content (name, cost,
+      description and effect lines, per-clause prereq met/unmet, blocked reason), and a thin TooltipCreator
+      adapter that renders it into a TooltipMakerAPI. Increment 4 attaches it with addTooltipTo. Fulfils R6.
+    wave: 3
+    depends_on: ["2a"]
+    complexity: 3
+    model: sonnet
+    priority: must
+    success_criteria:
+      - "NodeTooltipContentTest passes: content for an unlockable node lists name, cost and each prereq clause marked met or unmet"
+      - "A BLOCKED node's content states its reason (prereq, tier, or short by N points); an OWNED node shows no cost line"
+      - "NodeTooltip implements TooltipCreator with an explicit getTooltipWidth (not the 500 default) and isTooltipExpandable false"
+      - "NodeTooltipContent has no Global, GL or TooltipMakerAPI dependency; ./build.sh test passes"
+    files_affected:
+      - "src/skills_overhaul/ui/view/NodeTooltipContent.java"
+      - "src/skills_overhaul/ui/view/NodeTooltip.java"
+      - "src/skills_overhaul/ui/view/UiColors.java"
+      - "test/skills_overhaul/ui/view/NodeTooltipContentTest.java"
+    deliverables: []
+    agent_context: |
+      Node exposes getName, getDesc, getCost, getClauses (Prereq.All, Prereq.Any, Prereq.AtLeast) and
+      getEffects (JSONObject list). For an effect line use a description field when present, else its type.
+      Create ui/view/UiColors.java holding the current palette values copied from the PathTreeBuilder
+      constants COLOR_OWNED, COLOR_PENDING, COLOR_UNLOCKABLE, COLOR_LOCKED and COLOR_CAPSTONE; do not edit PathTreeBuilder (4a deletes it).
+      Research: research/external/findings.md Q5; spec §4.1 tooltip contents.
+
+  - id: "4a"
+    title: "SkillTreeView built once per tab, with addTooltipTo tooltips"
+    description: |
+      Replace CharacterTabPanelPlugin and PathTreeBuilder with SkillTreeView, a CustomUIPanelPlugin that
+      builds its components once per tab switch and drives everything from SkillTreeModel, TreeLayout and
+      GameSpend.commit. Node tooltips use addTooltipTo with NodeTooltip; sprites are cached; zoom, pan,
+      all-or-nothing confirm and the red flash are live. CharacterTabReplacer mounts it until increment 5.
+      Increment 4. Fulfils R3, R4, R5, R6, R7.
+    wave: 4
+    depends_on: ["3a", "3b"]
+    complexity: 7
+    model: opus
+    priority: must
+    success_criteria:
+      - "SkillTreeView builds child components only on construction and tab switch; no removeComponent/addComponent, loadTexture or edge rebuild runs per frame (grep of render/renderBelow/advance confirms) and hover changes do not rebuild"
+      - "Confirm calls GameSpend.commit once; a failed commit buys nothing and flashes the offending node red for about 0.4 s; adding an unaffordable or tier-blocked node also flashes red; a successful commit plays one sound"
+      - "Mouse wheel zooms about the cursor, left-drag over 6 px pans, a shorter press toggles pending; hit tests and tooltip anchors stay correct at non-fit zoom and pan"
+      - "CharacterTabPanelPlugin.java and PathTreeBuilder.java are deleted; GameSpend no longer imports skills_overhaul.ui; Esc clears pending, keys 1-3 switch tab, and owned-T0 click keeps the active-slot toggle"
+      - "./build.sh and ./build.sh test pass; manual verification steps for M4 are listed in the PR description"
+    files_affected:
+      - "src/skills_overhaul/ui/view/SkillTreeView.java"
+      - "src/skills_overhaul/ui/ConnectionLineDrawer.java"
+      - "src/skills_overhaul/ui/CharacterTabReplacer.java"
+      - "src/skills_overhaul/ui/CharacterTabPanelPlugin.java"
+      - "src/skills_overhaul/ui/PathTreeBuilder.java"
+      - "src/skills_overhaul/level/GameSpend.java"
+    deliverables:
+      - artifact: "Manual in-game verification (user)"
+        path: ".nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M4"
+        done_when: "user confirms tooltips appear on hover, zoom/pan keep clicks on target, an over-budget confirm buys nothing and flashes red, and frame time does not drop with the panel open"
+    agent_context: |
+      Children (one small CustomPanelAPI per node to anchor addTooltipTo) do not follow glTranslatef/glScalef;
+      on zoom/pan change reposition them with PanelCoords + TreeLayout.contentToScreen, do not rebuild.
+      Cache SpriteAPI per icon path in a field; call loadTexture only when getTextureId() <= 0; set
+      sprite.setAlphaMult(alphaMult * x) inside render every frame (shared-instance alpha is an open gap).
+      Keep the existing header (portrait, XP bar, points, respec/confirm buttons) and the current palette.
+      Owned-T0 click: keep ActiveLaneService toggle behaviour (the purchased-node branch of
+      CharacterTabPanelPlugin's node-click handler, marked TODO(active-basics)) including its auto-displacement; increment 6 replaces it.
+      Move the purchase sound from GameSpend.purchase to the view (one SkillUISounds call per successful commit).
+      Pending is cleared on tab switch and when the panel is discarded (spec §2.1).
+      Research: research/external/findings.md Q5, Q6, Q7; research/internal/findings.md Q1, Q7, Q8.
+
+  - id: "5a"
+    title: "VanillaCharTabProbe and CharTabHost"
+    description: |
+      Add VanillaCharTabProbe, which wraps the reflective calls and the CampaignState/AppDriver references
+      behind an explicit result type, and CharTabHost, which arms a deferred mount from either of two
+      triggers: a CoreUITabListener callback for CHARACTER, or a transient every-frame poll that sees
+      getCurrentCoreTab() == CHARACTER (this covers the case where the listener never fires for CHARACTER).
+      It swaps the vanilla skill panel in its parent for SkillTreeView sized to the parent, and unmounts by
+      polling the current core tab. Not registered yet; 5c wires it. Increment 5. Fulfils R8.
+    wave: 5
+    depends_on: ["4a"]
+    complexity: 6
+    model: opus
+    priority: must
+    success_criteria:
+      - "VanillaCharTabProbe.probe() returns a result that is either {core, vanillaPanel, parent} or a named failure reason; no reflective exception is swallowed into an empty list"
+      - "MountRetryTest passes: the deferred-mount scheduler retries for at most 180 frames, stops on success, and reports exhaustion exactly once"
+      - "MountRetryTest also shows that the mount is armed by the listener trigger alone, by the CHARACTER-tab poll alone, and only once when both fire for the same tab open; the poll re-arms after the tab leaves CHARACTER and opens again"
+      - "CharTabHost mounts SkillTreeView sized to the parent's width and height via parent.removeComponent(vanilla) + addComponent, parks no siblings, and unmounts when getCurrentCoreTab() is no longer CHARACTER"
+      - "Probe failure and SiC detection are exposed to the caller as results, not silent returns; ./build.sh and ./build.sh test pass"
+    files_affected:
+      - "src/skills_overhaul/ui/host/VanillaCharTabProbe.java"
+      - "src/skills_overhaul/ui/host/CharTabHost.java"
+      - "src/skills_overhaul/ui/host/MountRetry.java"
+      - "test/skills_overhaul/ui/host/MountRetryTest.java"
+    deliverables: []
+    agent_context: |
+      Reflection today lives in ui/ReflectionUtils (MethodHandle-based) used from CharacterTabReplacer
+      (the core lookup in install() and the sibling walk in hideSiblings). The probe may call ReflectionUtils; 5c deletes ReflectionUtils only if nothing
+      else uses it. Find the vanilla panel as the largest descendant with method canReassign (findLargestPanelWithCanReassign).
+      CoreUITabListener.reportAboutToOpenCoreTab fires before the tab exists: never mount inside it; schedule
+      a transient EveryFrameScript (runWhilePaused) and resolve on later frames, cap 180 (nex4x
+      IntelDiplomacyTabInjector.java:38,98-110). No close hook: poll getCurrentCoreTab().
+      Second trigger: the same transient EveryFrameScript (runWhilePaused) also arms the mount when it sees
+      getCurrentCoreTab() == CHARACTER with nothing mounted, as SiC (scripts/SkillPanelReplacerScript.kt:31-34)
+      and the current CharacterTabReplacer (advance) do. Both triggers feed one arm-once-per-open state, which
+      MountRetry owns so it stays headless and testable.
+      SiC mount precedent: game/mods/.../second_in_command/ui/SCSkillMenuPanel.kt:97-104.
+      Reset statics on game load (nex4x pattern). Research: research/internal/findings.md Q5, Q6;
+      research/external/findings.md Q4.
+
+  - id: "5b"
+    title: "DialogHost and skills hotkey listener"
+    description: |
+      Add DialogHost, which opens SkillTreeView in a custom visual dialog from the campaign map, and a
+      CampaignInputListener that opens it on a configurable hotkey and consumes the key. Not registered yet;
+      5c wires it. Increment 5. Fulfils R9.
+    wave: 5
+    depends_on: ["4a"]
+    complexity: 5
+    model: opus
+    priority: must
+    success_criteria:
+      - "DialogHost opens a dummy InteractionDialogPlugin via showInteractionDialog and calls showCustomVisualDialog from its init with SkillTreeView sized to about 0.9 of the screen; Esc with no pending, or a close button, dismisses it"
+      - "SkillsHotkeyGuardTest passes: the pure guard opens only on a key-down of the configured key that is not consumed, with no interaction dialog, no menu and no core tab open"
+      - "Config gains ui_hotkey (default Keyboard.KEY_K) read from data/config/skills_overhaul.json; ConfigTest asserts the default"
+      - "The listener consumes the event it acts on in processCampaignInputPreCore and ignores all others; ./build.sh and ./build.sh test pass"
+    files_affected:
+      - "src/skills_overhaul/ui/host/DialogHost.java"
+      - "src/skills_overhaul/ui/host/SkillsHotkeyListener.java"
+      - "src/skills_overhaul/config/Config.java"
+      - "data/config/skills_overhaul.json"
+      - "test/skills_overhaul/ui/host/SkillsHotkeyGuardTest.java"
+      - "test/skills_overhaul/config/ConfigTest.java"
+    deliverables:
+      - artifact: "Config key"
+        path: "data/config/skills_overhaul.json"
+        done_when: "file stays valid JSON with ui_hotkey set to the KEY_K code and Config reads it with the same default when absent"
+    agent_context: |
+      Precedents: showCustomVisualDialog(1000f, 700f, delegate) in
+      game/mods/Interastral Peace Casino-1.6.3/src/data/scripts/casino/interaction/GachaHandler.java:414,500;
+      CampaignInputListener in game/mods/Console Commands-4.0.9/src/org/lazywizard/console/ConsolePlugins.kt.
+      reportDismissed(int) meaning is undocumented; treat any call as closed and drop pending.
+      Whether consuming in PreCore blocks vanilla bindings is an in-game gap; note it in the PR.
+      Research: research/external/findings.md Q2, Q3.
+
+  - id: "5c"
+    title: "Host routing, registration and replacer removal"
+    description: |
+      Register CharTabHost (as a transient listener and as its transient CHARACTER-tab poll script) and the
+      hotkey listener in SkillsOverhaulModPlugin and route: under SiC, or when the probe fails, skip the tab
+      mount and leave the hotkey DialogHost path, with one INFO (SiC) or WARN (probe) log and a one-time
+      campaign message naming the hotkey in both cases. Add a README and CHANGELOG line for the hotkey.
+      Remove CharacterTabReplacer and its registration. Increment 5. Fulfils R8, R9, R10.
+    wave: 6
+    depends_on: ["5a", "5b"]
+    complexity: 4
+    model: sonnet
+    priority: must
+    success_criteria:
+      - "SkillsOverhaulModPlugin registers CharTabHost and SkillsHotkeyListener with addListener(l, true), each guarded by hasListenerOfClass, adds the CharTabHost CHARACTER-tab poll with addTransientScript guarded by hasTransientScript, and no longer adds CharacterTabReplacer"
+      - "With second_in_command enabled, CharTabHost does not mount, one INFO line is logged, one campaign message naming the hotkey is shown once per game session, and the hotkey still opens DialogHost"
+      - "A probe failure logs one WARN with the probe's reason and shows one campaign message naming the hotkey once per game session (not repeated on later tab opens, and not shown twice if SiC is also enabled)"
+      - "README.md gains a line naming the default hotkey K, the ui_hotkey key in data/config/skills_overhaul.json, and that it opens the skills dialog under Second-in-Command or when the character tab cannot be replaced; CHANGELOG.md's Unreleased section gains a matching entry"
+      - "CharacterTabReplacer.java is deleted; ReflectionUtils is deleted if no reference remains; ./build.sh and ./build.sh test pass"
+    files_affected:
+      - "src/skills_overhaul/SkillsOverhaulModPlugin.java"
+      - "src/skills_overhaul/ui/host/HostRouter.java"
+      - "src/skills_overhaul/ui/CharacterTabReplacer.java"
+      - "src/skills_overhaul/ui/ReflectionUtils.java"
+      - "README.md"
+      - "CHANGELOG.md"
+    deliverables:
+      - artifact: "Hotkey documentation"
+        path: "README.md, CHANGELOG.md"
+        done_when: "README.md and CHANGELOG.md each name the K default and the ui_hotkey config key"
+      - artifact: "Manual in-game verification (user)"
+        path: ".nimble/prds/skills-panel-restructure/PRD_skills-panel-restructure.md §8 M5"
+        done_when: "user confirms the CHARACTER tab shows SkillTreeView filling the vanilla panel area, switching tabs and back restores it, and with SiC enabled the hotkey opens the dialog and vanilla bindings still work"
+    agent_context: |
+      Registration convention: addListener(l, true) in onGameLoad (SkillsOverhaulModPlugin.java:69-74).
+      SiC detection: Global.getSettings().getModManager().isModEnabled("second_in_command") (current
+      replacer's second_in_command check in install()). Listeners are transient: re-register each load, guard against duplicates.
+      Campaign message: Global.getSector().getCampaignUI().addMessage(text); keep a static shown-this-session
+      flag reset on game load (nex4x static-reset pattern) so SiC and probe failure share one message.
+      Research: research/internal/findings.md Q6.

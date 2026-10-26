@@ -1,0 +1,13 @@
+{
+  "prd_slug": "skills-panel-restructure",
+  "version": "5.0",
+  "status": "ready",
+  "execution_mode": "feature-branch",
+  "tier": "architectural",
+  "created_at": "2026-10-26T07:38:20Z",
+  "tasks": {},
+  "feature_branch": "feature/skills-panel-restructure",
+  "ledger": {
+    "ref": "SO-K3P0"
+  }
+}
