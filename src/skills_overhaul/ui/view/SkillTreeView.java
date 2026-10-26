@@ -114,6 +114,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
     /** T0 node awaiting a choice of which active T0 it replaces; null outside replace mode. */
     private String replacePending;
     private boolean respecUnaffordable;
+    private String respecBlockedReason;
     private long xpCur, xpReq = 1;
 
     /** Sprite per icon path; a null value records a path whose texture could not load. */
@@ -273,7 +274,8 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
             public boolean isTooltipExpandable(Object p) { return false; }
             public float getTooltipWidth(Object p) { return 220f; }
             public void createTooltip(TooltipMakerAPI t, boolean expanded, Object p) {
-                t.addPara(respecUnaffordable ? "Needs 1 story point"
+                t.addPara(respecBlockedReason != null ? respecBlockedReason
+                        : respecUnaffordable ? "Needs 1 story point"
                         : "The first respec of each tree is free; later ones cost 1 story point.", 0f);
             }
         }, TooltipMakerAPI.TooltipLocation.RIGHT);
@@ -419,6 +421,8 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
             respecUnaffordable = respecCost > 0 && sp < respecCost;
             boolean canRespec = pending.isEmpty() && ownedCount() > 0 && !respecUnaffordable
                     && replacePending == null;
+            respecBlockedReason = !pending.isEmpty() ? "Confirm or clear pending purchases first"
+                    : ownedCount() == 0 ? "Nothing to respec in this tree" : null;
             respecButton.setText(pending.isEmpty() && ownedCount() > 0
                     ? (respecCost > 0 ? "Respec (" + respecCost + " SP)" : "Respec (free)")
                     : "Respec (n/a)");
@@ -438,10 +442,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
         xpCur = Math.max(0, cur);
         xpReq = req <= 0 ? 1 : req;
         if (bottomLabel != null && replacePending != null) {
-            Node rn = nodesById.get(replacePending);
-            bottomLabel.setText("Replace which active basic with "
-                    + (rn == null ? replacePending : rn.getName())
-                    + "? Click a pulsing node. Esc cancels.");
+            bottomLabel.setText("Choose an active basic to replace (Esc to cancel)");
         } else if (bottomLabel != null) {
             bottomLabel.setText(currentTab.key.toUpperCase()
                     + "   Level " + level
@@ -806,6 +807,7 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
     private void confirm() {
         Set<String> pending = model.getPending();
         if (pending.isEmpty()) return;
+        replacePending = null;
         PurchasePlan.Result r = GameSpend.commit(currentTab, new ArrayList<String>(pending));
         if (r != null && r.success) {
             int tier = 0;
