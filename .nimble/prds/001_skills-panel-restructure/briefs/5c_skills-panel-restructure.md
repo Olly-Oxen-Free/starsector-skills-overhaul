@@ -47,6 +47,8 @@ Mod: Skills Overhaul (Starsector, Java 8). PRD "Skills panel restructure (increm
 | Hotkey documentation | `README.md`, `CHANGELOG.md` | README.md and CHANGELOG.md each name the K default and the ui_hotkey config key |
 | Manual in-game verification (user) | `.nimble/prds/001_skills-panel-restructure/PRD_skills-panel-restructure.md` §8 M5 | user confirms the CHARACTER tab shows SkillTreeView filling the vanilla panel area, switching tabs and back restores it, and with SiC enabled the hotkey opens the dialog and vanilla bindings still work; with SiC enabled `starsector.log` has exactly one SiC INFO line and one campaign message names the hotkey, shown once per game session (not again on later tab opens; once more after a reload); a probe failure, if it occurs, logs one WARN with the reason (otherwise verified by code review) |
 
+Note for the reviewer: the M5 row above is the owner's manual check at the final gate, before the feature branch merges to master. It is not a merge criterion for this task PR. Judge this PR on its code criteria, build and tests.
+
 The second row is the user's check after merge, not yours. Mention it in your report as pending.
 
 ## Implementation guidance
