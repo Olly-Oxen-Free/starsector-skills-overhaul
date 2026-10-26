@@ -50,8 +50,8 @@ boundaries:
     - "target/"
     - "*.jar"
   require_review:             # Files that flag for human review
-    - "[\"mod_info.json\""
-    - "\"build.sh\"]"
+    - "mod_info.json"
+    - "build.sh"
 
 # GitHub integration (auto-detected)
 github:
