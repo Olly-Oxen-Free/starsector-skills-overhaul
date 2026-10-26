@@ -152,6 +152,96 @@ public final class ReflectionUtils {
         return r instanceof UIPanelAPI ? (UIPanelAPI) r : null;
     }
 
+    /* ── strict variants: no logging, failures thrown ───────────────────── */
+
+    /** A reflective call failed (method missing, access denied, or the call threw). */
+    public static final class ReflectionFailure extends Exception {
+        public ReflectionFailure(String message, Throwable cause) { super(message, cause); }
+    }
+
+    /**
+     * Calls a zero-arg method on target by name. Returns null for a null target or a null
+     * result; throws if the method does not exist or the call fails. Never logs.
+     */
+    public static Object invokeStrict(String methodName, Object target) throws ReflectionFailure {
+        if (target == null) return null;
+        Object method = findMethod(target.getClass(), methodName, 0);
+        if (method == null) {
+            throw new ReflectionFailure("method not found: " + methodName
+                    + " on " + target.getClass().getName(), null);
+        }
+        try {
+            METHOD_SET_ACCESSIBLE.invoke(method, true);
+            return METHOD_INVOKE.invoke(method, target, new Object[]{});
+        } catch (Throwable t) {
+            throw new ReflectionFailure("invoke(" + methodName + ") on "
+                    + target.getClass().getName() + " failed", t);
+        }
+    }
+
+    /**
+     * True iff target's class declares a method of this name (same lookup as
+     * {@link #hasMethodOfName}). Throws instead of returning false when the scan fails; a failed
+     * scan is not cached. Never logs.
+     */
+    public static boolean hasMethodOfNameStrict(String methodName, Object target) throws ReflectionFailure {
+        if (target == null) return false;
+        Class<?> clazz = target.getClass();
+        java.util.HashSet<String> cache = methodNameCache.get(clazz);
+        if (cache == null) {
+            java.util.HashSet<String> names = new java.util.HashSet<>();
+            try {
+                Object raw = clazz.getDeclaredMethods();
+                Object[] methods = (Object[]) raw;
+                for (int i = 0; i < methods.length; i++) {
+                    names.add((String) METHOD_GET_NAME.invoke(methods[i]));
+                }
+            } catch (Throwable t) {
+                throw new ReflectionFailure("method scan of " + clazz.getName() + " failed", t);
+            }
+            methodNameCache.put(clazz, names);
+            cache = names;
+        }
+        return cache.contains(methodName);
+    }
+
+    /**
+     * Children of a UIPanelAPI, as {@link #getChildrenCopy} finds them. Returns an empty list
+     * only for a null panel or a panel that really has no children; throws when neither
+     * getChildrenCopy nor a List field can be read. Never logs.
+     */
+    @SuppressWarnings("unchecked")
+    public static List<Object> getChildrenCopyStrict(UIPanelAPI panel) throws ReflectionFailure {
+        if (panel == null) return Collections.emptyList();
+        try {
+            Object method = findMethod(panel.getClass(), "getChildrenCopy", 0);
+            if (method != null) {
+                METHOD_SET_ACCESSIBLE.invoke(method, true);
+                Object r = METHOD_INVOKE.invoke(method, panel, new Object[]{});
+                if (r instanceof List) return new ArrayList<>((List<Object>) r);
+                if (r == null) return new ArrayList<>();
+            }
+            Object raw = panel.getClass().getDeclaredFields();
+            Object[] fields = (Object[]) raw;
+            for (int i = 0; i < fields.length; i++) {
+                Class<?> type = (Class<?>) FIELD_GET_TYPE.invoke(fields[i]);
+                if (!List.class.isAssignableFrom(type)) continue;
+                FIELD_SET_ACCESSIBLE.invoke(fields[i], true);
+                Object r = FIELD_GET.invoke(fields[i], panel);
+                if (r instanceof List) return new ArrayList<>((List<Object>) r);
+            }
+        } catch (Throwable t) {
+            throw new ReflectionFailure("getChildrenCopy on " + panel.getClass().getName() + " failed", t);
+        }
+        throw new ReflectionFailure("no child list found on " + panel.getClass().getName(), null);
+    }
+
+    /** Parent UIPanelAPI of a child component, or null when it has none; throws on failure. */
+    public static UIPanelAPI getParentStrict(Object child) throws ReflectionFailure {
+        Object r = invokeStrict("getParent", child);
+        return r instanceof UIPanelAPI ? (UIPanelAPI) r : null;
+    }
+
     /* ── helpers ────────────────────────────────────────────────────────── */
 
     /** Resolved-Method cache — the UI-tree crawl calls findMethod for the same
