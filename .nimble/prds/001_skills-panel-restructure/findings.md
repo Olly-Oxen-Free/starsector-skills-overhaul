@@ -53,3 +53,30 @@
 
 ## 4a (PR #5)
 - Reviewer's only blocking item was the M4 owner in-game sign-off; code criteria met, build+tests pass on bdd0692. Lead merged and deferred M4 to the final gate with M1 and M5.
+
+## 5b
+- Type: discovery | Severity: warning | Affected tasks: 5c, later waves | Generalizes: true
+  The local `feature/skills-panel-restructure` was still stale (32971ce) at wave 5; 5b fast-forwarded its worktree with `git pull --ff-only origin feature/skills-panel-restructure` to get 4a's SkillTreeView. Fetch/fast-forward the local feature branch before cutting wave-6 worktrees.
+- Type: api_change | Severity: info | Affected tasks: 5c | Generalizes: false
+  `skills_overhaul.ui.host.DialogHost.open()` returns boolean (false if a dialog is already showing or opening fails; logs). `new SkillsHotkeyListener()` is stateless; register with `addListener(l, true)`. Pure guard: `SkillsHotkeyListener.shouldOpen(consumed, keyDown, eventKey, configuredKey, hasDialog, showingMenu, coreTabOpen)`. Priority `Integer.MAX_VALUE - 20` (just below Console Commands). `Config.uiHotkey` (default `Keyboard.KEY_K`). `SkillTreeView.hasPending()` added (only view change).
+- Type: discovery | Severity: info | Affected tasks: M5 | Generalizes: false
+  Untested in game: the dialog panel's plugin is a wrapper `Frame` (not the view itself, since the view owns its own panel), which mounts `view.getPanel()` at inTL(0,0) and a Close button inTR(16,0). Esc handling checks `hasPending()` so it is correct whichever of frame/view sees input first. Also unverified: dummy dialog flash on open, and whether consuming K in PreCore blocks a vanilla binding on K. Target passed to showInteractionDialog is the player fleet.
+
+## 5a
+- Type: api_change | Severity: info | Affected tasks: 5b, 5c | Generalizes: false
+  `new CharTabHost(HostEvents)`; register the same instance with `addTransientScript(host)` and `getListenerManager().addListener(host, true)` guarded by `hasListenerOfClass(CharTabHost.class)`. `HostEvents.onSicDetected()` fires once per arming when SiC is enabled (mod-id check runs first, before any reflection) or an `SCSkillMenu` sibling is found; `onProbeExhausted(reason)` passes e.g. `NO_VANILLA_PANEL` or `REFLECTION_ERROR: <call>`. `VanillaCharTabProbe.isSicModEnabled()` is public for 5c routing. Failure enum adds `PARENT_ZERO_SIZE` beyond the brief's list.
+- Type: api_change | Severity: info | Affected tasks: 5c | Generalizes: false
+  `ReflectionUtils` gained `invokeStrict`, `hasMethodOfNameStrict`, `getChildrenCopyStrict`, `getParentStrict` (throw `ReflectionUtils.ReflectionFailure`, never log). If 5c deletes `CharacterTabReplacer`, the old logging variants become unused but the class must stay for the probe.
+- Type: discovery | Severity: info | Affected tasks: 5c, M5 | Generalizes: false
+  A screen-size change while mounted unmounts and remounts only on the next tab open (brief wording); the old replacer remounted on the next frame. A tab left mid-sequence drops the sequence; reopening starts a fresh 180-frame budget.
+- Type: discovery | Severity: warning | Affected tasks: 5b, 5c | Generalizes: true
+  The 5a worktree was again cut from the stale local feature branch (32971ce); `git pull --ff-only origin feature/skills-panel-restructure` inside the worktree brought in waves 1-4 (e3cffa0). Fast-forward the local base before `worktree.sh add`.
+
+## 5a (advisory, PR #7; merged by lead after classifier block)
+- CharTabHost.rollback() does not discard the view if addComponent throws (harmless today).
+- No remount after a screen-size change until the tab is reopened (accepted by brief); check in M5.
+- MountRetryTest has 10 cases for 5 areas; borderline over-testing.
+
+## 5b (advisory, PR #6)
+- DialogHost.Delegate.close() ordering vs reportDismissed untested in game; confirm discard/dismiss run once (M5).
+- M5 gaps: dummy dialog flash, K consumed in PreCore vs vanilla bindings, Close button at inTR(16,0), view input inside the Frame.

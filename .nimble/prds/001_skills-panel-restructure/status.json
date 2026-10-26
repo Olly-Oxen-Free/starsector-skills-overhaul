@@ -96,6 +96,42 @@
       ],
       "completed_at": "2026-10-26T08:41:45Z",
       "merged_at": "2026-10-26T08:42:38Z"
+    },
+    "5a": {
+      "status": "done",
+      "wave": 5,
+      "branch": "worktree/skills-panel-restructure-5a",
+      "model": "opus",
+      "started_at": "2026-10-26T08:43:08Z",
+      "loops": 1,
+      "pr_number": 7,
+      "pr_target": "feature/skills-panel-restructure",
+      "pr_labels": [
+        "nimble",
+        "nimble-skills-panel-restructure",
+        "wave-5",
+        "complexity-6"
+      ],
+      "completed_at": "2026-10-26T08:47:53Z",
+      "merged_at": "2026-10-26T08:48:27Z"
+    },
+    "5b": {
+      "status": "done",
+      "wave": 5,
+      "branch": "worktree/skills-panel-restructure-5b",
+      "model": "opus",
+      "started_at": "2026-10-26T08:43:08Z",
+      "loops": 1,
+      "pr_number": 6,
+      "pr_target": "feature/skills-panel-restructure",
+      "pr_labels": [
+        "nimble",
+        "nimble-skills-panel-restructure",
+        "wave-5",
+        "complexity-5"
+      ],
+      "completed_at": "2026-10-26T08:46:17Z",
+      "merged_at": "2026-10-26T08:46:25Z"
     }
   },
   "feature_branch": "feature/skills-panel-restructure",
@@ -115,6 +151,9 @@
       "status": "complete"
     },
     "4": {
+      "status": "complete"
+    },
+    "5": {
       "status": "complete"
     }
   }
