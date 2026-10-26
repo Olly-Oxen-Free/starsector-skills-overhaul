@@ -10,7 +10,6 @@ import skills_overhaul.tree.Node;
 import skills_overhaul.tree.PrereqValidator;
 import skills_overhaul.tree.TreeDef;
 import skills_overhaul.tree.TreeRegistry;
-import skills_overhaul.ui.SkillUISounds;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -41,7 +40,6 @@ public final class GameSpend {
             ActiveLaneService.onPurchased(mem, nodeId);
         }
         NodeEffectApplier.apply(n);
-        SkillUISounds.playTierSkillSound(tree, n.getTier(), 1f);
         return true;
     }
 
@@ -49,7 +47,7 @@ public final class GameSpend {
      * Buys every node of {@code nodeIds} or none. Dry-runs the batch with
      * {@link PurchasePlan} on a whole-tab snapshot; on failure writes nothing, plays
      * no sound, and returns the failing node and reason. On success writes each node
-     * in plan order through the same path as {@link #purchase} (without its sound).
+     * in plan order through the same path as {@link #purchase}.
      * A throw from {@link NodeEffectApplier#apply} is logged and the batch continues;
      * points already written stay spent.
      */
@@ -88,6 +86,15 @@ public final class GameSpend {
             }
         }
         return plan;
+    }
+
+    /**
+     * Whole-tab snapshot of sector memory, the same map {@link #commit} dry-runs against:
+     * points, pools, pool lock and the purchased flags of every node of the tab. The UI
+     * builds its {@code SkillTreeModel} from it.
+     */
+    public static Map<String,Object> snapshot(Tree tab) {
+        return snapshot(Global.getSector().getMemoryWithoutUpdate(), tab);
     }
 
     /** Points, pools, pool lock and the purchased flags of every node of the tab. */
