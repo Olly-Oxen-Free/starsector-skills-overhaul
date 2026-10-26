@@ -13,3 +13,9 @@ build_output.txt
 .serena/
 .karimo/
 .claude/settings.local.json
+
+# NIMBLE
+.nimble/.worktrees/
+.nimble/.hook-state/
+.nimble/active
+.nimble/config.yaml.bak
