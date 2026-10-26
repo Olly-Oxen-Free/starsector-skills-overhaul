@@ -147,6 +147,11 @@ public final class SkillTreeView extends BaseCustomUIPanelPlugin {
 
     public Tree getCurrentTab() { return currentTab; }
 
+    /** True while the current tab holds unconfirmed purchases (Esc then clears them). */
+    public boolean hasPending() {
+        return model != null && !model.getPending().isEmpty();
+    }
+
     /** Clears pending purchases; hosts call this when they remove the panel. */
     public void discard() {
         if (model != null && !model.getPending().isEmpty()) {
