@@ -245,17 +245,8 @@ public final class CorsairCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     // ---------- Helpers ----------
 
-    /**
-     * Counts d-mods on the ship's variant. D-mods in Starsector are hull mods whose IDs are
-     * registered as d-mods (e.g. "hull_breach", "degraded_shields", etc.). We use a suffix/
-     * prefix heuristic here since there is no public API method to query d-mod status.
-     * Cap at 5.
-     */
+    /** Counts d-mods on the ship's variant by hull mod tag. Cap at 5. */
     private static int countDMods(ShipAPI s) {
-        int c = 0;
-        for (String m : s.getVariant().getHullMods()) {
-            if (m.endsWith("_dmod") || m.contains("_d_") || m.startsWith("dmods_")) c++;
-        }
-        return Math.min(5, c);
+        return Math.min(5, DModCounter.count(s.getVariant().getHullMods()));
     }
 }
