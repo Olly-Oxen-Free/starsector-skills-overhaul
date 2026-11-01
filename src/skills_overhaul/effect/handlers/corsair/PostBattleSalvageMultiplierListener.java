@@ -14,6 +14,7 @@ public final class PostBattleSalvageMultiplierListener extends BaseCampaignEvent
 
     public static void register(String key, float mult) { MULTIPLIERS.put(key, mult); }
     public static void unregister(String key)            { MULTIPLIERS.remove(key); }
+    public static void clear()                           { MULTIPLIERS.clear(); }
 
     public PostBattleSalvageMultiplierListener() { super(false); }
 
