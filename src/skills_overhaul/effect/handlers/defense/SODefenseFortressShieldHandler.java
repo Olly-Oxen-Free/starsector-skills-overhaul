@@ -5,15 +5,20 @@ import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
+import skills_overhaul.effect.ShipStatEffect;
 import skills_overhaul.pilot.defense.DefenseCombatPlugin;
 
-public final class SODefenseFortressShieldHandler implements EffectHandler {
+public final class SODefenseFortressShieldHandler implements EffectHandler, ShipStatEffect {
     @Override
     public void apply(String nodeId, JSONObject params) {
         DefenseCombatPlugin.ACTIVE_NODES.add(nodeId);
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
-        MutableShipStatsAPI s = ship.getMutableStats();
+        applyTo(ship.getMutableStats(), ship, nodeId, params);
+    }
+
+    @Override
+    public void applyTo(MutableShipStatsAPI s, ShipAPI ship, String nodeId, JSONObject params) {
         s.getShieldAbsorptionMult().modifyMult(nodeId, 0.90f); // +10% effective absorption
         s.getShieldArcBonus().modifyFlat(nodeId, 20f);
     }

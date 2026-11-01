@@ -62,19 +62,24 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (!mem.getBoolean(SkillMemory.purchasedKey(n.getId()))) continue;
                 for (JSONObject fx : n.getEffects()) {
                     if (!NodeEffectApplier.isEffectActive(n, fx)) continue;
-                    if (applyShipStatEffect(stats, n.getId(), fx)) applied++;
+                    if (applyShipStatEffect(stats, ship, n.getId(), fx)) applied++;
                 }
             }
         }
         log.info("[SkillsOverhaul] combat init: applied " + applied + " ship-stat effects to " + ship.getHullSpec().getHullId());
     }
 
-    private boolean applyShipStatEffect(MutableShipStatsAPI s, String nodeId, JSONObject fx) {
+    private boolean applyShipStatEffect(MutableShipStatsAPI s, ShipAPI ship, String nodeId, JSONObject fx) {
         String type = fx.optString("type");
         if (type.equals("SO_piloted_stat")) {
             // MutableShipStatsAPI is rebuilt per combat, so static passives must
             // be re-applied here — purchase-time application cannot stick.
             pilotedStat.applyTo(s, nodeId, fx);
+            return true;
+        }
+        EffectHandler h = EffectRegistry.get(type);
+        if (h instanceof ShipStatEffect) {
+            ((ShipStatEffect) h).applyTo(s, ship, nodeId, fx);
             return true;
         }
         // Other types are handled by their own combat plugins via ACTIVE_NODES.

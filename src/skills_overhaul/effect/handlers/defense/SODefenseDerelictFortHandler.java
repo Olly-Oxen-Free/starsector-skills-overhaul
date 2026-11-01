@@ -6,18 +6,23 @@ import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.loading.HullModSpecAPI;
 import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
+import skills_overhaul.effect.ShipStatEffect;
 import skills_overhaul.pilot.defense.DefenseCombatPlugin;
 
-public final class SODefenseDerelictFortHandler implements EffectHandler {
+public final class SODefenseDerelictFortHandler implements EffectHandler, ShipStatEffect {
     @Override
     public void apply(String nodeId, JSONObject params) {
         DefenseCombatPlugin.ACTIVE_NODES.add(nodeId);
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
+        applyTo(ship.getMutableStats(), ship, nodeId, params);
+    }
+
+    @Override
+    public void applyTo(MutableShipStatsAPI s, ShipAPI ship, String nodeId, JSONObject params) {
         int dmodCount = countDMods(ship);
         if (dmodCount == 0) return;
         float bonus = Math.min(5, dmodCount) * 0.03f;
-        MutableShipStatsAPI s = ship.getMutableStats();
         s.getArmorBonus().modifyPercent(nodeId, bonus * 100f);
         s.getHullBonus().modifyPercent(nodeId, bonus * 100f);
         // Spec line 60: −20% d-mod negatives. No per-d-mod stat key in API; use
