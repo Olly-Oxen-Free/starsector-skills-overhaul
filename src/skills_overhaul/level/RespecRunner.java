@@ -75,13 +75,13 @@ public final class RespecRunner {
             }
         }
 
+        // Remove effects while T0 nodes are still active, so `core` channels are removed too
+        for (Node n : ownedBefore) NodeEffectApplier.remove(n);
+
         // Drop T0 nodes from active basics
         for (Node n : ownedBefore) {
             if (n.getY() == 0) ActiveLaneService.onUnpurchased(mem, n.getId());
         }
-
-        // Remove effects
-        for (Node n : ownedBefore) NodeEffectApplier.remove(n);
 
         // Charge SP (verbose=false, no text panel for compiles-only stub)
         if (r.storyPointsCharged > 0) {
