@@ -11,19 +11,19 @@ public final class EffectRegistry {
     private static final Map<String, EffectHandler> handlers = new HashMap<>();
 
     static {
-        handlers.put("corsair_stat_bonus",      new StatBonusHandler());
-        handlers.put("corsair_salvage_mult",    new SalvageMultiplierHandler());
-        handlers.put("corsair_combat_script",
+        handlers.put("SO_corsair_stat_bonus",      new StatBonusHandler());
+        handlers.put("SO_corsair_salvage_mult",    new SalvageMultiplierHandler());
+        handlers.put("SO_corsair_combat_script",
                 new skills_overhaul.effect.handlers.corsair.CombatScriptHandler());
-        handlers.put("corsair_bounty_board",
+        handlers.put("SO_corsair_bounty_board",
                 new skills_overhaul.effect.handlers.corsair.BountyBoardHandler());
-        handlers.put("corsair_dmod_dp",
+        handlers.put("SO_corsair_dmod_dp",
                 new skills_overhaul.effect.handlers.corsair.DModDpScalingHandler());
-        handlers.put("corsair_cap_mult",
+        handlers.put("SO_corsair_cap_mult",
                 new skills_overhaul.effect.handlers.corsair.CapMultiplierHandler());
-        handlers.put("corsair_t0",
+        handlers.put("SO_corsair_t0",
                 new skills_overhaul.effect.handlers.corsair.CorsairT0Handler());
-        handlers.put("corsair_letter_of_marque",
+        handlers.put("SO_corsair_letter_of_marque",
                 new skills_overhaul.effect.handlers.corsair.LetterOfMarqueHandler());
         handlers.put("SO_fleet_stat", new skills_overhaul.effect.handlers.SOFleetStatHandler());
         handlers.put("SO_combat_script", new skills_overhaul.effect.handlers.SOCombatScriptHandler());
@@ -32,6 +32,9 @@ public final class EffectRegistry {
         handlers.put("SO_objective_scaling", new skills_overhaul.effect.handlers.SOObjectiveScalingHandler());
         handlers.put("SO_commandant_t5", new skills_overhaul.effect.handlers.SOCommandantT5Handler());
         handlers.put("SO_refitting", new skills_overhaul.effect.handlers.SORefittingHandler());
+        handlers.put("SO_standing_orders", new skills_overhaul.effect.handlers.SOStandingOrdersHandler());
+        handlers.put("SO_command_and_conquer", new skills_overhaul.effect.handlers.SOCommandAndConquerHandler());
+        handlers.put("SO_in_good_hands", new skills_overhaul.effect.handlers.SOInGoodHandsHandler());
         handlers.put("SO_objective_capture_buff", new skills_overhaul.effect.handlers.SOObjectiveCaptureBuffHandler());
         handlers.put("SO_doctrine_hierarchy", new skills_overhaul.effect.handlers.SODoctrineHierarchyHandler());
         handlers.put("SO_officer_inspiration", new skills_overhaul.effect.handlers.SOOfficerInspirationHandler());

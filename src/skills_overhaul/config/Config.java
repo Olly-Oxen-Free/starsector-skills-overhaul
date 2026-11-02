@@ -1,6 +1,7 @@
 package skills_overhaul.config;
 
 import org.json.JSONObject;
+import org.lwjgl.input.Keyboard;
 
 public final class Config {
     public final int   pointsPerLevel;
@@ -19,6 +20,8 @@ public final class Config {
     public final int   stabilityStreakCapMonths;
     public final float vassalXpMult;
     public final float administratorXpMult;
+    /** LWJGL key code that opens the skills dialog from the campaign map. */
+    public final int   uiHotkey;
 
     private Config(JSONObject j) {
         this.pointsPerLevel              = j.optInt("points_per_level", 1);
@@ -40,6 +43,7 @@ public final class Config {
         this.stabilityStreakCapMonths    = j.optInt("stability_streak_cap_months", 6);
         this.vassalXpMult                = (float) j.optDouble("vassal_xp_mult", 0.25);
         this.administratorXpMult         = (float) j.optDouble("administrator_xp_mult", 0.50);
+        this.uiHotkey                    = j.optInt("ui_hotkey", Keyboard.KEY_K);
     }
 
     public static Config fromJSON(JSONObject j) { return new Config(j); }

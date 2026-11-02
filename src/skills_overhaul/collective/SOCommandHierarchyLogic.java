@@ -65,19 +65,15 @@ public final class SOCommandHierarchyLogic {
         return ship.getCaptain() != null && ship.getCaptain().isAICore();
     }
 
+    // "so_automated_ship_points" is not read by anything; the live automated-points cap is
+    // AutomatedShipPointService + AutomatedShipCapApplier.
     public static void applyPointBonus() {
-        try {
-            Global.getSector().getPlayerPerson()
-                .getStats().getDynamic().getMod("so_automated_ship_points")
-                .modifyFlat(POINT_SOURCE, 40f);
-        } catch (Exception ignored) {}
+        skills_overhaul.artificer.AutomatedShipPointService.registerBonus(POINT_SOURCE, 40);
+        skills_overhaul.artificer.AutomatedShipCapApplier.applyToPlayerFleet();
     }
 
     public static void removePointBonus() {
-        try {
-            Global.getSector().getPlayerPerson()
-                .getStats().getDynamic().getMod("so_automated_ship_points")
-                .unmodify(POINT_SOURCE);
-        } catch (Exception ignored) {}
+        skills_overhaul.artificer.AutomatedShipPointService.unregisterBonus(POINT_SOURCE);
+        skills_overhaul.artificer.AutomatedShipCapApplier.applyToPlayerFleet();
     }
 }

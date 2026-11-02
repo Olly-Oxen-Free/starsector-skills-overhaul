@@ -13,6 +13,7 @@ public final class SOZealotT5Handler implements EffectHandler {
         if ("core".equals(channel)) {
             ZealotCombatPlugin.ACTIVE_NODES.add("zealot_t5");
             Global.getSector().getMemoryWithoutUpdate().set("$skills.zealot.t5.purchased", true);
+            skills_overhaul.effect.AbilityGrants.grant(skills_overhaul.zealot.CrusadeAbility.ABILITY_ID);
         }
     }
 
@@ -22,6 +23,7 @@ public final class SOZealotT5Handler implements EffectHandler {
         if ("core".equals(channel)) {
             ZealotCombatPlugin.ACTIVE_NODES.remove("zealot_t5");
             Global.getSector().getMemoryWithoutUpdate().unset("$skills.zealot.t5.purchased");
+            skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.zealot.CrusadeAbility.ABILITY_ID);
         }
     }
 }

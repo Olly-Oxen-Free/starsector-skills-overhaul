@@ -17,8 +17,14 @@ public final class CommandFieldRegistrar extends BaseEveryFrameCombatPlugin {
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = com.fs.starfarer.api.Global.getCombatEngine();
         if (engine == null) return;
+        if (!engine.isInCampaign() && !engine.isInCampaignSim()) return; // no sector memory in missions
+        // Command Field is the commandant_t0 core channel (spec: "core: registers Command Field");
+        // without this gate every player ship got the aura whether or not the node was owned/active.
+        if (!Boolean.TRUE.equals(com.fs.starfarer.api.Global.getSector().getMemoryWithoutUpdate()
+                .get(skills_overhaul.effect.handlers.SOCommandantT0Handler.K_CORE_ACTIVE))) return;
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0) continue;
+            if (s.isFighter()) continue; // per-fighter O(ships) aura scans; fighters aren't aura ships
             if (attached.contains(s)) continue;
             CommandFieldService.attach(s);
             attached.add(s);

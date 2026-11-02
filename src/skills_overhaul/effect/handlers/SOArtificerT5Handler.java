@@ -12,6 +12,7 @@ public final class SOArtificerT5Handler implements EffectHandler {
         if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().set(
                     "$skills.artificer.t5.purchased", true);
+            skills_overhaul.effect.AbilityGrants.grant(skills_overhaul.artificer.alphastorm.AlphaStormAbility.ABILITY_ID);
         }
     }
 
@@ -21,6 +22,7 @@ public final class SOArtificerT5Handler implements EffectHandler {
         if ("core".equals(channel)) {
             Global.getSector().getMemoryWithoutUpdate().unset(
                     "$skills.artificer.t5.purchased");
+            skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.artificer.alphastorm.AlphaStormAbility.ABILITY_ID);
         }
     }
 }

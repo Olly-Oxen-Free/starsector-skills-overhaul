@@ -30,6 +30,14 @@ public class RespecServiceTest {
         r = RespecService.respecTree(mem, Tree.PILOT);
         assert r.storyPointsCharged == 1 : "second respec 1 SP";
 
+        Map<String,Object> snap = new HashMap<String,Object>();
+        assert RespecService.costFor(snap, Tree.PILOT) == 0 : "unset -> free";
+        snap.put(SkillMemory.respecUsedKey(Tree.PILOT), false);
+        assert RespecService.costFor(snap, Tree.PILOT) == 0 : "false -> free";
+        snap.put(SkillMemory.respecUsedKey(Tree.PILOT), true);
+        assert RespecService.costFor(snap, Tree.PILOT) == 1 : "used -> 1 SP";
+        assert RespecService.costFor(snap, Tree.COMMANDER) == 0 : "other tree unaffected";
+
         System.out.println("ALL PASSED");
     }
 }

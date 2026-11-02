@@ -70,7 +70,7 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, int playerHeld,
                                      boolean marching, boolean totalControl) {
         if (ACTIVE_NODES.contains("commandant_t1_officer_training")) OfficerTraining.apply(s);
-        if (ACTIVE_NODES.contains("commandant_t1_standing_orders")) StandingOrders.apply(s);
+        if (ACTIVE_NODES.contains("commandant_t1_drilled")) DrilledAndReady.apply(s);
         if (ACTIVE_NODES.contains("commandant_t2_authority")) Authority.apply(s, playerHeld);
         if (ACTIVE_NODES.contains("commandant_t2_cohesion")) TacticalCohesion.apply(s, engine);
         if (ACTIVE_NODES.contains("commandant_t2_reserve")) ReserveCommitment.apply(s, combatTime);
@@ -100,18 +100,21 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
     }
 
+    /** Drilled and Ready: +5% weapon damage fleet-wide (vanilla Tactical Drills stats). */
+    static final class DrilledAndReady {
+        static void apply(ShipAPI s) {
+            if (s.isFighter()) return;
+            s.getMutableStats().getBallisticWeaponDamageMult().modifyPercent("commandant_t1_drilled", 5f);
+            s.getMutableStats().getEnergyWeaponDamageMult().modifyPercent("commandant_t1_drilled", 5f);
+            s.getMutableStats().getMissileWeaponDamageMult().modifyPercent("commandant_t1_drilled", 5f);
+        }
+    }
+
     static final class OfficerTraining {
         static void apply(ShipAPI s) {
             if (s.getCaptain() == null || s.getCaptain().isDefault()) return;
             s.getMutableStats().getPeakCRDuration().modifyMult("commandant_t1_officer_training", 1.20f);
             s.getMutableStats().getMaxTurnRate().modifyMult("commandant_t1_officer_training", 1.10f);
-        }
-    }
-
-    static final class StandingOrders {
-        static void apply(ShipAPI s) {
-            float per = (s.getCaptain() != null && !s.getCaptain().isDefault()) ? 4.5f : 3f;
-            s.getMutableStats().getCRPerDeploymentPercent().modifyFlat("commandant_t1_standing_orders", per);
         }
     }
 
@@ -130,6 +133,7 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
             int nearby = 0;
             for (ShipAPI o : engine.getShips()) {
                 if (o == s || o.getOwner() != s.getOwner()) continue;
+                if (o.isFighter() || !o.isAlive()) continue; // fighters alone met the 2-friendly threshold
                 if (Misc.getDistance(s.getLocation(), o.getLocation()) <= 2000f) nearby++;
             }
             if (nearby >= 2) {
@@ -154,6 +158,10 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
                     s.getMutableStats().getMaxSpeed().modifyMult("commandant_t2_reserve", 1.15f);
                 }
                 s.getMutableStats().getMaxTurnRate().modifyMult("commandant_t2_reserve", 1.25f);
+            } else {
+                // The window closed but the buff was never removed — it lasted the rest of the battle.
+                s.getMutableStats().getMaxSpeed().unmodify("commandant_t2_reserve");
+                s.getMutableStats().getMaxTurnRate().unmodify("commandant_t2_reserve");
             }
         }
     }
@@ -162,17 +170,29 @@ public final class CommandantCombatPlugin extends BaseEveryFrameCombatPlugin {
         static void apply(ShipAPI s, CombatEngineAPI engine) {
             if (s.getHullSize() == ShipAPI.HullSize.CAPITAL_SHIP) {
                 s.getMutableStats().getMaxTurnRate().modifyMult("commandant_t3_line_anchor", 1.10f);
-                for (ShipAPI o : engine.getShips()) {
-                    if (o == s || o.getOwner() != s.getOwner()) continue;
-                    if (o.getHullSize() == ShipAPI.HullSize.CAPITAL_SHIP) continue;
-                    if (Misc.getDistance(s.getLocation(), o.getLocation()) > 1500f) continue;
-                    o.getMutableStats().getBallisticWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor:" + s.getId(), 20f);
-                    o.getMutableStats().getEnergyWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor:" + s.getId(), 20f);
-                }
+                return;
             } else if (s.getHullSize() == ShipAPI.HullSize.CRUISER) {
                 s.getMutableStats().getArmorBonus().modifyMult("commandant_t3_line_anchor", 1.10f);
                 s.getMutableStats().getFluxCapacity().modifyMult("commandant_t3_line_anchor", 1.20f);
                 s.getMutableStats().getPeakCRDuration().modifyMult("commandant_t3_line_anchor", 1.25f);
+            }
+            // Receiver side: a non-capital within 1500u of a live friendly capital gets +20% range.
+            // Previously applied per-source by each capital and never removed (out of range or after
+            // the capital died), and stacked +20% per nearby capital.
+            boolean anchored = false;
+            for (ShipAPI o : engine.getShips()) {
+                if (o == s || o.getOwner() != s.getOwner() || !o.isAlive()) continue;
+                if (o.getHullSize() != ShipAPI.HullSize.CAPITAL_SHIP) continue;
+                if (Misc.getDistance(s.getLocation(), o.getLocation()) > 1500f) continue;
+                anchored = true;
+                break;
+            }
+            if (anchored) {
+                s.getMutableStats().getBallisticWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor_range", 20f);
+                s.getMutableStats().getEnergyWeaponRangeBonus().modifyPercent("commandant_t3_line_anchor_range", 20f);
+            } else {
+                s.getMutableStats().getBallisticWeaponRangeBonus().unmodify("commandant_t3_line_anchor_range");
+                s.getMutableStats().getEnergyWeaponRangeBonus().unmodify("commandant_t3_line_anchor_range");
             }
         }
     }

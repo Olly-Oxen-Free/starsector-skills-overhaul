@@ -23,6 +23,8 @@ public final class SOArtificerT0Handler implements EffectHandler {
             Global.getSector().getMemoryWithoutUpdate().set(K_CORE_ACTIVE, true);
             ForgeRecipeRegistry.unlock("drone_wakes");
             ForgeRecipeRegistry.unlock("sensor_beacon");
+            // Spec (Artificer Plan A): "Buy T0; Deploy Forge Device ability appears in campaign bar."
+            skills_overhaul.effect.AbilityGrants.grant(skills_overhaul.artificer.forge.DeployForgeDeviceAbility.ABILITY_ID);
         }
     }
 
@@ -39,6 +41,7 @@ public final class SOArtificerT0Handler implements EffectHandler {
             Global.getSector().getMemoryWithoutUpdate().unset(K_CORE_ACTIVE);
             ForgeRecipeRegistry.lock("drone_wakes");
             ForgeRecipeRegistry.lock("sensor_beacon");
+            skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.artificer.forge.DeployForgeDeviceAbility.ABILITY_ID);
         }
     }
 }

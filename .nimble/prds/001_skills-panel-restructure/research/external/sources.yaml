@@ -1,0 +1,17 @@
+sources:
+  - url: file://game/starfarer.api.zip
+    title: "Starsector API sources (0.98a)"
+    accessed: 2026-10-26
+    supports: ["Q1","Q2","Q3","Q4","Q5","Q6","Q7"]
+  - url: file://game/mods/LunaLib-2.0.5/src
+    title: "LunaLib 2.0.5 source"
+    accessed: 2026-10-26
+    supports: ["Q1","Q2","Q3","Q6","Q7"]
+  - url: file://game/mods/Second-in-Command-2.0.0/src
+    title: "Second-in-Command 2.0.0 source"
+    accessed: 2026-10-26
+    supports: ["Q1","Q4","Q5","Q7"]
+  - url: file://game/mods/Ship Mastery System-2.0.8/src
+    title: "Ship Mastery System 2.0.8 source"
+    accessed: 2026-10-26
+    supports: ["Q4","Q6","Q7"]

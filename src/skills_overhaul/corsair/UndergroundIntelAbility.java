@@ -24,7 +24,7 @@ public final class UndergroundIntelAbility extends BaseDurationAbility {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         long now = Global.getSector().getClock().getTimestamp();
 
-        if (UndergroundIntelService.cooldownActive(mem, now)) return;
+        if (UndergroundIntelService.cooldownActive(mem, now)) { this.deactivate(); return; }
 
         int today = InfamyDailyTicker.monotonicDay();
         boolean legend = InfamyService.tierActive(mem, today, InfamyTier.LEGEND);
@@ -40,6 +40,7 @@ public final class UndergroundIntelAbility extends BaseDurationAbility {
             float bufferRefund = dr.fromBuffer;
             float currentBuffer = skills_overhaul.state.SkillMemory.getSupplyBuffer(mem);
             skills_overhaul.state.SkillMemory.setSupplyBuffer(mem, currentBuffer + bufferRefund);
+            this.deactivate();
             return;
         }
         if (dr.fromFleet > 0f) cargo.removeSupplies(dr.fromFleet);
@@ -50,13 +51,15 @@ public final class UndergroundIntelAbility extends BaseDurationAbility {
             float currentBuffer = skills_overhaul.state.SkillMemory.getSupplyBuffer(mem);
             skills_overhaul.state.SkillMemory.setSupplyBuffer(mem, currentBuffer + dr.fromBuffer);
             cargo.addSupplies(dr.fromFleet);
+            this.deactivate();
             return;
         }
 
         MarkIntel intel = new MarkIntel(mark.fleet, mark.strength, mark.incentiveDescription);
         Global.getSector().getIntelManager().addIntel(intel);
 
-        long cooldownEnd = now + (long) (COOLDOWN_DAYS * Global.getSector().getClock().getSecondsPerDay() * 1000L);
+        // Clock timestamps are calendar ms: one game day = 86400 * 1000 (not getSecondsPerDay()).
+        long cooldownEnd = now + (long) (COOLDOWN_DAYS * 86400L * 1000L);
         UndergroundIntelService.setCooldown(mem, cooldownEnd);
 
         this.deactivate();

@@ -41,7 +41,10 @@ public final class SOFluxGhostProjector extends SOSecondarySystem {
         );
 
         try {
-            FleetMemberAPI ghostMember = Global.getFactory().createFleetMember(FleetMemberType.SHIP, variantId);
+            // Clone the live variant: player refits carry custom variant ids that are
+            // not registered globally, so createFleetMember(SHIP, variantId) throws.
+            FleetMemberAPI ghostMember = Global.getFactory().createFleetMember(
+                    FleetMemberType.SHIP, ship.getVariant().clone());
             ghostMember.getRepairTracker().setCrashMothballed(false);
             ghostMember.getRepairTracker().setMothballed(false);
             ghostMember.getRepairTracker().setCR(ship.getCurrentCR() * 0.8f);

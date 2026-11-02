@@ -8,7 +8,7 @@ import skills_overhaul.effect.EffectHandler;
 
 /**
  * Per-ship d-mod-scaled stat tweaks. Params:
- *   { "type": "corsair_dmod_dp",
+ *   { "type": "SO_corsair_dmod_dp",
  *     "dpPerDMod":   -0.06,    // per-ship DP cost mult; not applicable — API lacks the stat
  *     "armorPerDMod": 0.03,    // armor bonus per d-mod
  *     "hullPerDMod":  0.03,    // hull bonus per d-mod
@@ -46,10 +46,7 @@ public final class DModDpScalingHandler implements EffectHandler {
     }
 
     private int countDMods(FleetMemberAPI m) {
-        int c = 0;
-        for (String h : m.getVariant().getHullMods()) {
-            if (h.endsWith("_dmod") || h.contains("_d_") || h.contains("_d ")) c++;
-        }
-        return c;
+        // Vanilla "dmod" hullmod tag; the old id heuristic matched no vanilla d-mod id.
+        return com.fs.starfarer.api.impl.campaign.DModManager.getNumDMods(m.getVariant());
     }
 }

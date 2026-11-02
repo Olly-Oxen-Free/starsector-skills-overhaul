@@ -31,6 +31,7 @@ public final class NodeApplyService {
         // reset, loading save B after save A carries A's active nodes,
         // recipe unlocks, cap multipliers and command-field params into B.
         resetTransientStatics();
+        skills_overhaul.effect.AbilityGrants.beginReapply();
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         int count = 0;
@@ -55,6 +56,11 @@ public final class NodeApplyService {
                 }
             }
         }
+        // Drop abilities no owned/active node granted (incl. the old unlockedAtStart rows).
+        skills_overhaul.effect.AbilityGrants.revokeUngranted();
+        // Always re-stamp (even with no automated-points node owned) so AI-core
+        // captains damaged by the old $autoPointsMult overwrite self-heal.
+        skills_overhaul.artificer.AutomatedShipCapApplier.applyToPlayerFleet();
         Global.getLogger(NodeApplyService.class).info(
                 "[skills_overhaul] re-applied " + count + " owned nodes on load");
     }
@@ -75,6 +81,20 @@ public final class NodeApplyService {
         skills_overhaul.artificer.forge.ForgeRecipeRegistry.resetUnlocks();
         skills_overhaul.artificer.forge.FreeDeployQuotaTracker.reset();
         skills_overhaul.artificer.AutomatedShipPointService.reset();
+        skills_overhaul.effect.handlers.corsair.BountyBoardListener.active = false;
+        skills_overhaul.effect.handlers.corsair.BountyBoardListener.weaponDropMult = 1f;
+        skills_overhaul.commandant.FieldCommandsService.active = false;
+        // Salvage multipliers are keyed by node id and have no bulk clear.
+        for (Tree tab : Tree.values()) {
+            List<TreeDef> trees;
+            try { trees = TreeRegistry.getTrees(tab); }
+            catch (Exception e) { continue; }
+            for (TreeDef def : trees) {
+                for (Node node : def.getNodes()) {
+                    skills_overhaul.effect.handlers.corsair.PostBattleSalvageMultiplierListener.unregister(node.getId());
+                }
+            }
+        }
     }
 
     private NodeApplyService() {}

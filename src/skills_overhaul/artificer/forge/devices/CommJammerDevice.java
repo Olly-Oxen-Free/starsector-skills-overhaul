@@ -18,8 +18,7 @@ public final class CommJammerDevice implements ForgeDeviceEffect {
                     null, "Forge Comm Jammer", "jammer_station", null);
             jammer.setLocation(pos.x, pos.y);
             // 30-day duration: set memory key
-            int expire = (int) Global.getSector().getClock().getCycle() * 365
-                    + (int) Global.getSector().getClock().getDay() + 30;
+            int expire = skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay() + 30;
             Global.getSector().getMemoryWithoutUpdate().set(
                     "$skills.artificer.forge.comm_jammer_expire." + jammer.getId(), expire);
             // Flag enemy comms degradation

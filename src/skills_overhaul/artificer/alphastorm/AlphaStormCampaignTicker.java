@@ -40,7 +40,9 @@ public final class AlphaStormCampaignTicker implements EveryFrameScript {
         } else if (today > last) {
             // Bill each skipped day at that day's own intensity — a skip that crosses a
             // MILD→SEVERE boundary must not charge every day at today's (highest) rate.
-            for (int day = last + 1; day <= today; day++) {
+            // Catch-up capped at 7 days like MobileFabUnitTicker: saves written with the old
+            // day-of-month counter can be up to ~330 days behind on first load.
+            for (int day = Math.max(last + 1, today - 6); day <= today; day++) {
                 AlphaStormState.Intensity dayIntensity = AlphaStormState.intensity(mem, day);
                 if (dayIntensity == null) continue;
                 int dailyCost = AlphaStormState.dailyCost(dayIntensity);

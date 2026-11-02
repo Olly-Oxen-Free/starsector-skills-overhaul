@@ -27,7 +27,7 @@ public final class ECMWaveDevice implements ForgeDeviceEffect {
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0) continue;
             try {
-                s.getMutableStats().getDynamic().getMod("ew_jamming")
+                s.getMutableStats().getDynamic().getMod(com.fs.starfarer.api.impl.campaign.ids.Stats.ELECTRONIC_WARFARE_FLAT)
                         .modifyMult("forge_ecm_wave", 1.20f);
             } catch (Throwable t) {}
         }
@@ -40,7 +40,7 @@ public final class ECMWaveDevice implements ForgeDeviceEffect {
                     for (ShipAPI s : engine.getShips()) {
                         if (s.getOwner() != 0) continue;
                         try {
-                            s.getMutableStats().getDynamic().getMod("ew_jamming").unmodify("forge_ecm_wave");
+                            s.getMutableStats().getDynamic().getMod(com.fs.starfarer.api.impl.campaign.ids.Stats.ELECTRONIC_WARFARE_FLAT).unmodify("forge_ecm_wave");
                         } catch (Throwable t) {}
                     }
                     engine.removePlugin(this);

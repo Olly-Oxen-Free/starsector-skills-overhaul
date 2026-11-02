@@ -46,19 +46,20 @@ public final class ZealDailyTicker implements EveryFrameScript {
         return false;
     }
 
+    /** cycle*365 + day-of-year. getDay() is day-of-month and would run backwards at month rollover. */
     public static int monotonicDay() {
         return (int) Global.getSector().getClock().getCycle() * 365
-                + (int) Global.getSector().getClock().getDay();
+                + Global.getSector().getClock().getCal().get(java.util.Calendar.DAY_OF_YEAR);
     }
 
     /**
      * Map view backed by a MemoryAPI. get reads from MemoryAPI; put writes to MemoryAPI; remove unsets.
      * Other Map methods are minimal stubs.
      */
-    static final class MemoryWrapMap extends AbstractMap<String, Object> {
+    public static final class MemoryWrapMap extends AbstractMap<String, Object> {
         private final MemoryAPI mem;
 
-        MemoryWrapMap(MemoryAPI mem) { this.mem = mem; }
+        public MemoryWrapMap(MemoryAPI mem) { this.mem = mem; }
 
         @Override
         public Object get(Object key) { return mem.get((String) key); }

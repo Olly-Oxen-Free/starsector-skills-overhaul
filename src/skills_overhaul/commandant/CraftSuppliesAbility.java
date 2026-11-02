@@ -38,7 +38,8 @@ public final class CraftSuppliesAbility extends BaseDurationAbility {
         if (dr.fromFleet > 0f) cargo.removeSupplies(dr.fromFleet);
 
         cargo.addSupplies(OUTPUT);
-        long cdEndNew = now + (long)(COOLDOWN_DAYS * Global.getSector().getClock().getSecondsPerDay() * 1000L);
+        // Clock timestamps are calendar ms: one game day = 86400 * 1000 (not getSecondsPerDay()).
+        long cdEndNew = now + (long)(COOLDOWN_DAYS * 86400L * 1000L);
         mem.set(K_CD_END, cdEndNew);
         this.deactivate();
     }

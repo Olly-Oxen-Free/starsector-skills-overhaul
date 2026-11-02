@@ -112,7 +112,10 @@ public final class FieldCommandsService {
             if (fm == null || !memberId.equals(fm.getId())) continue;
             applyOrderBuff(s, typeName, key);
         }
-        CommandFieldService.registerParam("field_command:" + key, "rangeBumpFlat", 500f);
+        // Spec: "ships executing any order project a temporary +500u Command Aura range bonus".
+        // Per-ship param — a global rangeBumpFlat summed +500 per order into every ship's aura.
+        CommandFieldService.registerParam("field_command:" + key,
+                CommandFieldService.SHIP_RANGE_BUMP_PREFIX + memberId, 500f);
     }
 
     private static void applyBuffEnd(String key) {

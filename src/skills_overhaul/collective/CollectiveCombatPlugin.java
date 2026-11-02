@@ -58,7 +58,8 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         distributedConsciousness = new SODistributedConsciousnessListener();
 
         // T5 (Capstone) — initialize Transspatial Interface uses from alpha assimilation count
-        if (CollectiveActiveNodes.isActive("so_collective_transspatial_mind")) {
+        if (CollectiveActiveNodes.isActive("so_collective_transspatial_mind")
+                && Global.getSector() != null) {
             MemoryAPI mem = Global.getSector().getCharacterData().getMemory();
             TransspatialInterfaceSystem.initializeUses(mem);
         }
@@ -81,6 +82,10 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
     private static final float BURST_DURATION         = 5.0f; // [TUNE]
     private static final float BURST_DMG_BONUS        = 0.30f; // [TUNE]
 
+    // Voltaic Conduits: per-ship accumulated time since the last arc
+    private final Map<String, Float> conduitTimer = new HashMap<String, Float>();
+    private static final float CONDUIT_ARC_INTERVAL = 0.5f;
+
     // Structural Integrity cache
     private float integrityUpdateTimer = 0f;
     private static final float INTEGRITY_UPDATE_INTERVAL = 0.25f;
@@ -92,6 +97,7 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
         if (!CollectiveActiveNodes.isActive("so_collective_t0")) return;
+        if (Global.getSector() == null) return;
 
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
         applyAssimilationPassives(mem, engine);
@@ -171,7 +177,9 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     private static boolean isAutomated(ShipAPI ship) {
-        return isAICored(ship) || ship.getCaptain() == null || ship.isDrone();
+        // Coreless automated hulls have a default (non-null) captain — check the hull itself.
+        return isAICored(ship) || ship.getCaptain() == null || ship.isDrone()
+                || com.fs.starfarer.api.util.Misc.isAutomated(ship);
     }
 
     private void applyAssimilationPassives(MemoryAPI mem, CombatEngineAPI engine) {
@@ -262,7 +270,17 @@ public final class CollectiveCombatPlugin extends BaseEveryFrameCombatPlugin {
     private void advanceVoltaicConduits(CombatEngineAPI engine, float amount) {
         for (ShipAPI ship : engine.getShips()) {
             if (ship.getOwner() != 0 || !ship.isAlive() || !isAICored(ship)) continue;
-            VoltaicArcEmitter.emitConduitsArcs(engine, ship, amount);
+            // Accumulate and fire every CONDUIT_ARC_INTERVAL instead of spawning an arc entity
+            // (plus three target lists) every frame. Damage scales with the accumulated time,
+            // so DPS is unchanged.
+            String id = ship.getId();
+            float acc = (conduitTimer.containsKey(id) ? conduitTimer.get(id) : 0f) + amount;
+            if (acc < CONDUIT_ARC_INTERVAL) {
+                conduitTimer.put(id, acc);
+                continue;
+            }
+            conduitTimer.put(id, 0f);
+            VoltaicArcEmitter.emitConduitsArcs(engine, ship, acc);
         }
     }
 

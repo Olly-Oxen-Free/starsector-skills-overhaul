@@ -29,6 +29,9 @@ public final class SODistributedConsciousnessListener {
     /** Number of death events recorded so far (capped at DEATH_CAP). */
     private int deathCount = 0;
 
+    /** Bonuses earned so far (source id -> pct); re-applied each frame so reinforcements get them. */
+    private final Map<String, Float> earned = new java.util.LinkedHashMap<String, Float>();
+
     public void advance(CombatEngineAPI engine) {
         if (!CollectiveActiveNodes.isActive("so_collective_transspatial_mind")) return;
 
@@ -47,21 +50,24 @@ public final class SODistributedConsciousnessListener {
                     deathCount++;
                     float bonusPct = coreBonusPct(ship);
                     String source  = "so_distributed_" + deathCount;
-                    applyToSurvivors(engine, source, bonusPct);
+                    earned.put(source, bonusPct);
                 }
             }
         }
+        if (!earned.isEmpty()) applyToSurvivors(engine);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
 
-    private void applyToSurvivors(CombatEngineAPI engine, String source, float bonusPct) {
+    private void applyToSurvivors(CombatEngineAPI engine) {
         for (ShipAPI ship : engine.getShips()) {
             if (ship.getOwner() != 0 || !ship.isAlive()) continue;
             if (!isAICored(ship)) continue;
             MutableShipStatsAPI stats = ship.getMutableStats();
-            stats.getFluxDissipation().modifyPercent(source, bonusPct);
-            stats.getFluxCapacity().modifyPercent(source, bonusPct);
+            for (Map.Entry<String, Float> e : earned.entrySet()) {
+                stats.getFluxDissipation().modifyPercent(e.getKey(), e.getValue());
+                stats.getFluxCapacity().modifyPercent(e.getKey(), e.getValue());
+            }
         }
     }
 

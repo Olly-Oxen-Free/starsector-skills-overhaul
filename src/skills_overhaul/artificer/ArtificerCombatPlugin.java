@@ -31,6 +31,8 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
     /** Targets that currently carry the beam flux-dissipation debuff (for clean unmodify). */
     private final Set<Object> beamDebuffTargets = new HashSet<Object>();
     private boolean firstFrame = true;
+    private float ecmRangePct = 0f;
+    private float phaseBonus = 0f;
 
     @Override
     public void advance(float amount, List<InputEventAPI> events) {
@@ -45,6 +47,11 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("artificer_t3_final_gambit")) {
             FinalGambitService.tick(engine);
         }
+
+        // Fleet-wide inputs: compute once per frame, not once per ship (each is a full-fleet scan).
+        ecmRangePct = ACTIVE_NODES.contains("artificer_t1_ecm") ? ECM.computeRangePct() : 0f;
+        phaseBonus = ACTIVE_NODES.contains("artificer_t4_transcendence")
+                ? PhaseSharedBonusService.computeBonusForLivePhaseFleet() : 0f;
 
         // Per-ship effect dispatch
         for (ShipAPI s : engine.getShips()) {
@@ -114,8 +121,7 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
             if (Global.getSector() == null) return false;
             Object exp = Global.getSector().getMemoryWithoutUpdate().get(OFFICER_IMPRINT_EXPIRE_KEY);
             if (!(exp instanceof Number)) return false;
-            int today = (int) (Global.getSector().getClock().getCycle() * 365
-                    + Global.getSector().getClock().getDay());
+            int today = skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay();
             return today < ((Number) exp).intValue();
         } catch (Throwable t) {
             return false;
@@ -143,7 +149,7 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     private void applyPerShipEffects(ShipAPI s, CombatEngineAPI engine, float amount) {
         // T1
-        if (ACTIVE_NODES.contains("artificer_t1_ecm")) ECM.apply(s);
+        if (ACTIVE_NODES.contains("artificer_t1_ecm")) ECM.apply(s, ecmRangePct);
         if (ACTIVE_NODES.contains("artificer_t1_ewm")) EnergyWeaponMastery.apply(s);
         if (ACTIVE_NODES.contains("artificer_t1_systems")) SystemsExpertise.apply(s);
         // T2
@@ -157,7 +163,7 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("artificer_t3_resilience")) TechResilience.apply(s);
         if (ACTIVE_NODES.contains("artificer_t3_power_grid")) PowerGrid.apply(s, engine);
         // T4
-        if (ACTIVE_NODES.contains("artificer_t4_transcendence")) TechTranscendence.apply(s, engine);
+        if (ACTIVE_NODES.contains("artificer_t4_transcendence")) TechTranscendence.apply(s, phaseBonus);
         if (ACTIVE_NODES.contains("artificer_t4_carrier_command")) CarrierCommand.apply(s);
         if (ACTIVE_NODES.contains("artificer_t4_limit_breaker")) LimitBreaker.apply(s);
     }
@@ -165,12 +171,16 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
     // ---------- Effect inner classes ----------
 
     static final class ECM {
-        static void apply(ShipAPI s) {
+        /** Fleet-wide range bonus %, computed once per frame (two full-fleet scans). */
+        static float computeRangePct() {
             float adv = ECMTracker.advantage(
                     ECMTracker.getPlayerECMRatingLive(),
                     ECMTracker.getEnemyECMRatingLive());
             float enemyRangePenalty = ECMTracker.enemyWeaponRangePenaltyMult(adv);
-            float rangePct = (1f - enemyRangePenalty) * 100f;
+            return (1f - enemyRangePenalty) * 100f;
+        }
+
+        static void apply(ShipAPI s, float rangePct) {
             s.getMutableStats().getBallisticWeaponRangeBonus().modifyPercent("artificer_t1_ecm_range", rangePct);
             s.getMutableStats().getEnergyWeaponRangeBonus().modifyPercent("artificer_t1_ecm_range", rangePct);
         }
@@ -206,12 +216,10 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
                 try { s.getMutableStats().getPhaseCloakActivationCostBonus().modifyMult("artificer_t2_strike", 0.80f); }
                 catch (Throwable t) {}
             }
-            try {
-                if (s.getHullSpec().hasTag("automated")) {
-                    s.getMutableStats().getEmpDamageTakenMult().modifyMult("artificer_t2_strike", 0.80f);
-                    s.getMutableStats().getShieldDamageTakenMult().modifyMult("artificer_t2_strike", 0.90f);
-                }
-            } catch (Throwable t) {}
+            if (Misc.isAutomated(s)) {
+                s.getMutableStats().getEmpDamageTakenMult().modifyMult("artificer_t2_strike", 0.80f);
+                s.getMutableStats().getShieldDamageTakenMult().modifyMult("artificer_t2_strike", 0.90f);
+            }
             if (s.getNumFighterBays() > 0) {
                 try {
                     s.getMutableStats().getFighterRefitTimeMult().modifyMult("artificer_t2_strike", 0.70f);
@@ -260,11 +268,9 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     static final class TechResilience {
         static void apply(ShipAPI s) {
-            try {
-                if (s.getHullSpec().hasTag("automated")) {
-                    s.getMutableStats().getHullDamageTakenMult().modifyMult("artificer_t3_resilience", 0.90f);
-                }
-            } catch (Throwable t) {}
+            if (Misc.isAutomated(s)) {
+                s.getMutableStats().getHullDamageTakenMult().modifyMult("artificer_t3_resilience", 0.90f);
+            }
         }
     }
 
@@ -296,9 +302,8 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
     }
 
     static final class TechTranscendence {
-        static void apply(ShipAPI s, CombatEngineAPI engine) {
+        static void apply(ShipAPI s, float bonus) {
             if (s.getPhaseCloak() == null) return;
-            float bonus = PhaseSharedBonusService.computeBonusForLivePhaseFleet();
             s.getMutableStats().getEnergyWeaponDamageMult().modifyMult("artificer_t4_transcendence", 1f + bonus);
             s.getMutableStats().getFluxDissipation().modifyMult("artificer_t4_transcendence", 1f + bonus);
         }
@@ -315,9 +320,7 @@ public final class ArtificerCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     static final class LimitBreaker {
         static void apply(ShipAPI s) {
-            try {
-                if (!s.getHullSpec().hasTag("automated")) return;
-            } catch (Throwable t) { return; }
+            if (!Misc.isAutomated(s)) return;
             s.getMutableStats().getBallisticWeaponDamageMult().modifyMult("artificer_t4_limit_breaker", 1.20f);
             s.getMutableStats().getEnergyWeaponDamageMult().modifyMult("artificer_t4_limit_breaker", 1.20f);
             s.getMutableStats().getMaxSpeed().modifyMult("artificer_t4_limit_breaker", 1.20f);

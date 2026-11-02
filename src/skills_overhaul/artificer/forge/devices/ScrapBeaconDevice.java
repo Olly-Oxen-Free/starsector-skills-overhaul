@@ -17,7 +17,8 @@ public final class ScrapBeaconDevice implements ForgeDeviceEffect {
             @Override public boolean isDone() { return remainingDays <= 0f; }
             @Override public boolean runWhilePaused() { return false; }
             @Override public void advance(float amount) {
-                interval.advance(amount);
+                // amount is real seconds; the interval and remainingDays are in campaign days.
+                interval.advance(Global.getSector().getClock().convertToDays(amount));
                 if (!interval.intervalElapsed()) return;
                 CampaignFleetAPIWrap.add10Supplies();
                 remainingDays -= 2f;

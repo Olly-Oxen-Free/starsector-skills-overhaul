@@ -5,14 +5,28 @@ import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
+import skills_overhaul.effect.PilotShipStatEffect;
 import skills_overhaul.pilot.gunnery.GunneryCombatPlugin;
 
-public final class SOGunneryGlassCannonHandler implements EffectHandler {
+public final class SOGunneryGlassCannonHandler implements EffectHandler, PilotShipStatEffect {
     @Override
     public void apply(String nodeId, JSONObject params) {
         GunneryCombatPlugin.ACTIVE_NODES.add(nodeId);
         ShipAPI ship = getPlayerShip();
         if (ship == null) return;
+        applyTo(ship, nodeId, params);
+    }
+
+    @Override
+    public void remove(String nodeId, JSONObject params) {
+        GunneryCombatPlugin.ACTIVE_NODES.remove(nodeId);
+        ShipAPI ship = getPlayerShip();
+        if (ship == null) return;
+        removeFrom(ship, nodeId, params);
+    }
+
+    @Override
+    public void applyTo(ShipAPI ship, String nodeId, JSONObject params) {
         MutableShipStatsAPI s = ship.getMutableStats();
         s.getBallisticWeaponDamageMult().modifyMult(nodeId, 1.30f);
         s.getEnergyWeaponDamageMult().modifyMult(nodeId, 1.30f);
@@ -21,10 +35,7 @@ public final class SOGunneryGlassCannonHandler implements EffectHandler {
     }
 
     @Override
-    public void remove(String nodeId, JSONObject params) {
-        GunneryCombatPlugin.ACTIVE_NODES.remove(nodeId);
-        ShipAPI ship = getPlayerShip();
-        if (ship == null) return;
+    public void removeFrom(ShipAPI ship, String nodeId, JSONObject params) {
         MutableShipStatsAPI s = ship.getMutableStats();
         s.getBallisticWeaponDamageMult().unmodify(nodeId);
         s.getEnergyWeaponDamageMult().unmodify(nodeId);

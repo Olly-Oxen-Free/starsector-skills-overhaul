@@ -30,7 +30,7 @@ public final class FinalGambitService {
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0 || !s.isAlive()) continue;
             if (triggered.contains(s)) continue;
-            if (!isAutomated(s)) continue;
+            if (s.isFighter() || !isAutomated(s)) continue;
             float hullPct = s.getHitpoints() / Math.max(1f, s.getMaxHitpoints());
             if (hullPct > TRIGGER_HULL_PCT) continue;
             triggerOn(s);
@@ -75,12 +75,15 @@ public final class FinalGambitService {
                     DamageType.HIGH_EXPLOSIVE, 0f, false, false, s);
         }
 
-        // Destroy own ship
-        s.setHitpoints(0f);
+        // Destroy own ship. setHitpoints(0) alone does not run the engine's death path;
+        // the invincibility listener has expired by now (same duration, advanced first).
+        Global.getCombatEngine().applyDamage(s, s.getLocation(),
+                999_999f, DamageType.ENERGY, 0f, true, false, s);
     }
 
     private static boolean isAutomated(ShipAPI s) {
-        try { return s.getHullSpec().hasTag("automated"); } catch (Throwable t) { return false; }
+        // Vanilla automated hulls carry the built-in "automated" hullmod, not a hullspec tag.
+        return com.fs.starfarer.api.util.Misc.isAutomated(s);
     }
 
     private FinalGambitService() {}

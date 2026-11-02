@@ -21,6 +21,9 @@ public final class DesignateRivalAbility extends BaseDurationAbility {
         float worstRel = 0f;
         for (FactionAPI f : Global.getSector().getAllFactions()) {
             if (f == player) continue;
+            // Hidden factions (remnant, derelict, omega, ...) are not valid rivals; the spec lists
+            // "currently-hostile factions" as the player would see them.
+            if (!f.isShowInIntelTab()) continue;
             float rel = player.getRelationship(f.getId());
             if (rel < worstRel) {
                 worstRel = rel;

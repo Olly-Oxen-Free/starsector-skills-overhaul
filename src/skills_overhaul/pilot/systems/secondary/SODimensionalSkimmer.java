@@ -55,7 +55,7 @@ public final class SODimensionalSkimmer extends SOSecondarySystem {
     }
 
     private boolean isPhaseShip(ShipAPI ship) {
-        ShipSystemAPI sys = ship.getSystem();
-        return sys != null && (sys.getId().contains("phase") || sys.getId().contains("phasecloak"));
+        // Phase cloak is the hull's defense, not getSystem(); vanilla idiom.
+        return ship.getHullSpec() != null && ship.getHullSpec().isPhase();
     }
 }

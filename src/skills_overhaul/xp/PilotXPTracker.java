@@ -54,6 +54,9 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
         if (engine == null) return;
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 1) continue;
+            // Fighters respawn under fresh ids: hooking them paid DP-fallback
+            // XP per fighter kill (unbounded vs carriers) and inflated enemyDP.
+            if (s.isFighter()) continue;
             String id = s.getId();
             if (hookedEnemyIds.contains(id)) continue;
             float dp = dpOf(s);
@@ -114,6 +117,10 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     public void recordDamage(String enemyShipId, float amount, boolean fromFighter, boolean autopilotOn) {
         if (fromFighter) ledger.addFighter(enemyShipId, amount, autopilotOn);
         else             ledger.addDirect(enemyShipId, amount, autopilotOn);
+    }
+
+    /** Damage from ANY source — the denominator of the player's share. */
+    public void recordTotalDamage(String enemyShipId, float amount) {
         ledger.addTotal(enemyShipId, amount);
     }
 
@@ -174,6 +181,9 @@ class ShipDamageHook implements DamageListener {
             if (!targetShip.isAlive()) tracker.onEnemyKilled(shipId, targetShip);
             return;
         }
+
+        // Total must include allied damage, otherwise any player hit = 100% share.
+        tracker.recordTotalDamage(shipId, total);
 
         boolean fromPlayerShip = false;
         boolean fromPlayerFighter = false;

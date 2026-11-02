@@ -14,7 +14,7 @@ import skills_overhaul.effect.EffectHandler;
  * to the player fleet (scope=fleet) or each ship in it (scope=ship).
  *
  * Params shape:
- *   { "type": "corsair_stat_bonus",
+ *   { "type": "SO_corsair_stat_bonus",
  *     "scope": "fleet" | "ship",
  *     "stats": [ { "key": "sensorProfileMod", "value": -0.10 }, ... ] }
  *

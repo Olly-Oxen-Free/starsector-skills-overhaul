@@ -18,11 +18,24 @@
     },
     { "id": "commandant_t1_drilled", "name": "Drilled and Ready",
       "x": 1, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
-      "effects": []
+      "effects": [
+        { "type": "SO_combat_script", "node": "commandant_t1_drilled" },
+        { "type": "SO_fleet_stat",
+          "stats": [
+            { "key": "maxCombatReadinessFlat", "value": 0.10 }
+          ] }
+      ]
     },
     { "id": "commandant_t1_discipline", "name": "Fleet Discipline",
       "x": 2, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
-      "effects": []
+      "effects": [
+        { "type": "SO_fleet_stat",
+          "stats": [
+            { "key": "minCrewMod", "value": -0.33 },
+            { "key": "crewLossMod", "value": -0.33 },
+            { "key": "officeredMaxCombatReadinessFlat", "value": 0.05 }
+          ] }
+      ]
     },
     { "id": "commandant_t1_logistics", "name": "Logistics Supremacy",
       "x": 3, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
@@ -35,7 +48,7 @@
     },
     { "id": "commandant_t1_standing_orders", "name": "Standing Orders",
       "x": 4, "y": 1, "cost": 1, "prereqs": [{ "all": ["commandant_t0"] }],
-      "effects": [ { "type": "SO_combat_script", "node": "commandant_t1_standing_orders" } ]
+      "effects": [ { "type": "SO_standing_orders" } ]
     },
 
     { "id": "commandant_t2_authority", "name": "Authority",
@@ -51,7 +64,7 @@
     },
     { "id": "commandant_t2_cnc", "name": "Command and Conquer",
       "x": 2, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_discipline"] }],
-      "effects": []
+      "effects": [ { "type": "SO_command_and_conquer" } ]
     },
     { "id": "commandant_t2_reserve", "name": "Reserve Commitment",
       "x": 3, "y": 2, "cost": 1, "prereqs": [{ "all": ["commandant_t1_logistics"] }],
@@ -75,7 +88,7 @@
     },
     { "id": "commandant_t3_in_good_hands", "name": "In Good Hands",
       "x": 2, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_cnc"] }],
-      "effects": []
+      "effects": [ { "type": "SO_in_good_hands" } ]
     },
     { "id": "commandant_t3_vanguard", "name": "Vanguard Screen",
       "x": 3, "y": 3, "cost": 1, "prereqs": [{ "all": ["commandant_t2_reserve"] }],

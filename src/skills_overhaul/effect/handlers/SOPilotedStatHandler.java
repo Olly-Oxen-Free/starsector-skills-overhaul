@@ -5,6 +5,7 @@ import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
+import skills_overhaul.effect.PilotShipStatEffect;
 
 /**
  * Generic per-ship-stat handler for pilot tree nodes.
@@ -15,7 +16,7 @@ import skills_overhaul.effect.EffectHandler;
  * SkillsOverhaulCombatPlugin.applyTo(). The EffectHandler apply/remove below is
  * a best-effort no-op outside combat (getPlayerShip() is null in campaign).
  */
-public final class SOPilotedStatHandler implements EffectHandler {
+public final class SOPilotedStatHandler implements EffectHandler, PilotShipStatEffect {
 
     /** Effect-object keys that are metadata, not stat params. */
     private static final java.util.Set<String> NON_STAT_KEYS = new java.util.HashSet<String>(
@@ -35,9 +36,15 @@ public final class SOPilotedStatHandler implements EffectHandler {
         applyParams(ship.getMutableStats(), nodeId, params, true);
     }
 
-    /** Combat-time entry point: apply this node's stat params to the given ship stats. */
-    public void applyTo(MutableShipStatsAPI s, String nodeId, JSONObject params) {
-        applyParams(s, nodeId, params, false);
+    /** Combat-time entry point: apply this node's stat params to the given ship. */
+    @Override
+    public void applyTo(ShipAPI ship, String nodeId, JSONObject params) {
+        applyParams(ship.getMutableStats(), nodeId, params, false);
+    }
+
+    @Override
+    public void removeFrom(ShipAPI ship, String nodeId, JSONObject params) {
+        applyParams(ship.getMutableStats(), nodeId, params, true);
     }
 
     private void applyParams(MutableShipStatsAPI s, String nodeId, JSONObject p, boolean remove) {
@@ -108,9 +115,11 @@ public final class SOPilotedStatHandler implements EffectHandler {
                 s.getDeceleration().modifyPercent(id, v * 100f);
                 s.getTurnAcceleration().modifyPercent(id, v * 100f);
                 break;
+            // Own modifier id: accelDecelBonus on the same node (engine_tuning) also
+            // modifies TurnAcceleration, and a shared id overwrote one of them.
             case "maneuverBonus":
-                s.getMaxTurnRate().modifyPercent(id, v * 100f);
-                s.getTurnAcceleration().modifyPercent(id, v * 100f);
+                s.getMaxTurnRate().modifyPercent(id + "_" + key, v * 100f);
+                s.getTurnAcceleration().modifyPercent(id + "_" + key, v * 100f);
                 break;
             case "overloadRecoveryReduction":
                 s.getOverloadTimeMod().modifyMult(id, 1f - v);
@@ -119,8 +128,8 @@ public final class SOPilotedStatHandler implements EffectHandler {
                 s.getPhaseCloakActivationCostBonus().modifyMult(id, 1f - v);
                 break;
             case "maneuverabilityBonus":
-                s.getMaxTurnRate().modifyPercent(id, v * 100f);
-                s.getTurnAcceleration().modifyPercent(id, v * 100f);
+                s.getMaxTurnRate().modifyPercent(id + "_" + key, v * 100f);
+                s.getTurnAcceleration().modifyPercent(id + "_" + key, v * 100f);
                 break;
             // Systems lane — newly mapped (T4)
             case "ventRateBonus":           s.getVentRateMult().modifyMult(id, 1f + v); break;
@@ -206,8 +215,8 @@ public final class SOPilotedStatHandler implements EffectHandler {
                 break;
             case "maneuverBonus":
             case "maneuverabilityBonus":
-                s.getMaxTurnRate().unmodifyPercent(id);
-                s.getTurnAcceleration().unmodifyPercent(id);
+                s.getMaxTurnRate().unmodifyPercent(id + "_" + key);
+                s.getTurnAcceleration().unmodifyPercent(id + "_" + key);
                 break;
             case "overloadRecoveryReduction": s.getOverloadTimeMod().unmodify(id); break;
             case "phaseEntryFluxReduction":   s.getPhaseCloakActivationCostBonus().unmodify(id); break;

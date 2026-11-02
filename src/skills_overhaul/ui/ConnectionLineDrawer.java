@@ -10,10 +10,9 @@ import java.util.*;
  *   - both endpoints owned → teal
  *   - child pending       → amber
  *   - either unmet        → gray
- *   - cross-lane hybrid   → stippled green
  *
- * Coordinates are panel-local pixels; caller must ensure the GL matrix is in the
- * right space before calling draw().
+ * Coordinates are bottom-up panel-local pixels (see {@link PanelCoords}); the
+ * caller passes the panel's engine-space bottom-left corner to draw().
  */
 public final class ConnectionLineDrawer {
 
@@ -32,18 +31,13 @@ public final class ConnectionLineDrawer {
     }
 
     /**
-     * @param offsetX screen-space X to add to each edge endpoint
-     * @param offsetY anchor Y (GL screen-space) used as the y reference; if
-     *                {@code flipY} is true, the edge's top-down y is
-     *                subtracted from this value (so offsetY should be the
-     *                GL y of the panel TOP, i.e. py + panelHeight).
-     * @param flipY when true, treat edge (x,y) as panel-local top-down and
-     *              convert with {@code offsetY - y} (legacy y-up drawing).
-     *              When false, use {@code offsetX + x, offsetY + y} directly
-     *              (panel-local top-down + screen top-left = Starsector UI space).
+     * Edge endpoints are bottom-up panel-local pixels (see {@link PanelCoords});
+     * each is drawn at {@code (panelX + x, panelY + y)}.
+     *
+     * @param panelX engine-space x of the panel's left edge ({@code PositionAPI.getX()})
+     * @param panelY engine-space y of the panel's bottom edge ({@code PositionAPI.getY()})
      */
-    public static void draw(List<Edge> edges, float alphaMult,
-                            float offsetX, float offsetY, boolean flipY) {
+    public static void draw(List<Edge> edges, float alphaMult, float panelX, float panelY) {
         GL11.glPushAttrib(GL11.GL_ENABLE_BIT | GL11.GL_LINE_BIT | GL11.GL_CURRENT_BIT);
         GL11.glDisable(GL11.GL_TEXTURE_2D);
         GL11.glEnable(GL11.GL_BLEND);
@@ -63,22 +57,11 @@ public final class ConnectionLineDrawer {
             float a = (e.color.getAlpha() / 255f) * alphaMult;
             GL11.glColor4f(e.color.getRed()/255f, e.color.getGreen()/255f, e.color.getBlue()/255f, a);
             GL11.glBegin(GL11.GL_LINES);
-            if (flipY) {
-                GL11.glVertex2f(offsetX + e.x1, offsetY - e.y1);
-                GL11.glVertex2f(offsetX + e.x2, offsetY - e.y2);
-            } else {
-                GL11.glVertex2f(offsetX + e.x1, offsetY + e.y1);
-                GL11.glVertex2f(offsetX + e.x2, offsetY + e.y2);
-            }
+            GL11.glVertex2f(PanelCoords.screenX(panelX, e.x1), PanelCoords.screenY(panelY, e.y1));
+            GL11.glVertex2f(PanelCoords.screenX(panelX, e.x2), PanelCoords.screenY(panelY, e.y2));
             GL11.glEnd();
         }
 
         GL11.glPopAttrib();
-    }
-
-    /** @deprecated pre-flip signature retained for compatibility. */
-    @Deprecated
-    public static void draw(List<Edge> edges, float alphaMult, float offsetX, float offsetY) {
-        draw(edges, alphaMult, offsetX, offsetY, false);
     }
 }

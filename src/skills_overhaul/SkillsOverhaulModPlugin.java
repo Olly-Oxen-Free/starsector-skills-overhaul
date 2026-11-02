@@ -63,11 +63,27 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
     @Override
     public void onGameLoad(boolean newGame) {
         Global.getSector().addTransientListener(new skills_overhaul.xp.CommanderXPListener());
-        Global.getSector().getListenerManager().addListener(new skills_overhaul.xp.AdminXPTracker(), false);
+        // addListener(l, true) = transient. The old `false` registered a
+        // persistent copy per load (saved into the save, stacking: N loads =
+        // N monthly XP awards). removeListenerOfClass purges those from saves.
+        Global.getSector().getListenerManager().removeListenerOfClass(skills_overhaul.xp.AdminXPTracker.class);
+        Global.getSector().getListenerManager().addListener(new skills_overhaul.xp.AdminXPTracker(), true);
         Global.getSector().addTransientScript(new skills_overhaul.level.LevelReconciler());
         Global.getSector().addTransientListener(new skills_overhaul.supply.SalvageBonusListener());
         Global.getSector().addTransientScript(new skills_overhaul.supply.SupplyBufferRenderer());
-        Global.getSector().addTransientScript(new skills_overhaul.ui.CharacterTabReplacer());
+        skills_overhaul.ui.host.HostRouter.reset();
+        com.fs.starfarer.api.campaign.listeners.ListenerManagerAPI lm = Global.getSector().getListenerManager();
+        if (!lm.hasListenerOfClass(skills_overhaul.ui.host.CharTabHost.class)
+                && !Global.getSector().hasTransientScript(skills_overhaul.ui.host.CharTabHost.class)) {
+            // One instance is both the tab listener and the CHARACTER-tab poll script.
+            skills_overhaul.ui.host.CharTabHost tabHost =
+                    new skills_overhaul.ui.host.CharTabHost(new skills_overhaul.ui.host.HostRouter());
+            lm.addListener(tabHost, true);
+            Global.getSector().addTransientScript(tabHost);
+        }
+        if (!lm.hasListenerOfClass(skills_overhaul.ui.host.SkillsHotkeyListener.class)) {
+            lm.addListener(new skills_overhaul.ui.host.SkillsHotkeyListener(), true);
+        }
         Global.getSector().addTransientScript(new skills_overhaul.corsair.InfamyDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.corsair.InfamyKillListener());
         Global.getSector().addTransientListener(
@@ -81,7 +97,9 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
         Global.getSector().addTransientListener(new skills_overhaul.zealot.ZealKillListener());
         Global.getSector().addTransientScript(new skills_overhaul.zealot.ZealDailyTicker());
         Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.PostBattleRestoreListener());
-        Global.getSector().addTransientListener(new skills_overhaul.effect.handlers.RaidZealListener());
+        if (!lm.hasListenerOfClass(skills_overhaul.effect.handlers.RaidZealListener.class)) {
+            lm.addListener(new skills_overhaul.effect.handlers.RaidZealListener(), true);
+        }
         Global.getSector().addTransientScript(new skills_overhaul.zealot.DoctrinalAuthorityTicker());
         Global.getSector().addTransientScript(
                 new skills_overhaul.artificer.forge.MobileFabUnitTicker());
@@ -93,16 +111,29 @@ public class SkillsOverhaulModPlugin extends BaseModPlugin {
                 new skills_overhaul.collective.CollectiveBattleEndListener());
         Global.getSector().addTransientScript(
                 new skills_overhaul.supply.ForgeCampaignBuffsTicker());
-        if (!Boolean.TRUE.equals(Global.getSector().getMemoryWithoutUpdate()
-                .get("$so_bar_seasoned_crew_registered"))) {
+        // The creator is saved with BarEventManager; the old 0-day memory flag
+        // expired, so a duplicate creator was added on every load.
+        if (!BarEventManager.getInstance().hasEventCreator(SeasonedCrewBarEvent.class)) {
             BarEventManager.getInstance().addEventCreator(new SeasonedCrewBarEvent());
-            Global.getSector().getMemoryWithoutUpdate().set(
-                    "$so_bar_seasoned_crew_registered", true, 0f);
         }
-        skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
-        skills_overhaul.console.OrphanSkillGranter.applyAllOnLoad();
-        skills_overhaul.state.NodeApplyService.reapplyAllOwned();
+        // Saves from those versions hold one creator per past load; keep the first.
+        // getCreators() returns BarEventManager's live list.
+        boolean keptSeasonedCrew = false;
+        java.util.Iterator<BarEventManager.GenericBarEventCreator> creators =
+                BarEventManager.getInstance().getCreators().iterator();
+        while (creators.hasNext()) {
+            if (!(creators.next() instanceof SeasonedCrewBarEvent)) continue;
+            if (keptSeasonedCrew) creators.remove();
+            keptSeasonedCrew = true;
+        }
+        // Migration must read vanilla skill levels BEFORE suppression zeroes
+        // them, or every existing save migrates with spent=0.
         skills_overhaul.migration.MigrationPlugin.runOnce(newGame);
+        skills_overhaul.suppress.VanillaSuppressor.applyOnEveryLoad();
+        skills_overhaul.state.NodeApplyService.reapplyAllOwned();
+        // After reapplyAllOwned: its static reset pass would otherwise wipe
+        // the ACTIVE_NODES entries orphan grants just added.
+        skills_overhaul.console.OrphanSkillGranter.applyAllOnLoad();
         Global.getLogger(SkillsOverhaulModPlugin.class).info(
                 LOG_PREFIX + "listeners registered; newGame=" + newGame);
     }

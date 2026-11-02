@@ -62,7 +62,9 @@ public final class UnbreakableArmorListener implements DamageTakenModifier {
         float projectedCell = currCell - dmgValue;
         if (projectedCell < floorVal) {
             float allowed = currCell - floorVal;
-            damage.getModifier().modifyFlat("so_unbreakable_clamp", -(dmgValue - allowed));
+            // DamageAPI.getModifier() is a multiplier (base 1): a flat −(excess) drove
+            // it negative on big hits. Scale the hit down to what the floor allows.
+            damage.getModifier().modifyMult("so_unbreakable_clamp", Math.max(0f, allowed / dmgValue));
             state.startBlock();
             return "so_unbreakable";
         }

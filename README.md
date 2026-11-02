@@ -28,7 +28,8 @@ This is a **v0.1 alpha**. Infrastructure is in; content is first-pass drafts fla
 - Combat plugin that applies `piloted_maneuverability` to MaxTurnRate / TurnAcceleration / Acceleration
 
 **Stubbed or unwired (see FIXME markers):**
-- **Entry point**: the mod ships an `OpenSkillPanelCommand` and a `rules.csv` row using the `CharacterInfoMenu` trigger — *this trigger does not fire in vanilla*. Until a `CoreUITabListener` is wired (likely v0.2), open the skill panel only via rules-console or a dev command. Player-facing entry needs playtest to pick the right hook.
+- **Entry point**: the skill panel is mounted over the vanilla CHARACTER tab (`CharTabHost`). When the tab cannot be replaced (Second-in-Command, or the vanilla panel cannot be probed), the `K` hotkey dialog below is the way in. The old `CharacterInfoMenu` rules trigger does not fire in vanilla and is not relied on.
+- **Skills hotkey**: press `K` (default; set `ui_hotkey` in `data/config/skills_overhaul.json`) to open the skills dialog. It is the way in under Second-in-Command or when the character tab cannot be replaced; the player is told once per session.
 - **Ship-stat handlers**: only `piloted_maneuverability` is wired to real combat-time stat modifiers. All other pilot-tree effect types (damage, range, hull, armor, flux, shield) log STUB and no-op. Add branches to `SkillsOverhaulCombatPlugin.applyShipStatEffect()` post-playtest.
 - **Campaign-wide handlers**: commander-tree and admin-tree effects (fleet CR, officer slots, colony production, accessibility, etc.) have no handler — they route to `NoOpHandler` which warns at purchase and does nothing. Content is drafted with effect types; handlers land post-playtest.
 - **Bar event**: `SeasonedCrewBarEvent` is a skeleton; `createBarEvent()` returns null so the event is skipped. Real dialog + XP award is post-playtest.
@@ -41,15 +42,20 @@ This is a **v0.1 alpha**. Infrastructure is in; content is first-pass drafts fla
 
 1. **Skill panel entry point does not fire.** See above. Not a regression — just not wired to any player-reachable hook.
 2. **Re-entrant dialog risk.** `SkillPanel.show()` re-opens itself after each button press to redraw; advisor flagged potential recursion / leak. Monitor in playtest; may need rewrite to mutate the existing panel in place.
-3. **Vanilla skill suppression** calls `setSkillLevel(id, 0f)` for every non-`so_` skill. Vanilla may cache stat bonuses elsewhere; teardown path has a `FIXME(playtest)` in `VanillaSuppressor.java`.
+3. **Vanilla skill suppression** calls `setSkillLevel(id, 0f)` for every vanilla skill (ids from vanilla `skill_data.csv`). Vanilla may cache stat bonuses elsewhere; teardown path has a `FIXME(playtest)` in `VanillaSuppressor.java`.
 4. **Migration pool lock** prevents mixing migration points across trees by locking the first-spent tree. Intended, documented in `SpendService`, but un-mocked in tests against real save data.
+
+## Deliberate deviations from spec
+
+- **Craft Fuel** converts 10 supplies → 30 fuel, not the spec's 20 → 1 (a strict loss); changed in the 2026-07-07 audit.
+- **Drilled and Ready** drops the spec's "crew/marine XP +30%": the API has no crew or marine XP stat.
 
 ---
 
 ## Installation
 
 1. Drop the `Skills Overhaul` folder in `<Starsector>/mods`.
-2. Enable in launcher. Requires LazyLib + MagicLib; optional: LunaLib, Nexerelin.
+2. Enable in launcher. No required dependencies; optional: LunaLib, Nexerelin.
 3. **Existing save compatibility**: yes, via `MigrationPlugin` running once on first load. Vanilla skill points convert to the universal migration pool.
 
 ## Uninstall

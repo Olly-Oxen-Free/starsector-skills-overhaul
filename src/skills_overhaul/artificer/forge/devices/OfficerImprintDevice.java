@@ -15,8 +15,7 @@ public final class OfficerImprintDevice implements ForgeDeviceEffect {
     @Override
     public void deployCampaign() {
         try {
-            int expire = (int) Global.getSector().getClock().getCycle() * 365
-                    + (int) Global.getSector().getClock().getDay() + 7;
+            int expire = skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay() + 7;
             Global.getSector().getMemoryWithoutUpdate().set(
                     ArtificerCombatPlugin.OFFICER_IMPRINT_EXPIRE_KEY, expire);
             Global.getLogger(OfficerImprintDevice.class).info(

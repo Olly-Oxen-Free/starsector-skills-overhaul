@@ -43,8 +43,11 @@ public final class DoctrinalAuthorityTicker implements EveryFrameScript {
         }
 
         if (commissionId != null) {
+            // No expiry: set(k, v, 0f) is unset on the next memory advance, so the flag existed for
+            // ~1 frame per 5s interval and was usually absent when combat started. The else-branch
+            // below clears it when the commission is lost.
             Global.getSector().getMemoryWithoutUpdate().set(
-                    "$zealot.doctrinal_authority.commission_active", true, 0f);
+                    "$zealot.doctrinal_authority.commission_active", true);
         } else {
             Global.getSector().getMemoryWithoutUpdate().unset(
                     "$zealot.doctrinal_authority.commission_active");

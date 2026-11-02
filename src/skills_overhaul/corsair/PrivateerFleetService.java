@@ -82,9 +82,11 @@ public final class PrivateerFleetService {
         CampaignFleetAPI privateer = FleetFactoryV3.createFleet(params);
         if (privateer == null) return null;
 
-        privateer.setFaction("skills_overhaul_privateer", true);
+        // Guard: the faction only exists if registered in factions.csv; setFaction on an unknown id
+        // would fail, so keep the commission faction in that case.
         FactionAPI privFac = Global.getSector().getFaction("skills_overhaul_privateer");
         if (privFac != null) {
+            privateer.setFaction("skills_overhaul_privateer", true);
             privFac.setRelationship(Global.getSector().getPlayerFaction().getId(), 1.0f);
             for (FactionAPI f : Global.getSector().getAllFactions()) {
                 if (f == Global.getSector().getPlayerFaction()) continue;
@@ -109,7 +111,8 @@ public final class PrivateerFleetService {
         if (id != null) {
             CampaignFleetAPI privateer = findPrivateerFleet((String) id);
             if (privateer != null && privateer.getContainingLocation() != null) {
-                privateer.getContainingLocation().removeEntity(privateer);
+                // despawn() fires reportFleetDespawned for listeners; removeEntity() skipped that.
+                privateer.despawn(com.fs.starfarer.api.campaign.CampaignEventListener.FleetDespawnReason.OTHER, null);
             }
         }
         mem.unset(K_FLEET_ID);

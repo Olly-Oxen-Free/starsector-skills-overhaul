@@ -41,6 +41,8 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
     public void advance(float dt, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
+        // ACTIVE_NODES is campaign state; keep it out of title-screen/mission battles.
+        if (!engine.isInCampaign() && !engine.isInCampaignSim()) return;
 
         if (!initialized) {
             flagship = engine.getPlayerShip();
@@ -92,11 +94,17 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
             if (hullDelta > 0f && adamantine.absorbHullDamage(hullDelta)) {
                 engine.spawnExplosion(flagship.getLocation(), flagship.getVelocity(),
                         new java.awt.Color(100, 150, 255, 200), 600f, 1f);
-                engine.spawnEmpArc(flagship, flagship.getLocation(), flagship, flagship,
-                        com.fs.starfarer.api.combat.DamageType.ENERGY, 300f, 1500f, 600f,
-                        "tachyon_lance_emp_impact", 20f,
-                        new java.awt.Color(180, 220, 255, 220),
-                        new java.awt.Color(255, 255, 255, 255));
+                // Arc at the nearest enemy; targeting the flagship itself made the
+                // discharge damage the player's own ship.
+                ShipAPI arcTarget = com.fs.starfarer.api.util.Misc.findClosestShipEnemyOf(
+                        flagship, flagship.getLocation(), ShipAPI.HullSize.FIGHTER, 600f, true);
+                if (arcTarget != null) {
+                    engine.spawnEmpArc(flagship, flagship.getLocation(), flagship, arcTarget,
+                            com.fs.starfarer.api.combat.DamageType.ENERGY, 300f, 1500f, 600f,
+                            "tachyon_lance_emp_impact", 20f,
+                            new java.awt.Color(180, 220, 255, 220),
+                            new java.awt.Color(255, 255, 255, 255));
+                }
                 adamantine.startPostDischarge();
             }
             adamantine.advance(dt);
@@ -151,12 +159,13 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
     private void applyDRCapGuard() {
         if (flagship == null) return;
         MutableShipStatsAPI s = flagship.getMutableStats();
+        // Strip last frame's corrective first, or the guard reads its own output
+        // and toggles on/off every other frame.
+        s.getHullDamageTakenMult().unmodify("so_dr_cap_guard");
         float hull = s.getHullDamageTakenMult().getModifiedValue();
         if (hull < 0.05f && hull > 0f) {
             float corrective = 0.05f / hull;
             s.getHullDamageTakenMult().modifyMult("so_dr_cap_guard", corrective);
-        } else {
-            s.getHullDamageTakenMult().unmodify("so_dr_cap_guard");
         }
     }
 

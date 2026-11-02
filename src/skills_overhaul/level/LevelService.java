@@ -14,10 +14,16 @@ public final class LevelService {
         }
     }
 
+    /** Points granted on reaching {@code level}. Shared with LevelReconciler (the live path). */
+    public static int pointsForLevel(int level, Cfg cfg) {
+        int g = cfg.perLevel;
+        if (level > 0 && level % 5 == 0) g += cfg.bonusEvery5;
+        return g;
+    }
+
     /** Grants points for a single level-up (newLevel is the level just reached). */
     public static int processLevelUp(Map<String,Object> mem, Tree tree, int newLevel, Cfg cfg) {
-        int g = cfg.perLevel;
-        if (newLevel > 0 && newLevel % 5 == 0) g += cfg.bonusEvery5;
+        int g = pointsForLevel(newLevel, cfg);
         SkillMemory.addPoints(mem, tree, g);
         SkillMemory.setLevel(mem, tree, newLevel);
         return g;

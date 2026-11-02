@@ -16,7 +16,6 @@ public final class SlipstreamSeederDevice implements ForgeDeviceEffect {
     }
 
     private int currentDay() {
-        return (int)(Global.getSector().getClock().getCycle() * 365
-                   + Global.getSector().getClock().getDay());
+        return skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay();
     }
 }

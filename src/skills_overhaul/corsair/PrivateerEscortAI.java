@@ -4,6 +4,8 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.EveryFrameScript;
 import com.fs.starfarer.api.campaign.CampaignFleetAPI;
 import com.fs.starfarer.api.campaign.FleetAssignment;
+import com.fs.starfarer.api.campaign.SectorEntityToken;
+import com.fs.starfarer.api.campaign.ai.FleetAssignmentDataAPI;
 import com.fs.starfarer.api.util.Misc;
 
 /**
@@ -57,8 +59,7 @@ public final class PrivateerEscortAI implements EveryFrameScript {
         if (player.getContainingLocation() != privateer.getContainingLocation()) {
             jumpDelayElapsed += Misc.getDays(amount);
             if (jumpDelayElapsed >= JUMP_FOLLOW_DELAY_DAYS) {
-                privateer.clearAssignments();
-                privateer.addAssignment(FleetAssignment.GO_TO_LOCATION, player, 1f);
+                assign(FleetAssignment.GO_TO_LOCATION, player, 1f);
                 jumpDelayElapsed = 0f;
             }
             return;
@@ -69,22 +70,34 @@ public final class PrivateerEscortAI implements EveryFrameScript {
         // Engage nearby hostiles
         CampaignFleetAPI target = findHostileTarget(player);
         if (target != null) {
-            privateer.clearAssignments();
-            privateer.addAssignment(FleetAssignment.INTERCEPT, target, 0.5f);
+            assign(FleetAssignment.INTERCEPT, target, 0.5f);
             return;
         }
 
         // Stay close to player
         float dist = Misc.getDistance(privateer.getLocation(), player.getLocation());
         if (dist > FOLLOW_RADIUS_SU) {
-            privateer.clearAssignments();
-            privateer.addAssignment(FleetAssignment.GO_TO_LOCATION, player, 0.5f);
+            assign(FleetAssignment.GO_TO_LOCATION, player, 0.5f);
         }
+    }
+
+    /**
+     * Replace the current assignment only when it differs. Clearing and re-adding every frame
+     * reset the fleet AI's pathing each tick.
+     */
+    private void assign(FleetAssignment type, SectorEntityToken target, float days) {
+        if (privateer.getAI() != null) {
+            FleetAssignmentDataAPI cur = privateer.getAI().getCurrentAssignment();
+            if (cur != null && cur.getAssignment() == type && cur.getTarget() == target) return;
+        }
+        privateer.clearAssignments();
+        privateer.addAssignment(type, target, days);
     }
 
     private CampaignFleetAPI findHostileTarget(CampaignFleetAPI player) {
         for (CampaignFleetAPI f : privateer.getContainingLocation().getFleets()) {
             if (f == privateer || f == player) continue;
+            if (f.isStationMode()) continue; // never send the escort into a station
             if (!f.getFaction().isHostileTo(player.getFaction())) continue;
             float distFromSelf   = Misc.getDistance(privateer.getLocation(), f.getLocation());
             float distFromPlayer = Misc.getDistance(player.getLocation(),    f.getLocation());

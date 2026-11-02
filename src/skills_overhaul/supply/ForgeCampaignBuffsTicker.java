@@ -123,7 +123,8 @@ public final class ForgeCampaignBuffsTicker implements EveryFrameScript {
     }
 
     private int currentDay() {
-        return (int)(Global.getSector().getClock().getCycle() * 365
-                   + Global.getSector().getClock().getDay());
+        // Must match the writers (forge devices): cycle*365 + day-of-year.
+        // getDay() is day-of-month and runs backwards at month rollover.
+        return skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay();
     }
 }

@@ -49,7 +49,6 @@ public final class MobileFabUnitTicker implements EveryFrameScript {
     }
 
     public static int monotonicDay() {
-        return (int) Global.getSector().getClock().getCycle() * 365
-                + (int) Global.getSector().getClock().getDay();
+        return skills_overhaul.artificer.alphastorm.AlphaStormAbility.monotonicDay();
     }
 }

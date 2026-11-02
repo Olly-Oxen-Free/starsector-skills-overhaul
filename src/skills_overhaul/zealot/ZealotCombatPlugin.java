@@ -36,6 +36,8 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
     public void advance(float amount, List<InputEventAPI> events) {
         CombatEngineAPI engine = Global.getCombatEngine();
         if (engine == null || engine.isPaused()) return;
+        // ACTIVE_NODES/zeal are campaign state; skip title-screen/mission battles (no sector memory).
+        if (!engine.isInCampaign() && !engine.isInCampaignSim()) return;
 
         if (ACTIVE_NODES.contains("zealot_t2_avenge")) avenge.tick(engine);
         if (ACTIVE_NODES.contains("zealot_t4_tribute")) tribute.tick(engine);
@@ -43,10 +45,42 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         int zealStacks = ZealService.getStacks(Global.getSector().getMemoryWithoutUpdate());
         Oath currentOath = OathService.getCurrentOath(Global.getSector().getMemoryWithoutUpdate());
 
+        boolean crusadeVsRival = isCrusadeVsRival(engine);
         for (ShipAPI s : engine.getShips()) {
             if (s.getOwner() != 0) continue;
             applyPerShipEffects(s, engine, zealStacks, currentOath);
+            CrusadeRivalDR.apply(s, crusadeVsRival);
             if (ACTIVE_NODES.contains("zealot_t4_death_cheat")) deathCheat.tick(s, zealStacks);
+        }
+    }
+
+    /**
+     * Crusade is active and this battle's opposing fleet belongs to the Crusade Rival.
+     * Battle-level check: allied fleets joining the Rival's side share the bonus.
+     */
+    static boolean isCrusadeVsRival(CombatEngineAPI engine) {
+        com.fs.starfarer.api.campaign.rules.MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        if (!CrusadeService.isActive(mem)) return false;
+        String rival = CrusadeService.getCrusadeRival(mem);
+        if (rival == null || engine.getContext() == null) return false;
+        com.fs.starfarer.api.campaign.CampaignFleetAPI other = engine.getContext().getOtherFleet();
+        return other != null && other.getFaction() != null && rival.equals(other.getFaction().getId());
+    }
+
+    /** Crusade capstone: −10% damage taken from Rival ships (multiplicative, spec 6.2). */
+    static final class CrusadeRivalDR {
+        static final String ID = "zealot_crusade_rival_dr";
+        static void apply(ShipAPI s, boolean active) {
+            com.fs.starfarer.api.combat.MutableShipStatsAPI st = s.getMutableStats();
+            if (active) {
+                st.getHullDamageTakenMult().modifyMult(ID, 0.90f);
+                st.getArmorDamageTakenMult().modifyMult(ID, 0.90f);
+                st.getShieldDamageTakenMult().modifyMult(ID, 0.90f);
+            } else {
+                st.getHullDamageTakenMult().unmodify(ID);
+                st.getArmorDamageTakenMult().unmodify(ID);
+                st.getShieldDamageTakenMult().unmodify(ID);
+            }
         }
     }
 
@@ -93,7 +127,10 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("zealot_t3_last_stand")) LastStand.apply(s, zealStacks);
         if (ACTIVE_NODES.contains("zealot_t3_iron_discipline")) IronDiscipline.apply(s);
         if (ACTIVE_NODES.contains("zealot_t4_sanctum")) Sanctum.apply(s, engine);
-        if (ACTIVE_NODES.contains("zealot_t4_doctrinal_authority")) DoctrinalAuthority.apply(s);
+        // Node uses SO_doctrinal_authority (memory flag), not SO_zeal_combat_script, so it never
+        // lands in ACTIVE_NODES — gate on the handler's purchase flag instead.
+        if (Boolean.TRUE.equals(Global.getSector().getMemoryWithoutUpdate().get(
+                skills_overhaul.effect.handlers.SODoctrinalAuthorityHandler.K_PURCHASED))) DoctrinalAuthority.apply(s);
     }
 
     static final class T0BallisticRange {
@@ -145,7 +182,8 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
 
         void tick(CombatEngineAPI engine) {
             Set<ShipAPI> alive = new HashSet<>();
-            for (ShipAPI o : engine.getShips()) if (o.isAlive() && o.getOwner() == 0) alive.add(o);
+            // Fighters excluded: every lost fighter counted as a fallen ship and maxed Avenge instantly.
+            for (ShipAPI o : engine.getShips()) if (o.isAlive() && o.getOwner() == 0 && !o.isFighter()) alive.add(o);
             Set<String> retreated = retreatedMemberIds(engine, 0);
             for (ShipAPI prev : lastSeen) {
                 if (!alive.contains(prev) && isDestroyed(prev, retreated)) losses = Math.min(5, losses + 1);
@@ -257,10 +295,12 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
 
         void tick(CombatEngineAPI engine) {
             Set<ShipAPI> alive = new HashSet<>();
-            for (ShipAPI o : engine.getShips()) if (o.isAlive()) alive.add(o);
+            // Filter by owner while alive: a destroyed ship's owner is set to 100 (hulk), so the old
+            // post-death prev.getOwner() == 1 check never matched and Tribute never fired.
+            for (ShipAPI o : engine.getShips()) if (o.isAlive() && o.getOwner() == 1) alive.add(o);
             Set<String> retreated = retreatedMemberIds(engine, 1);
             for (ShipAPI prev : lastSeen) {
-                if (!alive.contains(prev) && prev.getOwner() == 1 && isDestroyed(prev, retreated)) {
+                if (!alive.contains(prev) && isDestroyed(prev, retreated)) {
                     grantTribute(engine, prev);
                 }
             }
@@ -309,6 +349,8 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
         Set<ShipAPI> triggered = new HashSet<>();
 
         void tick(ShipAPI s, int zealStacks) {
+            // Fighters excluded: each near-dead fighter spawned its own invincibility plugin.
+            if (s.isFighter() || !s.isAlive()) return;
             if (triggered.contains(s)) return;
             float hullPct = s.getHitpoints() / Math.max(1f, s.getMaxHitpoints());
             if (hullPct > 0.04f) return;
@@ -360,6 +402,10 @@ public final class ZealotCombatPlugin extends BaseEveryFrameCombatPlugin {
             } else if (Misc.getDistance(s.getLocation(), flagship.getLocation()) <= 2000f) {
                 s.getMutableStats().getBallisticWeaponDamageMult().modifyMult("zealot_t4_sanctum_aura", 1.10f);
                 s.getMutableStats().getEnergyWeaponDamageMult().modifyMult("zealot_t4_sanctum_aura", 1.10f);
+            } else {
+                // Aura previously stuck once a ship had ever been within range.
+                s.getMutableStats().getBallisticWeaponDamageMult().unmodify("zealot_t4_sanctum_aura");
+                s.getMutableStats().getEnergyWeaponDamageMult().unmodify("zealot_t4_sanctum_aura");
             }
         }
     }

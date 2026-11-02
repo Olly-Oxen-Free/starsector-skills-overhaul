@@ -44,9 +44,8 @@ public final class ECMTracker {
     }
 
     private static boolean isAutomated(ShipAPI s) {
-        try {
-            return s.getHullSpec().hasTag("automated");
-        } catch (Throwable t) { return false; }
+        // Vanilla automated hulls carry the built-in "automated" hullmod, not a hullspec tag.
+        return com.fs.starfarer.api.util.Misc.isAutomated(s);
     }
 
     private ECMTracker() {}

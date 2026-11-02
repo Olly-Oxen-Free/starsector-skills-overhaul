@@ -1,0 +1,108 @@
+{
+  "prd_slug": "skills-panel-restructure",
+  "version": "1.0",
+  "generated_at": "2026-10-26T08:50:37Z",
+  "duration": {
+    "started_at": "2026-10-26T08:15:45Z",
+    "completed_at": null,
+    "total_minutes": null
+  },
+  "tasks": {
+    "1a": {
+      "status": "done",
+      "model": "opus",
+      "loops": 1,
+      "duration_minutes": 6.2,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "2a": {
+      "status": "done",
+      "model": "opus",
+      "loops": 1,
+      "duration_minutes": 5.1,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "3a": {
+      "status": "done",
+      "model": "opus",
+      "loops": 1,
+      "duration_minutes": 6.1,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "3b": {
+      "status": "done",
+      "model": "sonnet",
+      "loops": 1,
+      "duration_minutes": 2.1,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "4a": {
+      "status": "done",
+      "model": "opus",
+      "loops": 1,
+      "duration_minutes": 8.2,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "5a": {
+      "status": "done",
+      "model": "opus",
+      "loops": 1,
+      "duration_minutes": 5.3,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "5b": {
+      "status": "done",
+      "model": "opus",
+      "loops": 1,
+      "duration_minutes": 3.3,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    },
+    "5c": {
+      "status": "done",
+      "model": "sonnet",
+      "loops": 1,
+      "duration_minutes": 1.5,
+      "wall_min": null,
+      "active_min": null,
+      "max_gap_min": null,
+      "bash_cap_hits": null,
+      "stalled": false,
+      "transcript": null
+    }
+  }
+}
