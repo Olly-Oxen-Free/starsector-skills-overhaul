@@ -29,7 +29,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     // Strike Coordination: allied bombers within this radius get the buff (spec unspecified).
     private static final float STRIKE_COORD_RANGE = 2000f;
 
-    private final Set<String> prevAliveEnemyIds = new HashSet<String>();
+    private final EnemyKillScanner killScanner = new EnemyKillScanner();
     private boolean initialized = false;
 
     private boolean wasPhased = false;
@@ -48,7 +48,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     public void init(CombatEngineAPI engine) {
         initialized = false;
         // ACTIVE_NODES is campaign-owned — do not clear per combat.
-        prevAliveEnemyIds.clear();
+        killScanner.clear();
         gameTime = 0f;
     }
 
@@ -307,16 +307,8 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         boolean redLineActive  = ACTIVE_NODES.contains("so_systems_red_line");
         if (!killSyncActive && !redLineActive) return;
 
-        Set<String> nowAlive = new HashSet<String>();
         for (ShipAPI s : engine.getShips()) {
-            if (s.getOwner() == 1 && s.isAlive() && !s.isFighter()) {
-                nowAlive.add(s.getId());
-            }
-        }
-        // Ships that were alive last frame but aren't now = kills
-        for (ShipAPI s : engine.getShips()) {
-            if (s.getOwner() != 1 || s.isFighter()) continue;
-            if (prevAliveEnemyIds.contains(s.getId()) && !s.isAlive()) {
+            if (killScanner.observe(s.getId(), s.getOwner(), s.isAlive(), s.isFighter())) {
                 float killedDP = s.getFleetMember() != null ? s.getFleetMember().getDeploymentPointsCost() : 10f;
                 float flagshipDP = flagship.getFleetMember() != null ? flagship.getFleetMember().getDeploymentPointsCost() : 10f;
                 if (killSyncActive) {
@@ -326,8 +318,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
                 if (redLineActive) redLine.onKill();
             }
         }
-        prevAliveEnemyIds.clear();
-        prevAliveEnemyIds.addAll(nowAlive);
+        killScanner.endFrame();
     }
 
     public void onSystemUse() {
@@ -382,9 +373,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         activeSecondary = detectSecondaryHullmod(flagship);
 
         for (ShipAPI s : engine.getShips()) {
-            if (s.getOwner() == 1 && s.isAlive() && !s.isFighter()) {
-                prevAliveEnemyIds.add(s.getId());
-            }
+            killScanner.seed(s.getId(), s.getOwner(), s.isAlive(), s.isFighter());
         }
         initialized = true;
     }
