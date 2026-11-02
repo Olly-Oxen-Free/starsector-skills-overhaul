@@ -22,12 +22,8 @@ import java.util.Map;
  */
 public final class UnbreakableArmorListener implements DamageTakenModifier {
 
-    private static final float BLOCK_DURATION = 8f;
-    private static final float COOLDOWN_DURATION = 15f;
-    private static final float FLOOR = 0.50f;
-
     private final ShipAPI flagship;
-    private final Map<String, CellState> cellStates = new HashMap<>();
+    private final Map<String, UnbreakableCellState> cellStates = new HashMap<>();
 
     public UnbreakableArmorListener(ShipAPI flagship) { this.flagship = flagship; }
 
@@ -43,27 +39,16 @@ public final class UnbreakableArmorListener implements DamageTakenModifier {
         if (cell == null) return null;
 
         String key = cell[0] + "," + cell[1];
-        CellState state = cellStates.get(key);
+        UnbreakableCellState state = cellStates.get(key);
         if (state == null) {
-            state = new CellState();
+            state = new UnbreakableCellState();
             cellStates.put(key, state);
         }
 
-        if (state.cooldownRemaining > 0f) return null;  // can't re-trigger
-
-        float maxCell = grid.getMaxArmorInCell();
-        float currCell = grid.getArmorValue(cell[0], cell[1]);
-        float floorVal = maxCell * FLOOR;
-
-        if (currCell <= floorVal) return null;  // already below floor — no protection
-
-        // If incoming damage would drop the cell below floor, clamp it.
-        float dmgValue = damage.getDamage();
-        float projectedCell = currCell - dmgValue;
-        if (projectedCell < floorVal) {
-            float allowed = currCell - floorVal;
-            damage.getModifier().modifyFlat("so_unbreakable_clamp", -(dmgValue - allowed));
-            state.startBlock();
+        float mult = state.onHit(grid.getArmorValue(cell[0], cell[1]), grid.getMaxArmorInCell(),
+                damage.getDamage());
+        if (mult < 1f) {
+            damage.getModifier().modifyMult("so_unbreakable_clamp", mult);
             return "so_unbreakable";
         }
         return null;
@@ -71,23 +56,6 @@ public final class UnbreakableArmorListener implements DamageTakenModifier {
 
     /** Tick all per-cell timers; called from plugin advance(). */
     public void advance(float dt) {
-        for (CellState s : cellStates.values()) s.advance(dt);
-    }
-
-    private static final class CellState {
-        float blockRemaining = 0f;
-        float cooldownRemaining = 0f;
-
-        void startBlock() {
-            blockRemaining = BLOCK_DURATION;
-        }
-        void advance(float dt) {
-            if (blockRemaining > 0f) {
-                blockRemaining = Math.max(0f, blockRemaining - dt);
-                if (blockRemaining == 0f) cooldownRemaining = COOLDOWN_DURATION;
-            } else if (cooldownRemaining > 0f) {
-                cooldownRemaining = Math.max(0f, cooldownRemaining - dt);
-            }
-        }
+        for (UnbreakableCellState s : cellStates.values()) s.advance(dt);
     }
 }
