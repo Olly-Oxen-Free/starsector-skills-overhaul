@@ -8,6 +8,7 @@ import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.WeaponAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.util.IntervalUtil;
+import skills_overhaul.pilot.TargetGatedConditions;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -155,9 +156,10 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Dragon Slayer: bonus vs larger hull sizes
-        if (ACTIVE_NODES.contains("so_gunnery_dragon_slayer") && flagship.getShipTarget() != null) {
-            int diff = flagship.getShipTarget().getHullSize().ordinal() - flagship.getHullSize().ordinal();
-            float bonus = Math.min(0.30f, Math.max(0f, diff * 0.10f));
+        if (ACTIVE_NODES.contains("so_gunnery_dragon_slayer")) {
+            ShipAPI target = flagship.getShipTarget();
+            int diff = target != null ? target.getHullSize().ordinal() - flagship.getHullSize().ordinal() : 0;
+            float bonus = TargetGatedConditions.dragonSlayerBonus(target != null, diff);
             if (bonus > 0f) {
                 stats.getBallisticWeaponDamageMult().modifyMult("so_dragon_slayer", 1f + bonus);
                 stats.getEnergyWeaponDamageMult().modifyMult("so_dragon_slayer", 1f + bonus);
@@ -170,10 +172,11 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Point Blank: within 400u → +20% damage, +50% weapon turn rate
-        if (ACTIVE_NODES.contains("so_gunnery_point_blank") && flagship.getShipTarget() != null) {
-            float dist = com.fs.starfarer.api.util.Misc.getDistance(
-                    flagship.getLocation(), flagship.getShipTarget().getLocation());
-            if (dist <= 400f) {
+        if (ACTIVE_NODES.contains("so_gunnery_point_blank")) {
+            ShipAPI target = flagship.getShipTarget();
+            float dist = target != null ? com.fs.starfarer.api.util.Misc.getDistance(
+                    flagship.getLocation(), target.getLocation()) : 0f;
+            if (TargetGatedConditions.pointBlank(target != null, dist)) {
                 stats.getBallisticWeaponDamageMult().modifyMult("so_point_blank", 1.20f);
                 stats.getEnergyWeaponDamageMult().modifyMult("so_point_blank", 1.20f);
                 stats.getMissileWeaponDamageMult().modifyMult("so_point_blank", 1.20f);
@@ -246,11 +249,11 @@ public final class GunneryCombatPlugin extends BaseEveryFrameCombatPlugin {
         // Dead Eye (spec line 142): static range + accuracy parts done in
         // SODefenseUnbreakableHandler-style handler (pending). Conditional
         // flux: −10% beyond 75% of weapon range.
-        if (ACTIVE_NODES.contains("so_gunnery_dead_eye") && surgicalTarget != null) {
-            float dist = com.fs.starfarer.api.util.Misc.getDistance(
-                    flagship.getLocation(), surgicalTarget.getLocation());
+        if (ACTIVE_NODES.contains("so_gunnery_dead_eye")) {
+            float dist = surgicalTarget != null ? com.fs.starfarer.api.util.Misc.getDistance(
+                    flagship.getLocation(), surgicalTarget.getLocation()) : 0f;
             // Approx max range = 1000u; "75% of range" ≈ 750u.
-            if (dist > 750f) {
+            if (TargetGatedConditions.deadEyeFluxDiscount(surgicalTarget != null, dist)) {
                 stats.getBallisticWeaponFluxCostMod().modifyMult("so_dead_eye_range", 0.90f);
                 stats.getEnergyWeaponFluxCostMod().modifyMult("so_dead_eye_range", 0.90f);
             } else {

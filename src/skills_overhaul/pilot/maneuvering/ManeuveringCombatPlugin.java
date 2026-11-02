@@ -4,6 +4,7 @@ import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
 import com.fs.starfarer.api.util.Misc;
+import skills_overhaul.pilot.TargetGatedConditions;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -105,9 +106,10 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Knife Fighter: +15% turn rate, +5% ballistic/energy ROF within 300u
-        if (ACTIVE_NODES.contains("so_maneuver_knife_fighter") && flagship.getShipTarget() != null) {
-            float dist = Misc.getDistance(flagship.getLocation(), flagship.getShipTarget().getLocation());
-            if (dist <= 300f) {
+        if (ACTIVE_NODES.contains("so_maneuver_knife_fighter")) {
+            ShipAPI target = flagship.getShipTarget();
+            float dist = target != null ? Misc.getDistance(flagship.getLocation(), target.getLocation()) : 0f;
+            if (TargetGatedConditions.knifeFighter(target != null, dist)) {
                 stats.getMaxTurnRate().modifyMult("so_knife_fighter", 1.15f);
                 stats.getBallisticRoFMult().modifyMult("so_knife_fighter", 1.05f);
                 stats.getEnergyRoFMult().modifyMult("so_knife_fighter", 1.05f);
@@ -200,9 +202,10 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Flanking Mastery: +25% damage when attacking from the side or rear
-        if (ACTIVE_NODES.contains("so_maneuver_flanking") && flagship.getShipTarget() != null) {
-            float angle = angleBetween(flagship, flagship.getShipTarget());
-            if (isFlankingAngle(angle)) {
+        if (ACTIVE_NODES.contains("so_maneuver_flanking")) {
+            ShipAPI target = flagship.getShipTarget();
+            float angle = target != null ? angleBetween(flagship, target) : 0f;
+            if (TargetGatedConditions.flanking(target != null, angle)) {
                 stats.getBallisticWeaponDamageMult().modifyMult("so_flanking", 1.25f);
                 stats.getEnergyWeaponDamageMult().modifyMult("so_flanking", 1.25f);
                 stats.getMissileWeaponDamageMult().modifyMult("so_flanking", 1.25f);
@@ -356,10 +359,6 @@ public final class ManeuveringCombatPlugin extends BaseEveryFrameCombatPlugin {
         float diff = Math.abs(angle - target.getFacing()) % 360f;
         if (diff > 180f) diff = 360f - diff;
         return diff;
-    }
-
-    private boolean isFlankingAngle(float diff) {
-        return diff > 45f;
     }
 
     private boolean isFiring(ShipAPI ship) {
