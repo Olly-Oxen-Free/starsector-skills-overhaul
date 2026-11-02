@@ -35,6 +35,22 @@ public class CrusadeServiceTest {
         assert CrusadeService.canDeclare(mem2, now) : "no cooldown after natural end";
         assert CrusadeService.CAP_BONUS == 50 : "crusade Zeal-cap bonus is +50";
 
+        // Removing the T5 capstone mid-Crusade ends it and drops the +50 cap bonus.
+        Map<String,Object> mem3 = new HashMap<>();
+        int baseCap = ZealService.getCap(mem3);
+        CrusadeService.declare(mem3, "hegemony", now);
+        ZealService.registerCapBonus(mem3, "crusade", CrusadeService.CAP_BONUS);
+        assert ZealService.getCap(mem3) == baseCap + CrusadeService.CAP_BONUS;
+        CrusadeService.endForCapstoneRemoval(mem3);
+        assert !CrusadeService.isActive(mem3) : "crusade ends when T5 is removed";
+        assert CrusadeService.getCrusadeRival(mem3) == null;
+        assert ZealService.getCap(mem3) == baseCap : "crusade cap bonus removed with T5";
+        // No-op when no Crusade is active.
+        Map<String,Object> mem4 = new HashMap<>();
+        CrusadeService.endForCapstoneRemoval(mem4);
+        assert !CrusadeService.isActive(mem4);
+        assert ZealService.getCap(mem4) == baseCap;
+
         System.out.println("ALL PASSED");
     }
 }
