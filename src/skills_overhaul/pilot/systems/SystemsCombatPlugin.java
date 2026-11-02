@@ -3,7 +3,9 @@ package skills_overhaul.pilot.systems;
 import com.fs.starfarer.api.Global;
 import com.fs.starfarer.api.combat.*;
 import com.fs.starfarer.api.input.InputEventAPI;
+import com.fs.starfarer.api.util.Misc;
 import org.lwjgl.input.Keyboard;
+import skills_overhaul.pilot.ArcTargetPolicy;
 import skills_overhaul.pilot.maneuvering.ManeuveringCombatPlugin;
 import skills_overhaul.pilot.maneuvering.PhaseStateTracker;
 import skills_overhaul.pilot.systems.secondary.*;
@@ -251,11 +253,16 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         if (ACTIVE_NODES.contains("so_systems_phase_mastery") && wasPhased && !isPhased) {
             float fluxLevel = flagship.getFluxTracker().getFluxLevel();
             float scale = fluxLevel >= 0.80f ? 1.5f : (fluxLevel < 0.40f ? 0.75f : 1.0f);
-            Global.getCombatEngine().spawnEmpArc(flagship, flagship.getLocation(), flagship, flagship,
-                    com.fs.starfarer.api.combat.DamageType.ENERGY,
-                    300f * scale, 600f * scale, 500f, "tachyon_lance_emp_impact",
-                    15f, new java.awt.Color(180, 220, 255, 220),
-                    new java.awt.Color(255, 255, 255, 255));
+            ShipAPI arcTarget = ArcTargetPolicy.dischargeTarget(flagship,
+                    Misc.findClosestShipEnemyOf(flagship, flagship.getLocation(),
+                            ShipAPI.HullSize.FIGHTER, 500f, true));
+            if (arcTarget != null) {
+                Global.getCombatEngine().spawnEmpArc(flagship, flagship.getLocation(), flagship, arcTarget,
+                        com.fs.starfarer.api.combat.DamageType.ENERGY,
+                        300f * scale, 600f * scale, 500f, "tachyon_lance_emp_impact",
+                        15f, new java.awt.Color(180, 220, 255, 220),
+                        new java.awt.Color(255, 255, 255, 255));
+            }
         }
 
         // Carrier Command (spec line 198): bomber-target-kill teleport-home.

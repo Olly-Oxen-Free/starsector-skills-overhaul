@@ -6,6 +6,8 @@ import com.fs.starfarer.api.combat.CombatEngineAPI;
 import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
+import com.fs.starfarer.api.util.Misc;
+import skills_overhaul.pilot.ArcTargetPolicy;
 
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -92,11 +94,16 @@ public final class DefenseCombatPlugin extends BaseEveryFrameCombatPlugin {
             if (hullDelta > 0f && adamantine.absorbHullDamage(hullDelta)) {
                 engine.spawnExplosion(flagship.getLocation(), flagship.getVelocity(),
                         new java.awt.Color(100, 150, 255, 200), 600f, 1f);
-                engine.spawnEmpArc(flagship, flagship.getLocation(), flagship, flagship,
-                        com.fs.starfarer.api.combat.DamageType.ENERGY, 300f, 1500f, 600f,
-                        "tachyon_lance_emp_impact", 20f,
-                        new java.awt.Color(180, 220, 255, 220),
-                        new java.awt.Color(255, 255, 255, 255));
+                ShipAPI arcTarget = ArcTargetPolicy.dischargeTarget(flagship,
+                        Misc.findClosestShipEnemyOf(flagship, flagship.getLocation(),
+                                ShipAPI.HullSize.FIGHTER, 600f, true));
+                if (arcTarget != null) {
+                    engine.spawnEmpArc(flagship, flagship.getLocation(), flagship, arcTarget,
+                            com.fs.starfarer.api.combat.DamageType.ENERGY, 300f, 1500f, 600f,
+                            "tachyon_lance_emp_impact", 20f,
+                            new java.awt.Color(180, 220, 255, 220),
+                            new java.awt.Color(255, 255, 255, 255));
+                }
                 adamantine.startPostDischarge();
             }
             adamantine.advance(dt);
