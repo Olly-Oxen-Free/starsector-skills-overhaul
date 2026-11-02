@@ -20,6 +20,16 @@ public final class SpendService {
         public String reason = "";
     }
 
+    /** Points spend() could draw for this tree, with the same pool-lock rule. */
+    public static int availablePoints(Map<String,Object> mem, Tree tree) {
+        String lockedTo = (String) mem.get(POOL_LOCK_KEY);
+        boolean canUsePool = (lockedTo == null || lockedTo.equals(tree.name()));
+        return SkillMemory.getPoints(mem, tree)
+                + (int) f(mem.get(SkillMemory.migUniKey(tree)))
+                + (canUsePool ? (int) f(mem.get(POOL_UNALLOC)) : 0)
+                + (int) f(mem.get(SkillMemory.freeUniKey()));
+    }
+
     public static Result spend(Map<String,Object> mem, Tree tree, String nodeId, int cost) {
         Result r = new Result();
 

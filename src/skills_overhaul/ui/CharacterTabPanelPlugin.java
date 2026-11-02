@@ -1220,15 +1220,13 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         if (mem.contains(migLockedK)) snap.put(migLockedK, mem.getFloat(migLockedK));
         String migPoolK = skills_overhaul.level.SpendService.POOL_UNALLOC;
         if (mem.contains(migPoolK)) snap.put(migPoolK, mem.getFloat(migPoolK));
+        String lockK = skills_overhaul.level.SpendService.POOL_LOCK_KEY;
+        if (mem.contains(lockK)) snap.put(lockK, mem.getString(lockK));
 
         if (!hasAnyInPreviousTier(clicked.getTier(), def, snap, pending)) return;
         if (!skills_overhaul.tree.PrereqValidator.canPurchaseWithPending(def, snap, pending, nodeId)) return;
 
-        int treePts   = SkillMemory.getPoints(snap, currentTree);
-        int migLocked = (int) f(snap.get(migLockedK));
-        int migPool   = (int) f(snap.get(migPoolK));
-        int freeUni   = (int) f(snap.get(freeUniK));
-        int totalPts  = treePts + migLocked + migPool + freeUni;
+        int totalPts  = skills_overhaul.level.SpendService.availablePoints(snap, currentTree);
         if (sumPendingCost(pending) + clicked.getCost() > totalPts) {
             Global.getLogger(CharacterTabPanelPlugin.class).warn(
                     "[SkillsOverhaul/UI] over budget: can't pend " + nodeId);
@@ -1238,8 +1236,6 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         SkillUISounds.playTierSkillSound(currentTree, clicked.getTier(), 0.55f);
         rebuild();
     }
-
-    private static float f(Object v) { return v == null ? 0f : ((Number) v).floatValue(); }
 
     private void commitPending() {
         Set<String> pending = pendingByTree.get(currentTree);
@@ -1265,8 +1261,9 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
                         "[SkillsOverhaul/UI] purchase failed for " + nodeId);
                 break;
             }
+            // Keep unbought selections pending so a failure is visible, not silently dropped.
+            pending.remove(nodeId);
         }
-        pending.clear();
     }
 
     private void removePendingWithDependents(String removed, Set<String> pending) {
