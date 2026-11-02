@@ -9,6 +9,7 @@ public final class TargetPainterState {
     private float damageAccum = 0f;
     private float lastStackTime = -999f;
     private int stacks = 0;
+    private float prevTargetFlux = 0f;
 
     public void onShieldDamage(float damage, float gameTime) {
         damageAccum += damage;
@@ -21,6 +22,19 @@ public final class TargetPainterState {
 
     public void onTargetSwitch() {
         stacks = 0; damageAccum = 0f; lastStackTime = -999f;
+    }
+
+    /** New target: reset stacks and take its current flux as the delta baseline. */
+    public void onTargetSwitch(float targetFlux) {
+        onTargetSwitch();
+        prevTargetFlux = targetFlux;
+    }
+
+    /** Per frame while a target is held: the flux rise since last frame counts as damage. */
+    public void onTargetFlux(float currFlux, float gameTime) {
+        float fluxDelta = Math.max(0f, currFlux - prevTargetFlux);
+        if (fluxDelta > 0f) onShieldDamage(fluxDelta, gameTime);
+        prevTargetFlux = currFlux;
     }
 
     public int getStacks() { return stacks; }
