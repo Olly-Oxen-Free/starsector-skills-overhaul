@@ -34,7 +34,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
     private final Set<String> prevAliveEnemyIds = new HashSet<String>();
     private boolean initialized = false;
 
-    private boolean wasPhased = false;
+    private PhaseExitDetector phaseExit = new PhaseExitDetector(false);
     private boolean shieldWasRaised = false;
     private float shieldLoweredTimer = 0f;
 
@@ -130,11 +130,11 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
 
         // Phase-exit detection for Void Strike + Reactive Systems reset
-        if (!isPhased && wasPhased) {
+        phaseExit.update(isPhased);
+        if (phaseExit.exitedThisFrame()) {
             if (ACTIVE_NODES.contains("so_systems_void_strike")) voidStrike.trigger();
             if (ACTIVE_NODES.contains("so_systems_reactive_systems")) reactiveSystems.onPhaseExit();
         }
-        wasPhased = isPhased;
 
         // Phase Coil: shield-lowered timer + weapon flux cost reduction
         if (ACTIVE_NODES.contains("so_systems_phase_coil")) {
@@ -250,7 +250,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         }
         // Phase Mastery exit burst (spec line 194): on phase exit, spawn
         // 300 energy + 600 EMP scaled by exit flux.
-        if (ACTIVE_NODES.contains("so_systems_phase_mastery") && wasPhased && !isPhased) {
+        if (ACTIVE_NODES.contains("so_systems_phase_mastery") && phaseExit.exitedThisFrame()) {
             float fluxLevel = flagship.getFluxTracker().getFluxLevel();
             float scale = fluxLevel >= 0.80f ? 1.5f : (fluxLevel < 0.40f ? 0.75f : 1.0f);
             ShipAPI arcTarget = ArcTargetPolicy.dischargeTarget(flagship,
@@ -382,7 +382,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
         redLine        = new RedLineStacker();
         voidStrike     = new VoidStrikeWindow(phase);
         targetPainter  = new TargetPainterState();
-        wasPhased      = flagship.isPhased();
+        phaseExit      = new PhaseExitDetector(flagship.isPhased());
         shieldWasRaised = flagship.getShield() != null && flagship.getShield().isOn();
         precisionStrikeAttached = false;
 
