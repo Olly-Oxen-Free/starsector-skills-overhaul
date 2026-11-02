@@ -23,6 +23,12 @@ public final class RespecService {
         mem.put(RECORD_PREFIX + nodeId + ".mg", (float) migration);
     }
 
+    /** True if the player can pay for the next respec of this tree: the first is free, later ones cost 1 SP. */
+    public static boolean canAfford(Map<String,Object> mem, Tree tree, int storyPoints) {
+        boolean firstFree = !Boolean.TRUE.equals(mem.get(SkillMemory.respecUsedKey(tree)));
+        return firstFree || storyPoints >= 1;
+    }
+
     public static Result respecTree(Map<String,Object> mem, Tree tree) {
         Result r = new Result();
         boolean firstFree = !Boolean.TRUE.equals(mem.get(SkillMemory.respecUsedKey(tree)));

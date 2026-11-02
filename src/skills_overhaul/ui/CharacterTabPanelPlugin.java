@@ -961,8 +961,9 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             // Respec is only actionable if the player has at least one owned
             // node in the current tree.
             if (ownedCountForTree(currentTree) > 0) {
-                SkillUISounds.playRespecReset();
-                skills_overhaul.level.RespecRunner.run(currentTree);
+                if (skills_overhaul.level.RespecRunner.run(currentTree) != null) {
+                    SkillUISounds.playRespecReset();
+                }
                 rebuild();
             }
             return;

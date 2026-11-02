@@ -15,6 +15,7 @@ import java.util.*;
 
 public final class RespecRunner {
 
+    /** Returns null, changing nothing, when the respec costs a story point the player does not have. */
     public static RespecService.Result run(Tree tree) {
         MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
 
@@ -48,6 +49,10 @@ public final class RespecRunner {
             }
         }
 
+        // Refuse a paid respec the player cannot pay for; null means nothing changed.
+        MutableCharacterStatsAPI stats = Global.getSector().getPlayerPerson().getStats();
+        if (!RespecService.canAfford(m, tree, stats.getStoryPoints())) return null;
+
         RespecService.Result r = RespecService.respecTree(m, tree);
 
         // Write back
@@ -78,7 +83,6 @@ public final class RespecRunner {
 
         // Charge SP (verbose=false, no text panel for compiles-only stub)
         if (r.storyPointsCharged > 0) {
-            MutableCharacterStatsAPI stats = Global.getSector().getPlayerPerson().getStats();
             stats.spendStoryPoints(r.storyPointsCharged, false, null, false, "Skills Overhaul respec");
         }
 
