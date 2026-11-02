@@ -8,14 +8,8 @@ public final class PhaseSharedBonusService {
 
     public static float computeBonus(float totalPhaseDPDeployed) {
         if (totalPhaseDPDeployed <= 0f) return CAP_BONUS;
-        float raw = POOL_SIZE / (totalPhaseDPDeployed / 10f);
-        // raw is in % units (e.g. raw=30 means 30%, 150 = 150%). Convert to multiplier (1.30) — wait
-        // re-read: spec says "per-ship bonus = 150 / (totalDP/10)". And "floor 20%, cap 150%".
-        // So raw is already in "% units" (30 = 30%, 150 = 150%). Convert to multiplier: bonus/100.
-        // But 1.50 cap is 150%, so cap_bonus 1.50f represents 150% — then a 30 raw = 30% = 0.30 mult.
-        // The test asserts midBonus=0.50f for totalDP=3000 → raw=1500/3000=0.5. So raw is already in
-        // multiplier form (0.5 = 50%). The math line above gives raw=0.5 directly. Floor 0.20, cap 1.50.
-        // OK math is correct as-is.
+        // POOL_SIZE is in percentage points; FLOOR_BONUS/CAP_BONUS are fractions.
+        float raw = (POOL_SIZE / (totalPhaseDPDeployed / 10f)) / 100f;
         if (raw < FLOOR_BONUS) return FLOOR_BONUS;
         if (raw > CAP_BONUS) return CAP_BONUS;
         return raw;
