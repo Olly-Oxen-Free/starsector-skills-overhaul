@@ -119,7 +119,7 @@ public final class UndergroundIntelService {
             return out;
         }
 
-        out.fleet = spawnFallback(out.strength, playerFP);
+        out.fleet = spawnFallback(out.strength, playerFP, rng);
         out.wasSpawned = true;
         out.incentiveDescription = out.fleet == null ? "no contacts available"
                 : "fresh contact rallied via Underground (" + out.fleet.getFaction().getDisplayName() + ")";
@@ -151,32 +151,30 @@ public final class UndergroundIntelService {
         return sb.toString();
     }
 
-    private static CampaignFleetAPI spawnFallback(Strength s, float playerFP) {
+    private static CampaignFleetAPI spawnFallback(Strength s, float playerFP, Random rng) {
         float ratioMid = s == Strength.WEAK ? 0.725f : s == Strength.STRONG ? 1.275f : 1.0f;
         float fp = playerFP * ratioMid;
 
-        // Only factions that own a market can anchor a spawn (hidden factions like derelict/omega can't).
-        Set<FactionAPI> withMarkets = new HashSet<>();
+        // Only a hostile-owned market within SEARCH_LY can anchor the spawn (the tooltip promises
+        // a mark within 10 LY, and MarkIntel drops marks kept beyond 30 LY). Hidden factions like
+        // derelict/omega own no market and so never qualify.
+        CampaignFleetAPI playerFleet = Global.getSector().getPlayerFleet();
+        FactionAPI playerFaction = Global.getSector().getPlayerFaction();
+        List<MarketAPI> candidates = new ArrayList<>();
+        List<Float> distancesLY = new ArrayList<>();
         for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
-            if (m.getFaction() != null && m.getPrimaryEntity() != null) withMarkets.add(m.getFaction());
+            FactionAPI fac = m.getFaction();
+            if (fac == null || m.getPrimaryEntity() == null) continue;
+            if (fac == playerFaction || !fac.isHostileTo(playerFaction)) continue;
+            candidates.add(m);
+            distancesLY.add(Misc.getDistanceLY(playerFleet, m.getPrimaryEntity()));
         }
-        List<FactionAPI> hostile = new ArrayList<>();
-        for (FactionAPI fac : Global.getSector().getAllFactions()) {
-            if (fac == Global.getSector().getPlayerFaction()) continue;
-            if (!fac.isHostileTo(Global.getSector().getPlayerFaction())) continue;
-            if (!withMarkets.contains(fac)) continue;
-            hostile.add(fac);
-        }
-        if (hostile.isEmpty()) return null;
-        FactionAPI faction = hostile.get((int)(Math.random() * hostile.size()));
-
-        SectorEntityToken anchor = null;
-        for (MarketAPI m : Global.getSector().getEconomy().getMarketsCopy()) {
-            if (m.getFaction() == faction && m.getPrimaryEntity() != null) { anchor = m.getPrimaryEntity(); break; }
-        }
-        // No market for the picked faction: previously fell back to the player fleet, spawning a
-        // hostile fleet on top of the player. Report "no contacts" instead (the caller refunds).
-        if (anchor == null) return null;
+        // None in range: report "no contacts" (the caller refunds) rather than a mark the
+        // player cannot reach before it expires.
+        int pick = MarkAnchorPicker.pick(distancesLY, SEARCH_LY, rng);
+        if (pick < 0) return null;
+        FactionAPI faction = candidates.get(pick).getFaction();
+        SectorEntityToken anchor = candidates.get(pick).getPrimaryEntity();
 
         Vector2f locInHyper = anchor.getLocationInHyperspace();
         FleetParamsV3 params = new FleetParamsV3(
