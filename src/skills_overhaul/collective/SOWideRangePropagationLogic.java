@@ -25,7 +25,7 @@ public final class SOWideRangePropagationLogic {
 
             ShipAPI source = ship.getWing().getSourceShip();
             if (source == null) continue;
-            if (!isAICored(source)) continue;
+            if (!WideRangePropagationRule.shouldBuff(ship.getOwner(), source.getOwner(), isAICored(source))) continue;
 
             // Re-apply every frame. modifyPercent keyed by the fixed SRC id is
             // idempotent, so this is a no-op for already-buffed fighters while
