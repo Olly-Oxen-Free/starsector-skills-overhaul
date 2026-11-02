@@ -22,19 +22,21 @@ public final class PendingPurchaseTopoSort {
             }
         }
 
-        Deque<String> queue = new ArrayDeque<>();
+        // Ready nodes are taken lowest tier first (ties in pending order), so every
+        // node is bought after the pending nodes its previous-tier gate relies on.
+        List<String> ready = new ArrayList<>();
         for (Map.Entry<String, Integer> e : inDegree.entrySet()) {
-            if (e.getValue() == 0) queue.add(e.getKey());
+            if (e.getValue() == 0) ready.add(e.getKey());
         }
 
         List<String> out = new ArrayList<>();
-        while (!queue.isEmpty()) {
-            String id = queue.removeFirst();
+        while (!ready.isEmpty()) {
+            String id = ready.remove(lowestTier(def, ready));
             out.add(id);
             for (String child : adj.get(id)) {
                 int d = inDegree.get(child) - 1;
                 inDegree.put(child, d);
-                if (d == 0) queue.add(child);
+                if (d == 0) ready.add(child);
             }
         }
 
@@ -42,6 +44,19 @@ public final class PendingPurchaseTopoSort {
             throw new IllegalStateException("cycle in pending set: " + pending);
         }
         return out;
+    }
+
+    private static int lowestTier(TreeDef def, List<String> ids) {
+        int best = 0;
+        for (int i = 1; i < ids.size(); i++) {
+            if (tierOf(def, ids.get(i)) < tierOf(def, ids.get(best))) best = i;
+        }
+        return best;
+    }
+
+    private static int tierOf(TreeDef def, String id) {
+        Node n = def.getNode(id);
+        return n == null ? 0 : n.getTier();
     }
 
     private PendingPurchaseTopoSort() {}

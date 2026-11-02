@@ -26,6 +26,7 @@ public final class GameSpend {
         Map<String,Object> m = snapshot(mem, def);
 
         if (!PrereqValidator.canPurchase(def, m, nodeId)) return false;
+        if (!PrereqValidator.tierGateSatisfied(def, m, java.util.Collections.<String>emptySet(), nodeId)) return false;
 
         SpendService.Result r = SpendService.spend(m, tree, nodeId, n.getCost());
         if (!r.success) return false;

@@ -934,19 +934,6 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         return s;
     }
 
-    private boolean hasAnyInPreviousTier(int tier, TreeDef def,
-                                         Map<String, Object> snap, Set<String> pending) {
-        if (tier <= 0) return true;
-        int prevTier = tier - 1;
-        for (Node n : def.getNodes()) {
-            if (n.getTier() != prevTier) continue;
-            String k = SkillMemory.purchasedKey(n.getId());
-            if (snap.containsKey(k) && Boolean.TRUE.equals(snap.get(k))) return true;
-            if (pending.contains(n.getId())) return true;
-        }
-        return false;
-    }
-
     @Override
     public void buttonPressed(Object id) {
         if (!(id instanceof String)) return;
@@ -1223,7 +1210,7 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
         String lockK = skills_overhaul.level.SpendService.POOL_LOCK_KEY;
         if (mem.contains(lockK)) snap.put(lockK, mem.getString(lockK));
 
-        if (!hasAnyInPreviousTier(clicked.getTier(), def, snap, pending)) return;
+        if (!skills_overhaul.tree.PrereqValidator.tierGateSatisfied(def, snap, pending, nodeId)) return;
         if (!skills_overhaul.tree.PrereqValidator.canPurchaseWithPending(def, snap, pending, nodeId)) return;
 
         int totalPts  = skills_overhaul.level.SpendService.availablePoints(snap, currentTree);
@@ -1287,5 +1274,16 @@ public final class CharacterTabPanelPlugin extends BaseCustomUIPanelPlugin {
             }
         }
         pending.removeAll(toRemove);
+
+        // Removing a node can also break the tier gate of the nodes it justified.
+        MemoryAPI mem = Global.getSector().getMemoryWithoutUpdate();
+        for (TreeDef def : TreeRegistry.getTrees(currentTree)) {
+            Map<String, Object> snap = new HashMap<String, Object>();
+            for (Node n : def.getNodes()) {
+                String k = SkillMemory.purchasedKey(n.getId());
+                if (mem.contains(k) && mem.getBoolean(k)) snap.put(k, Boolean.TRUE);
+            }
+            skills_overhaul.tree.PrereqValidator.prunePending(def, snap, pending);
+        }
     }
 }
