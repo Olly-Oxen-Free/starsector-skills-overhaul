@@ -98,7 +98,8 @@ public final class PrivateerEscortAI implements EveryFrameScript {
         for (CampaignFleetAPI f : privateer.getContainingLocation().getFleets()) {
             if (f == privateer || f == player) continue;
             if (f.isStationMode()) continue; // never send the escort into a station
-            if (!f.getFaction().isHostileTo(player.getFaction())) continue;
+            // Only fleets the privateer will actually fight; the player's view can differ.
+            if (!privateer.getFaction().isHostileTo(f.getFaction())) continue;
             float distFromSelf   = Misc.getDistance(privateer.getLocation(), f.getLocation());
             float distFromPlayer = Misc.getDistance(player.getLocation(),    f.getLocation());
             if (distFromSelf < ENGAGE_RADIUS_SU || distFromPlayer < ENGAGE_RADIUS_SU) {

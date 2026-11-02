@@ -11,6 +11,9 @@ import com.fs.starfarer.api.fleet.FleetMemberAPI;
 public final class PrivateerLifecycleScript extends BaseCampaignEventListener
         implements EveryFrameScript {
 
+    /** Last day the privateer faction's relations were re-synced; transient, so a load re-syncs. */
+    private transient int lastSyncDay = Integer.MIN_VALUE;
+
     public PrivateerLifecycleScript() { super(false); }
 
     @Override public boolean isDone() { return false; }
@@ -25,6 +28,12 @@ public final class PrivateerLifecycleScript extends BaseCampaignEventListener
         int today = InfamyDailyTicker.monotonicDay();
         if (today >= expireDay) {
             PrivateerFleetService.dismiss();
+            return;
+        }
+        // Follow the player's peace and war declarations while the commission runs.
+        if (today != lastSyncDay) {
+            lastSyncDay = today;
+            PrivateerFleetService.syncRelations();
         }
     }
 
