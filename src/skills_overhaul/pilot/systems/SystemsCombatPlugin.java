@@ -23,7 +23,7 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
 
     private String lastTargetId = null;
     private float prevOwnShieldFlux = 0f;
-    private float prevTargetShieldFlux = 0f;
+    private final TargetDebuffHolder<ShipAPI> paintedTarget = new TargetDebuffHolder<ShipAPI>();
     private float gameTime = 0f;
 
     // Strike Coordination: allied bombers within this radius get the buff (spec unspecified).
@@ -167,31 +167,33 @@ public final class SystemsCombatPlugin extends BaseEveryFrameCombatPlugin {
 
         // Target Painter: track target switches + apply shield debuff on target
         if (ACTIVE_NODES.contains("so_systems_target_painter")) {
-            String targetId = flagship.getShipTarget() != null ? flagship.getShipTarget().getId() : null;
+            ShipAPI target = flagship.getShipTarget();
+            // Take the debuff off the previous target once the player switches or loses it.
+            ShipAPI released = paintedTarget.release(target);
+            if (released != null) {
+                released.getMutableStats().getShieldDamageTakenMult().unmodify("so_target_painter");
+            }
+
+            String targetId = target != null ? target.getId() : null;
             if (targetId != null && !targetId.equals(lastTargetId)) {
-                targetPainter.onTargetSwitch();
-                // New target → reset its flux baseline so the first delta isn't garbage.
-                prevTargetShieldFlux = 0f;
+                // New target → its current flux is the baseline, not damage.
+                targetPainter.onTargetSwitch(target.getFluxTracker().getCurrFlux());
             }
             lastTargetId = targetId;
 
-            ShipAPI target = flagship.getShipTarget();
             if (target != null) {
                 // T1 bug fix: pass real flux delta as damage, not 0.
-                float currFlux = target.getFluxTracker().getCurrFlux();
-                float fluxDelta = Math.max(0f, currFlux - prevTargetShieldFlux);
-                if (fluxDelta > 0f) targetPainter.onShieldDamage(fluxDelta, gameTime);
-                prevTargetShieldFlux = currFlux;
+                targetPainter.onTargetFlux(target.getFluxTracker().getCurrFlux(), gameTime);
 
                 if (targetPainter.getStacks() > 0) {
                     float debuff = targetPainter.getShieldEfficiencyDebuff();
                     // Spec line 124: stat is getShieldEfficiencyMult, not Damage Taken.
                     target.getMutableStats().getShieldDamageTakenMult()
                             .modifyMult("so_target_painter", 1f + debuff);
+                    paintedTarget.hold(target);
                 }
             } else {
                 lastTargetId = null;
-                prevTargetShieldFlux = 0f;
             }
         }
 
