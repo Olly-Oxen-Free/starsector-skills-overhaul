@@ -87,13 +87,7 @@ public final class PrivateerFleetService {
         FactionAPI privFac = Global.getSector().getFaction("skills_overhaul_privateer");
         if (privFac != null) {
             privateer.setFaction("skills_overhaul_privateer", true);
-            privFac.setRelationship(Global.getSector().getPlayerFaction().getId(), 1.0f);
-            for (FactionAPI f : Global.getSector().getAllFactions()) {
-                if (f == Global.getSector().getPlayerFaction()) continue;
-                if (f.isHostileTo(Global.getSector().getPlayerFaction())) {
-                    privFac.setRelationship(f.getId(), -1.0f);
-                }
-            }
+            syncRelations(privFac);
         }
 
         anchor.getContainingLocation().addEntity(privateer);
@@ -103,6 +97,31 @@ public final class PrivateerFleetService {
         mem.set(K_FLEET_ID, privateer.getId());
         mem.set(K_EXPIRE, InfamyDailyTicker.monotonicDay() + DURATION_DAYS);
         return privateer;
+    }
+
+    /**
+     * Mirrors the player faction's relations onto the shared privateer faction. Relations
+     * are saved, so writing only hostiles left a faction the player has since made peace
+     * with hostile to every later privateer.
+     */
+    static void syncRelations(FactionAPI privFac) {
+        FactionAPI player = Global.getSector().getPlayerFaction();
+        java.util.Map<String, Float> priv = new java.util.HashMap<>();
+        java.util.Map<String, Float> playerRel = new java.util.HashMap<>();
+        for (FactionAPI f : Global.getSector().getAllFactions()) {
+            priv.put(f.getId(), privFac.getRelationship(f.getId()));
+            playerRel.put(f.getId(), player.getRelationship(f.getId()));
+        }
+        PrivateerRelations.sync(priv, playerRel, player.getId(), privFac.getId());
+        for (java.util.Map.Entry<String, Float> e : priv.entrySet()) {
+            privFac.setRelationship(e.getKey(), e.getValue());
+        }
+    }
+
+    /** Re-syncs the privateer faction's relations; no-op if the faction is not registered. */
+    static void syncRelations() {
+        FactionAPI privFac = Global.getSector().getFaction("skills_overhaul_privateer");
+        if (privFac != null) syncRelations(privFac);
     }
 
     public static void dismiss() {
