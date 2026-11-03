@@ -62,8 +62,8 @@ public final class SpendService {
 
         // Commit
         SkillMemory.setPoints(mem, tree, treePts - takeTL);
-        // Pool points lock to this tree; add them to the tree-locked migration key
-        mem.put(SkillMemory.migUniKey(tree), migLocked - takeML + takePool);
+        // Pool points are spent here; only the lock below ties the pool to this tree
+        mem.put(SkillMemory.migUniKey(tree), migLocked - takeML);
         mem.put(POOL_UNALLOC, migPool - takePool);
         mem.put(SkillMemory.freeUniKey(), freeUni - takeFU);
         mem.put(SkillMemory.purchasedKey(nodeId), true);
@@ -80,8 +80,7 @@ public final class SpendService {
         Result r = new Result();
         SkillMemory.addPoints(mem, tree, fromTreeLocked);
         mem.put(SkillMemory.freeUniKey(), f(mem.get(SkillMemory.freeUniKey())) + fromFreeUni);
-        // Return migration points to the unallocated pool (un-locking them from this tree)
-        mem.put(SkillMemory.migUniKey(tree), f(mem.get(SkillMemory.migUniKey(tree))) - fromMigration);
+        // Return migration points to the unallocated pool (spend never credited them to the tree)
         mem.put(POOL_UNALLOC, f(mem.get(POOL_UNALLOC)) + fromMigration);
         mem.remove(SkillMemory.purchasedKey(nodeId));
 
