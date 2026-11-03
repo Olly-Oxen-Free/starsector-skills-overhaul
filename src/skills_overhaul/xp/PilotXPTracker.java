@@ -85,13 +85,15 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     }
 
     private boolean isCombatEnding() {
-        // V1 heuristic: all enemy ships hulked or gone (victory)
+        // Victory: an enemy was seen, its reserves are empty and no enemy ship is
+        // alive (a gap between reinforcement waves is not victory).
         // OR the engine reports combat over (covers player retreat).
-        if (engine.isCombatOver()) return true;
+        boolean anyEnemyAlive = false;
         for (ShipAPI s : engine.getShips()) {
-            if (s.getOwner() == 1 && s.isAlive()) return false;
+            if (s.getOwner() == 1 && s.isAlive()) { anyEnemyAlive = true; break; }
         }
-        return true;
+        return PilotBattleState.battleEnded(engine.isCombatOver(), !hookedEnemyIds.isEmpty(),
+                engine.getFleetManager(1).getReservesCopy().size(), anyEnemyAlive);
     }
 
     private void payBattleEndBonus() {

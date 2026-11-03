@@ -22,4 +22,13 @@ final class PilotBattleState {
 
     boolean isLatched() { return firstShipId != null; }
     boolean firstShipEverDied() { return firstShipEverDied; }
+
+    /** Victory needs an enemy to have been seen, no enemy reserves left to
+     *  deploy, and no enemy ship alive on the field; otherwise only the engine's
+     *  own combat-over flag ends the battle. */
+    static boolean battleEnded(boolean combatOver, boolean anyEnemySeen,
+                               int enemyReserves, boolean anyEnemyAlive) {
+        if (combatOver) return true;
+        return anyEnemySeen && enemyReserves == 0 && !anyEnemyAlive;
+    }
 }
