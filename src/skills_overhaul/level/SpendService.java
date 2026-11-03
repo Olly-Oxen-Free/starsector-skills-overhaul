@@ -30,7 +30,10 @@ public final class SpendService {
 
         // Check whether the unallocated migration pool is locked to a different tree
         String lockedTo = (String) mem.get(POOL_LOCK_KEY);
-        boolean canUsePool = (lockedTo == null || lockedTo.equals(tree.name()));
+        // Admin trees are placeholders (no effects, no reachable capstone): keep them from
+        // draining or locking the pool. Drop the ADMIN check once admin content lands.
+        boolean canUsePool = tree != Tree.ADMIN
+                && (lockedTo == null || lockedTo.equals(tree.name()));
 
         int remaining = cost;
 

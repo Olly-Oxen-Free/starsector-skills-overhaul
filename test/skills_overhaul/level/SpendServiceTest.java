@@ -68,6 +68,16 @@ public class SpendServiceTest {
         assert fr.reason.equals("not enough points (short 3)") : fr.reason;
         assert fmem.equals(fbefore) : "failed spend must not touch the map";
 
+        // Admin has no content yet: an Admin purchase must not draw from or lock the pool
+        Map<String,Object> amem = new HashMap<>();
+        amem.put("$skills.points.universal_migrated_unallocated", 3f);
+        Map<String,Object> abefore = new HashMap<>(amem);
+        SpendService.Result ar = SpendService.spend(amem, Tree.ADMIN, "admin_warden_t0", 1);
+        assert !ar.success : "admin spend from the unallocated pool fails";
+        assert amem.equals(abefore) : "pool untouched and not locked to ADMIN";
+        ar = SpendService.spend(amem, Tree.PILOT, "so_pilot_root_1", 3);
+        assert ar.success && ar.fromMigrationToPilot == 3 : "pool still usable by Pilot";
+
         System.out.println("ALL PASSED");
     }
 }
