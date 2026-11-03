@@ -1,5 +1,6 @@
 package skills_overhaul.commandant;
 
+import com.fs.starfarer.api.combat.MutableShipStatsAPI;
 import com.fs.starfarer.api.combat.ShipAPI;
 import com.fs.starfarer.api.combat.listeners.AdvanceableListener;
 import com.fs.starfarer.api.util.IntervalUtil;
@@ -18,12 +19,16 @@ public final class CommandFieldListener implements AdvanceableListener {
         if (ship == null || !ship.isAlive()) return;
         interval.advance(amount);
         if (!interval.intervalElapsed()) return;
-        float[] totals = CommandFieldService.computeTotalsForShip(ship);
-        ship.getMutableStats().getBeamWeaponDamageMult().modifyMult(STAT_KEY, 1f + totals[0]);
-        ship.getMutableStats().getBallisticWeaponDamageMult().modifyMult(STAT_KEY, 1f + totals[0]);
-        ship.getMutableStats().getMissileWeaponDamageMult().modifyMult(STAT_KEY, 1f + totals[0]);
-        ship.getMutableStats().getHullDamageTakenMult().modifyMult(STAT_KEY, 1f - totals[1]);
-        ship.getMutableStats().getArmorDamageTakenMult().modifyMult(STAT_KEY, 1f - totals[1]);
-        ship.getMutableStats().getEmpDamageTakenMult().modifyMult(STAT_KEY, 1f - totals[1]);
+        applyTotals(ship.getMutableStats(), CommandFieldService.computeTotalsForShip(ship));
+    }
+
+    /** totals[0] = damage bonus, totals[1] = damage-taken reduction. */
+    static void applyTotals(MutableShipStatsAPI stats, float[] totals) {
+        stats.getEnergyWeaponDamageMult().modifyMult(STAT_KEY, 1f + totals[0]);
+        stats.getBallisticWeaponDamageMult().modifyMult(STAT_KEY, 1f + totals[0]);
+        stats.getMissileWeaponDamageMult().modifyMult(STAT_KEY, 1f + totals[0]);
+        stats.getHullDamageTakenMult().modifyMult(STAT_KEY, 1f - totals[1]);
+        stats.getArmorDamageTakenMult().modifyMult(STAT_KEY, 1f - totals[1]);
+        stats.getEmpDamageTakenMult().modifyMult(STAT_KEY, 1f - totals[1]);
     }
 }
