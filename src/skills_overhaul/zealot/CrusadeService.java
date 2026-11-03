@@ -58,6 +58,12 @@ public final class CrusadeService {
         mem.remove(K_RIVAL);
     }
 
+    /** T5 capstone removed (respec): end any active Crusade and drop its cap bonus. */
+    public static void endForCapstoneRemoval(Map<String,Object> mem) {
+        if (isActive(mem)) rivalDestroyed(mem);
+        ZealService.unregisterCapBonus(mem, "crusade");
+    }
+
     // --- MemoryAPI overloads ---
 
     public static boolean isActive(MemoryAPI mem) {

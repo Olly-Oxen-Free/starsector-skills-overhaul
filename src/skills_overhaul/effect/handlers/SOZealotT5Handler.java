@@ -23,6 +23,8 @@ public final class SOZealotT5Handler implements EffectHandler {
         if ("core".equals(channel)) {
             ZealotCombatPlugin.ACTIVE_NODES.remove("zealot_t5");
             Global.getSector().getMemoryWithoutUpdate().unset("$skills.zealot.t5.purchased");
+            skills_overhaul.zealot.CrusadeService.endForCapstoneRemoval(
+                    new skills_overhaul.zealot.ZealDailyTicker.MemoryWrapMap(Global.getSector().getMemoryWithoutUpdate()));
             skills_overhaul.effect.AbilityGrants.revoke(skills_overhaul.zealot.CrusadeAbility.ABILITY_ID);
         }
     }

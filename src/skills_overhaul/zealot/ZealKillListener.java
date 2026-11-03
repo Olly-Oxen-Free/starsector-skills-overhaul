@@ -15,12 +15,12 @@ public final class ZealKillListener extends BaseCampaignEventListener {
     public ZealKillListener() { super(false); }
 
     public static final Set<String> LAWFUL_FACTIONS = new HashSet<>(Arrays.asList(
-            "hegemony", "diktat", "persean_league", "luddic_church", "tritachyon"));
+            "hegemony", "sindrian_diktat", "persean", "luddic_church", "tritachyon"));
     public static final Set<String> PIRATE_PATH_SLAVER = new HashSet<>(Arrays.asList(
             "pirates", "luddic_path"));
     public static final Set<String> ANTI_AI_FACTIONS = new HashSet<>(Arrays.asList(
-            "hegemony", "luddic_church", "luddic_path", "diktat"));
-    public static final Set<String> REMNANT_LIKE = new HashSet<>(Arrays.asList("remnants"));
+            "hegemony", "luddic_church", "luddic_path", "sindrian_diktat"));
+    public static final Set<String> REMNANT_LIKE = new HashSet<>(Arrays.asList("remnant"));
     public static final Set<String> THREAT_LIKE = new HashSet<>(Arrays.asList("threat"));
     public static final Set<String> VOID_LIKE = new HashSet<>(Arrays.asList("void"));
 
