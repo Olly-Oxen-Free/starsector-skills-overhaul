@@ -55,6 +55,31 @@ public final class FieldCommandsService {
         return 0f;
     }
 
+    /**
+     * Starts a buff timer for each newly issued snapshot key ("TYPE:assignment:memberId").
+     * Buffs are keyed "TYPE:memberId", so moving a ship to a second order of the same type
+     * refreshes its timer and modifiers instead of stacking a second set.
+     * Returns buff key -> order type for every buff to (re)apply.
+     */
+    static Map<String, String> issueBuffs(Set<String> newlyIssued, Map<String, Float> buffs,
+                                          Set<String> retreatUsed) {
+        Map<String, String> started = new LinkedHashMap<>();
+        for (String key : newlyIssued) {
+            String typeName = key.split(":", 2)[0];
+            float duration = bufferDurationFor(typeName);
+            if (duration <= 0f) continue;
+            String shipId = key.substring(key.lastIndexOf(':') + 1);
+            if ("RETREAT".equals(typeName)) {
+                if (!canApplyRetreat(retreatUsed, shipId)) continue;
+                retreatUsed.add(shipId);
+            }
+            String buffKey = typeName + ":" + shipId;
+            buffs.put(buffKey, duration);
+            started.put(buffKey, typeName);
+        }
+        return started;
+    }
+
     public static void tick(float dt) {
         if (!active) return;
         CombatEngineAPI engine = com.fs.starfarer.api.Global.getCombatEngine();
@@ -83,18 +108,8 @@ public final class FieldCommandsService {
 
         Set<String> newlyIssued = diffNewlyIssued(lastSnapshot, currentSnapshot);
 
-        for (String key : newlyIssued) {
-            String typeName = key.split(":", 2)[0];
-            float duration = bufferDurationFor(typeName);
-            if (duration <= 0f) continue;
-            if ("RETREAT".equals(typeName)) {
-                String shipId = key.substring(key.lastIndexOf(':') + 1);
-                if (!canApplyRetreat(retreatUsedThisBattle, shipId)) continue;
-                retreatUsedThisBattle.add(shipId);
-            }
-            activeBuffs.put(key, duration);
-            applyBuffStart(key, typeName);
-        }
+        Map<String, String> started = issueBuffs(newlyIssued, activeBuffs, retreatUsedThisBattle);
+        for (Map.Entry<String, String> e : started.entrySet()) applyBuffStart(e.getKey(), e.getValue());
 
         Set<String> expired = tickBuffTimers(activeBuffs, dt);
         for (String key : expired) applyBuffEnd(key);
