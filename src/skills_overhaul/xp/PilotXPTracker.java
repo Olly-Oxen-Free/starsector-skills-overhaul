@@ -25,8 +25,7 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     private final Map<String, Float> enemyDP = new HashMap<String, Float>();
     private float flagshipDP = 10f;
     private float enemyDPEngaged = 0f;
-    private String firstShipId = null;
-    private boolean firstShipEverDied = false;
+    private final PilotBattleState battle = new PilotBattleState();
     private float autoSeconds = 0f;
     private float manualSeconds = 0f;
     private float totalKilledXP = 0f;
@@ -38,12 +37,6 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
     public void init(CombatEngineAPI engine) {
         this.engine = engine;
         if (!engine.isInCampaign()) return;
-
-        ShipAPI pf = engine.getPlayerShip();
-        if (pf != null) {
-            firstShipId = pf.getId();
-            flagshipDP = dpOf(pf);
-        }
 
         scanForNewEnemies();
     }
@@ -78,11 +71,11 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
         if (engine.isUIAutopilotOn()) autoSeconds += amount;
         else manualSeconds += amount;
 
+        // The player ship is usually null in init() (before deployment): latch it here.
         ShipAPI pf = engine.getPlayerShip();
-        if (firstShipId != null && !firstShipEverDied) {
-            if (pf == null || !pf.isAlive() || !firstShipId.equals(pf.getId())) {
-                firstShipEverDied = true;
-            }
+        if (battle.observePlayerShip(pf == null ? null : pf.getId(),
+                pf != null && pf.isAlive(), pf != null && pf.isShuttlePod())) {
+            flagshipDP = dpOf(pf);
         }
 
         if (!bonusPaid && isCombatEnding()) {
@@ -105,7 +98,7 @@ public class PilotXPTracker extends BaseEveryFrameCombatPlugin {
         ShipAPI pf = engine.getPlayerShip();
         boolean finalShipAlive = pf != null && pf.isAlive();
         float bonus = PilotXPMath.survivalBonus(
-                firstShipEverDied, finalShipAlive, totalKilledXP,
+                battle.firstShipEverDied(), finalShipAlive, totalKilledXP,
                 autoSeconds, manualSeconds,
                 enemyDPEngaged, flagshipDP,
                 PilotXPMath.cfgFromConfig(ConfigLoader.get()));
