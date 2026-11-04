@@ -6,6 +6,10 @@ import org.json.JSONObject;
 import skills_overhaul.effect.EffectHandler;
 import skills_overhaul.effect.EffectRegistry;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Predicate;
+
 /**
  * Orphan skill access for nodes spec'd but absent from the tree.
  *
@@ -55,6 +59,17 @@ public final class OrphanSkillGranter {
         }
     }
 
+    /**
+     * Granted orphans, for SkillsOverhaulCombatPlugin. Their effects are ship
+     * stats, which are rebuilt every battle, so they must be applied per combat
+     * like tree nodes; the load-time apply cannot reach the flagship.
+     */
+    public static List<OrphanSpec> granted(Predicate<String> isSet) {
+        List<OrphanSpec> out = new ArrayList<OrphanSpec>();
+        for (OrphanSpec s : ORPHANS) if (isSet.test(KEY_PREFIX + s.name)) out.add(s);
+        return out;
+    }
+
     private static void applyHandler(OrphanSpec s) {
         EffectHandler h = EffectRegistry.get(s.effectType);
         if (h != null) h.apply(s.nodeId, s.params);
@@ -87,11 +102,11 @@ public final class OrphanSkillGranter {
         return o;
     }
 
-    private static final class OrphanSpec {
-        final String name;
-        final String nodeId;
-        final String effectType;
-        final JSONObject params;
+    public static final class OrphanSpec {
+        public final String name;
+        public final String nodeId;
+        public final String effectType;
+        public final JSONObject params;
         OrphanSpec(String name, String nodeId, String effectType, JSONObject params) {
             this.name = name; this.nodeId = nodeId;
             this.effectType = effectType; this.params = params;
