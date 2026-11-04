@@ -8,6 +8,7 @@ import com.fs.starfarer.api.campaign.rules.MemoryAPI;
 import com.fs.starfarer.api.input.InputEventAPI;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
+import skills_overhaul.console.OrphanSkillGranter;
 import skills_overhaul.state.SkillMemory;
 import skills_overhaul.tree.Node;
 import skills_overhaul.tree.TreeDef;
@@ -75,6 +76,18 @@ public class SkillsOverhaulCombatPlugin extends BaseEveryFrameCombatPlugin {
                     applied++;
                 }
             }
+        }
+        // Console-granted orphans are not in any tree; apply them the same way.
+        for (OrphanSkillGranter.OrphanSpec o : OrphanSkillGranter.granted(
+                k -> mem.contains(k) && mem.getBoolean(k))) {
+            EffectHandler h = EffectRegistry.get(o.effectType);
+            if (!(h instanceof PilotShipStatEffect)) continue;
+            if (!apply) {
+                ((PilotShipStatEffect) h).removeFrom(ship, o.nodeId, o.params);
+                continue;
+            }
+            ((PilotShipStatEffect) h).applyTo(ship, o.nodeId, o.params);
+            applied++;
         }
         if (apply) log.info("[SkillsOverhaul] combat init: applied " + applied + " ship-stat effects to " + ship.getHullSpec().getHullId());
     }
